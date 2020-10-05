@@ -17,6 +17,7 @@ M5 = M1 * 5
 verbose = False
 mysql_btc = 'mysql://bitok:bitok@10.10.10.200:3307'
 
+
 class Crypto:
     def __init__(self, exchange='BITMEX', crypto='BTC/USD', period='1d', indexes=True, tz=3):
         if verbose: print(f'==============\nInit {exchange}.{crypto}')
@@ -203,4 +204,3 @@ COMMIT;
         df = pd.read_sql(f"SELECT * FROM Exchange", con=conn)
         if verbose: print(df)
         return df
-

@@ -13,7 +13,6 @@ from plotly.subplots import make_subplots
 from DiLL.crypto import Crypto
 from DiLL.utils import SMA, hd
 
-
 exchange = 'BITMEX'
 crypto = 'BTC/USD'
 cry = Crypto(exchange=exchange, crypto=crypto, period='1h', indexes=True)
@@ -148,7 +147,7 @@ def update_graph(newCrypto, crypto, period, days, act, but, maxvols, intervals):
     fig.add_trace(
         go.Candlestick(
             x=df.index, open=df['Open'], close=df['Close'], high=df['High'], low=df['Low'],
-                increasing_line_color='blue', decreasing_line_color='red', showlegend=False
+            increasing_line_color='blue', decreasing_line_color='red', showlegend=False
         ), 1, 1, secondary_y=False,
     )
     # SMA(7d)
@@ -186,8 +185,8 @@ def update_graph(newCrypto, crypto, period, days, act, but, maxvols, intervals):
     )
     # Vert Vol
     fig.add_trace(
-        go.Bar(x=df.index, y=df['Volume'].where(df['Volume'] >= df['Volume'].max()*vol_lev, 0), name='VolV',
-            marker_color='black', showlegend=True, opacity=0.7, width=4000000),
+        go.Bar(x=df.index, y=df['Volume'].where(df['Volume'] >= df['Volume'].max() * vol_lev, 0), name='VolV',
+               marker_color='black', showlegend=True, opacity=0.7, width=4000000),
         row=1, col=1, secondary_y=True)
     # Hor Vol
     if dfg.shape[0] > 1:
@@ -268,7 +267,7 @@ def update_graph(newCrypto, crypto, period, days, act, but, maxvols, intervals):
         )
     ) for i in range(maxvols)]
     fig.update_layout(
-        title=f"Crypto-flash5 {exchange} {crypto} {bars}*{period}={days}D  SMA(7d+30d+60d)  VolUp: {hd(Voll-Vols)}",
+        title=f"Crypto-flash5 {exchange} {crypto} {bars}*{period}={days}D  SMA(7d+30d+60d)  VolUp: {hd(Voll - Vols)}",
         xaxis_title="Время",
         yaxis_title=f"{crypto}",
         height=700,
