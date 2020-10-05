@@ -13,9 +13,7 @@ from plotly.subplots import make_subplots
 from DiLL.crypto import Crypto
 from DiLL.utils import SMA, hd
 
-exchange = 'BITMEX'
-crypto = 'BTC/USD'
-cry = Crypto(exchange=exchange, crypto=crypto, period='1h', indexes=True)
+cry = Crypto(exchange='BITMEX', crypto='BTC/USD', period='1h', indexes=True)
 cry.update_crypto()
 df = cry.load_crypto(limit=2_400)
 df_exch = cry.get_list_exch()
@@ -35,7 +33,7 @@ app.layout = html.Div([
             options=[{'label': i, 'value': i} for i in df_exch['Crypto']],
             value='BTC/USD', persistence=True, persistence_type='memory', labelStyle={'display': 'inline-block'}
         ),
-        dcc.Input(id='newCrypto', persistence=True, persistence_type='memory', debounce=True, value='', type='text'),
+        dcc.Input(id='new_crypto', persistence=True, persistence_type='memory', debounce=True, value='', type='text'),
         html.Br(),
         # html.Label('Период'),
         dcc.RadioItems(
@@ -86,7 +84,7 @@ app.layout = html.Div([
 
 @app.callback(
     Output('out', 'figure'),
-    [Input('newCrypto', 'value'),
+    [Input('new_crypto', 'value'),
      Input('Crypto', 'value'),
      Input('Period', 'value'),
      Input('Days', 'value'),
@@ -94,14 +92,16 @@ app.layout = html.Div([
      Input('Button', 'n_clicks'),
      Input('Maxvols', 'value'),
      Input('interval-component', 'n_intervals')])
-def update_graph(newCrypto, crypto, period, days, act, but, maxvols, intervals):
+def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals):
     global df, cry, refr, maxvols_g, act_g, df_exch, df_exch
+    _ = but
+    _ = intervals
     refr = refresh[period]
     bars = days
     sbars = 1
-    print('>' + newCrypto + '<')
-    if newCrypto != '':
-        crypto = newCrypto
+    print('>' + new_crypto + '<')
+    if new_crypto != '':
+        crypto = new_crypto
     if crypto == 'BTC/USD':
         exchange = 'BITMEX'
     else:
@@ -134,11 +134,11 @@ def update_graph(newCrypto, crypto, period, days, act, but, maxvols, intervals):
     df_last = df[act][-1]
     df['lsl'] = df[act] - df_last
     df['ls_color'] = df['lsl'].where(df['lsl'] >= 0, 'blue').where(df['lsl'] < 0, 'red')
-    Voll = df['Volume'][df['lsl'] < 0].sum()
-    Vols = df['Volume'][df['lsl'] >= 0].sum()
-    Price_max = df[act].max()
-    Price_min = df[act].min()
-    grid = (Price_max - Price_min) / 100
+    vol_l = df['Volume'][df['lsl'] < 0].sum()
+    vol_s = df['Volume'][df['lsl'] >= 0].sum()
+    price_max = df[act].max()
+    price_min = df[act].min()
+    grid = (price_max - price_min) / 100
     df['Prof_Act'] = df[act] // grid * grid
     dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev].groupby(['Prof_Act']).sum()
     fig = make_subplots(rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
@@ -147,7 +147,7 @@ def update_graph(newCrypto, crypto, period, days, act, but, maxvols, intervals):
     fig.add_trace(
         go.Candlestick(
             x=df.index, open=df['Open'], close=df['Close'], high=df['High'], low=df['Low'],
-            increasing_line_color='blue', decreasing_line_color='red', showlegend=False
+            increasing=dict(line_color='blue'), decreasing=dict(line_color='red'), showlegend=False
         ), 1, 1, secondary_y=False,
     )
     # SMA(7d)
@@ -186,7 +186,7 @@ def update_graph(newCrypto, crypto, period, days, act, but, maxvols, intervals):
     # Vert Vol
     fig.add_trace(
         go.Bar(x=df.index, y=df['Volume'].where(df['Volume'] >= df['Volume'].max() * vol_lev, 0), name='VolV',
-               marker_color='black', showlegend=True, opacity=0.7, width=4000000),
+               marker=dict(color='black'), showlegend=True, opacity=0.7, width=4000000),
         row=1, col=1, secondary_y=True)
     # Hor Vol
     if dfg.shape[0] > 1:
@@ -194,7 +194,7 @@ def update_graph(newCrypto, crypto, period, days, act, but, maxvols, intervals):
             x=dfg['Volume'],
             y=dfg.index,
             orientation='h',
-            marker_color='blue',
+            marker=dict(color='blue'),
             name='VolH',
             showlegend=False
         ), 1, 2
@@ -218,7 +218,7 @@ def update_graph(newCrypto, crypto, period, days, act, but, maxvols, intervals):
     # Level price
     fig.add_trace(
         go.Scatter(
-            x=[df.index[-1] for i in range(maxvols)],
+            x=[df.index[-1] for _ in range(maxvols)],
             y=df[act][maxv],
             text=df[act][maxv],
             textposition="top right",
@@ -267,7 +267,7 @@ def update_graph(newCrypto, crypto, period, days, act, but, maxvols, intervals):
         )
     ) for i in range(maxvols)]
     fig.update_layout(
-        title=f"Crypto-flash5 {exchange} {crypto} {bars}*{period}={days}D  SMA(7d+30d+60d)  VolUp: {hd(Voll - Vols)}",
+        title=f"Crypto-flash5 {exchange} {crypto} {bars}*{period}={days}D  SMA(7d+30d+60d)  VolUp: {hd(vol_l - vol_s)}",
         xaxis_title="Время",
         yaxis_title=f"{crypto}",
         height=700,

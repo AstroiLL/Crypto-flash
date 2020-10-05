@@ -15,14 +15,14 @@ M1 = 60000  # ms
 M5 = M1 * 5
 # H1s = 3600  # s
 verbose = False
-mysql_btc = 'mysql://bitok:bitok@10.10.10.200:3307'
+mysql_crypto = 'mysql://bitok:bitok@10.10.10.200:3307'
 
 
 class Crypto:
     def __init__(self, exchange='BITMEX', crypto='BTC/USD', period='1d', indexes=True, tz=3):
         if verbose: print(f'==============\nInit {exchange}.{crypto}')
         try:
-            conn = create_engine(f'{mysql_btc}').connect()
+            conn = create_engine(f'{mysql_crypto}').connect()
         except:
             print('Error open MySQL')
             exit(1)
@@ -39,7 +39,7 @@ class Crypto:
         self.tz = tz
         self.df = pd.DataFrame()
         try:
-            self.conn = create_engine(f'{mysql_btc}/{self.exchange}.{self.crypto}').connect()
+            self.conn = create_engine(f'{mysql_crypto}/{self.exchange}.{self.crypto}').connect()
         except:
             print(f'No base {self.exchange}.{self.crypto}')
             self._create_base()
@@ -192,15 +192,15 @@ ALTER TABLE `1m`
 COMMIT;
         """
         if verbose: print(f'Created base {self.exchange}.{self.crypto}')
-        conn = create_engine(f'{mysql_btc}/').connect()
+        conn = create_engine(f'{mysql_crypto}/').connect()
         conn.execute(base1 + base2, con=conn)
-        conn = create_engine(f'{mysql_btc}/EXCHANGE').connect()
+        conn = create_engine(f'{mysql_crypto}/EXCHANGE').connect()
         ins = f"INSERT INTO `Exchange`(`Exchange`, `Crypto`) VALUES ('{self.exchange}','{self.crypto}')"
         conn.execute(ins, con=conn)
-        self.conn = create_engine(f'{mysql_btc}/{self.exchange}.{self.crypto}').connect()
+        self.conn = create_engine(f'{mysql_crypto}/{self.exchange}.{self.crypto}').connect()
 
     def get_list_exch(self):
-        conn = create_engine(f'{mysql_btc}/EXCHANGE').connect()
+        conn = create_engine(f'{mysql_crypto}/EXCHANGE').connect()
         df = pd.read_sql(f"SELECT * FROM Exchange", con=conn)
         if verbose: print(df)
         return df
