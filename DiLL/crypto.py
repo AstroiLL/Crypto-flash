@@ -17,7 +17,7 @@ M1 = 60000  # ms
 M5 = M1 * 5
 # H1s = 3600  # s
 verbose = False
-# load_dotenv()
+# mysql_url = 'mysql://user:pass@127.0.0.1:3307'
 mysql_url = os.environ['MYSQL_URL']
 
 class Crypto:
