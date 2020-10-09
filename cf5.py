@@ -285,4 +285,4 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
 
 
 if __name__ == '__main__':
-    app.run_server(port=8052, debug=True, use_reloader=True)
+    app.run_server(port=8051, debug=True, use_reloader=True)
