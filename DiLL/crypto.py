@@ -27,7 +27,7 @@ class Crypto:
     BITMEX BINANCE
     1d 1h 1m
     """
-    def __init__(self, exchange='BITMEX', crypto='BTC/USD', period='1d', indexes=True, tz=3, update=False):
+    def __init__(self, exchange='BITMEX', crypto='BTC/USD', period='1d', indexes=True, tz=3, update=True):
         if verbose: print(f'==============\nInit {exchange}.{crypto}')
         try:
             conn = create_engine(f'{mysql_url}').connect()

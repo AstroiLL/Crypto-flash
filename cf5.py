@@ -14,7 +14,7 @@ from DiLL.crypto import Crypto
 from DiLL.utils import SMA, hd
 
 cry = Crypto(exchange='BITMEX', crypto='BTC/USD', period='1h', indexes=True)
-# cry.update_crypto()
+cry.update_crypto()
 df = cry.load_crypto(limit=2_400)
 df_exch = cry.get_list_exch()
 refresh = {'1m': 60, '1h': 240, '1d': 400}
@@ -116,7 +116,7 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
         bars = days * 1440
     if maxvols == maxvols_g and act == act_g:
         cry = Crypto(exchange=exchange, crypto=crypto, period=period, indexes=True)
-        # cry.update_crypto()
+        cry.update_crypto()
         df = cry.load_crypto(limit=bars)
         bars = cry.limit
         if period == '1h':
