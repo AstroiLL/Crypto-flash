@@ -2,13 +2,14 @@
 Binance functions
 """
 import time
-import os
+# import os
 # from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
 import ccxt
 import pandas as pd
 from sqlalchemy import create_engine
+from .env import mysql_url
 
 # Константы
 D1 = 86400000  # ms
@@ -18,7 +19,8 @@ M5 = M1 * 5
 # H1s = 3600  # s
 verbose = False
 # mysql_url = 'mysql://user:pass@127.0.0.1:3307'
-mysql_url = os.environ['MYSQL_URL']
+# mysql_url = os.environ['MYSQL_URL']
+
 
 class Crypto:
     """
