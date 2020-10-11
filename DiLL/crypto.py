@@ -10,7 +10,7 @@ import ccxt
 import pandas as pd
 from sqlalchemy import create_engine
 
-# Констатнты
+# Константы
 D1 = 86400000  # ms
 H1 = 3600000  # ms
 M1 = 60000  # ms
@@ -21,7 +21,13 @@ verbose = False
 mysql_url = os.environ['MYSQL_URL']
 
 class Crypto:
-    def __init__(self, exchange='BITMEX', crypto='BTC/USD', period='1d', indexes=True, tz=3):
+    """
+    Получаем котировки с криптовалютных бирж и записываем в базу mySQL
+
+    BITMEX BINANCE
+    1d 1h 1m
+    """
+    def __init__(self, exchange='BITMEX', crypto='BTC/USD', period='1d', indexes=True, tz=3, update=False):
         if verbose: print(f'==============\nInit {exchange}.{crypto}')
         try:
             conn = create_engine(f'{mysql_url}').connect()
@@ -40,21 +46,25 @@ class Crypto:
         self.indexes = indexes
         self.tz = tz
         self.df = pd.DataFrame()
+        self.update = update
         try:
             self.conn = create_engine(f'{mysql_url}/{self.exchange}.{self.crypto}').connect()
         except:
             print(f'No base {self.exchange}.{self.crypto}')
+            if not self.update: exit(3)
             self._create_base()
-        result = self.get_count_records()
-        if result == 0:
+        count_records = self.get_count_records()
+        if count_records == 0:
             print(f'Empty base {self.exchange}.{self.crypto}')
+            if not self.update: exit(4)
             self._get_crypto_from_exchange()
-            result = self.get_count_records()
-            if result == 0:
+            count_records = self.get_count_records()
+            if count_records == 0:
                 print(f'Error filling base {self.exchange}.{self.crypto}')
+                if not self.update: exit(4)
                 # self.delete({self.exchange}.{self.crypto})
-                exit(3)
-        print(f"Table {self.period} has total {result} records")
+                exit(5)
+        print(f"Table {self.period} has total {count_records} records")
         self.get_list_exch()
 
     def get_count_records(self):
@@ -66,18 +76,19 @@ class Crypto:
         return df.at[0, 'Date']
 
     def get_last_date(self):
-        result = self.get_count_records()
-        print(f"Table {self.period} has total {result} records")
-        if result == 0:
+        count_records = self.get_count_records()
+        print(f"Table {self.period} has total {count_records} records")
+        if count_records == 0:
             print("Empty base")
+            if not self.update: exit(4)
             self._get_crypto_from_exchange()
         df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC LIMIT 1", con=self.conn)
         return df.at[0, 'Date']
 
     def load_crypto(self, limit=None):
         if verbose:
-            result = self.get_count_records()
-            print(f"Table {self.period} has total {result} records")
+            count_records = self.get_count_records()
+            print(f"Table {self.period} has total {count_records} records")
             print(f"Load {self.crypto} from SQL {self.period}")
         if limit is not None: self.limit = limit
         if self.limit is None:
@@ -96,6 +107,9 @@ class Crypto:
         return self.df
 
     def update_crypto(self):
+        if not self.update:
+            print(f"Update in mode update=False")
+            return
         if verbose: print(f"Update {self.crypto} from {self.exchange} {self.period}")
         self.last_date = self.get_last_date()
         if self.last_date == 0:
