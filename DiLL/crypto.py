@@ -70,14 +70,17 @@ class Crypto:
         self.get_list_exch()
 
     def get_count_records(self):
+        """Количество котировок в базе"""
         return self.conn.execute(f"SELECT COUNT(*) FROM {self.period}").fetchone()[0]
 
     def get_fist_date(self):
+        """Первая дата котировок в базе"""
         df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date LIMIT 1", con=self.conn)
         if verbose: print(f"Fist date {df.at[0, 'Date']}")
         return df.at[0, 'Date']
 
     def get_last_date(self):
+        """Последняя дата котировок в базе"""
         count_records = self.get_count_records()
         print(f"Table {self.period} has total {count_records} records")
         if count_records == 0:
@@ -88,6 +91,7 @@ class Crypto:
         return df.at[0, 'Date']
 
     def load_crypto(self, limit=None):
+        """Загрузить из базы limit котировок"""
         if verbose:
             count_records = self.get_count_records()
             print(f"Table {self.period} has total {count_records} records")
@@ -109,6 +113,7 @@ class Crypto:
         return self.df
 
     def update_crypto(self):
+        """Обновить базу котировок от последней даты до текущей"""
         if not self.update:
             print(f"Update in mode update=False")
             return
@@ -137,6 +142,7 @@ class Crypto:
             self._get_crypto_from_exchange(limit=difs + 1)
 
     def _crypto_to_sql(self, df_app: pd.DataFrame):
+        """Записать df_app в базу котировок"""
         df_app.set_index('Date', drop=True, inplace=True)
         try:
             df_app.to_sql(self.period, con=self.conn, if_exists='append', index=True)
@@ -145,6 +151,7 @@ class Crypto:
             pass
 
     def _get_crypto_from_exchange(self, since=None, limit=500):
+        """Получить котировки с биржи от даты since количеством limit"""
         print(f"Get {self.crypto} from {self.exchange} {self.period}")
         if self.exchange == 'BITMEX':
             exchange = ccxt.bitmex()
@@ -175,6 +182,7 @@ class Crypto:
             if limit > 0: time.sleep(exchange.rateLimit // 100)
 
     def _create_base(self):
+        """Создать базы котировок для 1d 1h 1m"""
         base1 = f"CREATE DATABASE IF NOT EXISTS `{self.exchange}.{self.crypto}`; USE `{self.exchange}.{self.crypto}`;"
         base2 = """
 CREATE TABLE `1d` (
@@ -218,6 +226,7 @@ COMMIT;
         self.conn = create_engine(f'{mysql_url}/{self.exchange}.{self.crypto}').connect()
 
     def get_list_exch(self):
+        """Получить список существующих на сервере баз данных баз котировок"""
         conn = create_engine(f'{mysql_url}/EXCHANGE').connect()
         df = pd.read_sql(f"SELECT * FROM Exchange", con=conn)
         if verbose: print(df)

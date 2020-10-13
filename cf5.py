@@ -22,7 +22,7 @@ refresh = {'1m': 60, '1h': 240, '1d': 400}
 
 refr = 120
 maxvols_g = 4
-act_g = 'Close'
+act_g = 'Open'
 vol_lev = 0.6
 
 app = dash.Dash()
@@ -44,7 +44,7 @@ app.layout = html.Div([
         dcc.RadioItems(
             id='Act',
             options=[{'label': i, 'value': i} for i in ['Open', 'Close']],
-            value='Close'
+            value='Open'
         ),
         html.Label('Количество максимумов '),
         dcc.Input(
