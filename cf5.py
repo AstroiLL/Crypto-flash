@@ -140,6 +140,7 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
     price_min = df[act].min()
     grid = (price_max - price_min) / 100
     df['Prof_Act'] = df[act] // grid * grid
+    df['rank'] = df['Volume'][maxv].rank()
     dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev].groupby(['Prof_Act']).sum()
     fig = make_subplots(rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
                         shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.01, column_widths=[0.8, 0.2])
@@ -246,7 +247,7 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
     [fig.add_shape(
         dict(
             type="line", xref='x', yref='y', x0=maxv[i], x1=df.index[-1],
-            y0=df[act][maxv][i], y1=df[act][maxv][i], line=dict(color=df['ls_color'][maxv][i])
+            y0=df[act][maxv][i], y1=df[act][maxv][i], line=dict(color=df['ls_color'][maxv][i], width=df['rank'][maxv][i])
         )
     ) for i in range(maxvols)]
     # Levels
