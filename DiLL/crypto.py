@@ -24,10 +24,10 @@ verbose = False
 
 class Crypto:
     """
-    Получаем котировки с криптовалютных бирж и записываем в базу mySQL
+    Получаем котировки с криптовалютных бирж и записываем в базу mySQL, чтобы легко их получать
 
-    BITMEX BINANCE
-    1d 1h 1m
+    Биржи BITMEX BINANCE
+    Периоды 1d 1h 1m
     """
     def __init__(self, exchange='BITMEX', crypto='BTC/USD', period='1d', indexes=True, tz=3, update=True):
         if verbose: print(f'==============\nInit {exchange}.{crypto}')
