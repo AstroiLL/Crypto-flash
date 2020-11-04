@@ -48,7 +48,7 @@ def hd(x, precision=2):
     M для миллионов
     k для тысяч
     :param x: число для преобразования
-    :param precision: число знаков после точки (пример: для 2 будет 3.86M, по умолчанию 2)
+    :param precision: число знаков после точки (пример для 2: 3 861 647 -> 3.86M, по умолчанию 2)
     :return: строку вида "3.86M"
     """
     if precision < 0: return (str(x))
@@ -322,3 +322,22 @@ class Disk():
             joblib.dump(var, self.name, compress=3)
             print(f'Saved {self.name}')
 """
+
+
+def HA(dataframe):
+    df = dataframe.copy()
+
+    df['HA_Close'] = (df.Open + df.High + df.Low + df.Close) / 4
+
+    # df.reset_index(inplace=True)
+
+    ha_open = [(df.Open[0] + df.Close[0]) / 2]
+    [ha_open.append((ha_open[i] + df.HA_Close.values[i]) / 2) for i in range(0, len(df) - 1)]
+    df['HA_Open'] = ha_open
+
+    # df.set_index('index', inplace=True)
+
+    df['HA_High'] = df[['HA_Open', 'HA_Close', 'High']].max(axis=1)
+    df['HA_Low'] = df[['HA_Open', 'HA_Close', 'Low']].min(axis=1)
+
+    return df
