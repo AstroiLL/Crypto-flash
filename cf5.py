@@ -61,9 +61,9 @@ app.layout = html.Div([
         dcc.Slider(
             id='Days',
             min=1,
-            max=400,
-            value=100,
-            marks={i: str(i) for i in range(0, 401, 50)},
+            max=200,
+            value=7,
+            marks={i: str(i) for i in range(0, 201, 10)},
             step=1,
             # updatemode='drag'
         ),
@@ -149,7 +149,7 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
     fig.add_trace(
         go.Candlestick(
             # x=df.index, open=df['Open'], close=df['Close'], high=df['High'], low=df['Low'],
-            x=df_ha.index, open=df_ha['HA_Open'], close=df_ha['HA_Close'], high=df_ha['HA_High'], low=df_ha['HA_Low'],
+            x=df_ha.index, open=df_ha['Open'], close=df_ha['Close'], high=df_ha['High'], low=df_ha['Low'],
             increasing=dict(line_color='blue'), decreasing=dict(line_color='red'), showlegend=False
         ), 1, 1, secondary_y=False,
     )

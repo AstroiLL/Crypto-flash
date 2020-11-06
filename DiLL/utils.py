@@ -339,5 +339,5 @@ def HA(dataframe):
 
     df['HA_High'] = df[['HA_Open', 'HA_Close', 'High']].max(axis=1)
     df['HA_Low'] = df[['HA_Open', 'HA_Close', 'Low']].min(axis=1)
-
+    df.rename(columns={'HA_Open': 'Open', 'HA_High': 'High', 'HA_Low': 'Low', 'HA_Close': 'Close'})
     return df
