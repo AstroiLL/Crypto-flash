@@ -11,7 +11,7 @@ from dash.dependencies import Input, Output
 from plotly.subplots import make_subplots
 
 from DiLL.crypto import Crypto
-from DiLL.utils import SMA, hd
+from DiLL.utils import SMA, hd, HA
 
 cry = Crypto(exchange='BITMEX', crypto='BTC/USD', period='1h', indexes=True)
 cry.update_crypto()
@@ -55,18 +55,21 @@ app.layout = html.Div([
             min=0,
         ),
     ], style={'columnCount': 3}),
-    # html.Br(),
-    # html.Label('Дни'),
     html.Div([
         dcc.Slider(
             id='Days',
             min=1,
-            max=400,
-            value=100,
-            marks={i: str(i) for i in range(0, 401, 50)},
-            step=1,
-            # updatemode='drag'
-        ),
+            max=200,
+            value=7,
+            marks={i: str(i) for i in range(0, 201, 10)},
+            step=1) if True else
+        dcc.Slider(
+            id='Days',
+            min=1,
+            max=30,
+            value=7,
+            marks={i: str(i) for i in range(0, 31, 1)},
+            step=1)
     ]),
     dcc.Interval(
         id='interval-component',
@@ -145,9 +148,11 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
     fig = make_subplots(rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
                         shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.01, column_widths=[0.8, 0.2])
     # Grafik Candelstik
+    df_ha = HA(df)
     fig.add_trace(
         go.Candlestick(
-            x=df.index, open=df['Open'], close=df['Close'], high=df['High'], low=df['Low'],
+            # x=df.index, open=df['Open'], close=df['Close'], high=df['High'], low=df['Low'],
+            x=df_ha.index, open=df_ha['Open'], close=df_ha['Close'], high=df_ha['High'], low=df_ha['Low'],
             increasing=dict(line_color='blue'), decreasing=dict(line_color='red'), showlegend=False
         ), 1, 1, secondary_y=False,
     )
@@ -168,7 +173,7 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
             x=df.index, y=SMA(df[act], 30 * sbars), mode='lines', name='SMA(30d)',
             line=dict(
                 width=2,
-                color='blue',
+                color='lime',
             ),
             showlegend=True
         ), 1, 1, secondary_y=False,
@@ -185,10 +190,11 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
         ), 1, 1, secondary_y=False,
     )
     # Vert Vol
-    fig.add_trace(
-        go.Bar(x=df.index, y=df['Volume'].where(df['Volume'] >= df['Volume'].max() * vol_lev, 0), name='VolV',
-               marker=dict(color='black'), showlegend=True, opacity=0.7, width=4000000),
-        row=1, col=1, secondary_y=True)
+    if False:
+        fig.add_trace(
+            go.Bar(x=df.index, y=df['Volume'].where(df['Volume'] >= df['Volume'].max() * vol_lev, 0), name='VolV',
+                   marker=dict(color='black'), showlegend=True, opacity=0.7, width=4000000),
+            row=1, col=1, secondary_y=True)
     # Hor Vol
     if dfg.shape[0] > 1:
         fig.add_trace(go.Bar(
@@ -247,7 +253,8 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
     [fig.add_shape(
         dict(
             type="line", xref='x', yref='y', x0=maxv[i], x1=df.index[-1],
-            y0=df[act][maxv][i], y1=df[act][maxv][i], line=dict(color=df['ls_color'][maxv][i], width=df['rank'][maxv][i])
+            y0=df[act][maxv][i], y1=df[act][maxv][i],
+            line=dict(color=df['ls_color'][maxv][i], width=df['rank'][maxv][i])
         )
     ) for i in range(maxvols)]
     # Levels
@@ -267,8 +274,10 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
             ay=-40
         )
     ) for i in range(maxvols)]
+    voldir = vol_l - vol_s
+    dir = 'Up' if voldir >= 0 else 'Down'
     fig.update_layout(
-        title=f"Crypto-flash5 {exchange} {crypto} {bars}*{period}={days}D  SMA(7d+30d+60d)  VolUp: {hd(vol_l - vol_s)}",
+        title=f"Crypto-flash6 {exchange} {crypto} {bars}*{period}={days}D  SMA(7d+30d+60d)  VolDir: {hd(voldir)} {dir}",
         xaxis_title="Время",
         yaxis_title=f"{crypto}",
         height=700,
@@ -286,4 +295,4 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
 
 
 if __name__ == '__main__':
-    app.run_server(port=8051, debug=True, use_reloader=True)
+    app.run_server(port=8052, debug=True, use_reloader=True)
