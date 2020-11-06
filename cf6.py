@@ -27,15 +27,19 @@ vol_lev = 0.6
 
 app = dash.Dash()
 app.layout = html.Div([
+    html.Details([
+        html.Summary('Выбор крипты', style={"font-size": "22"}),
+        html.Div([
+            dcc.RadioItems(
+                id='Crypto',
+                options=[{'label': i, 'value': i} for i in df_exch['Crypto']],
+                value='BTC/USD', persistence=True, persistence_type='memory', labelStyle={'display': 'inline-block'}
+            ),
+            dcc.Input(id='new_crypto', persistence=True, persistence_type='memory', debounce=True, value='',
+                      type='text'),
+        ]),
+    ]),
     html.Div([
-        dcc.RadioItems(
-            id='Crypto',
-            options=[{'label': i, 'value': i} for i in df_exch['Crypto']],
-            value='BTC/USD', persistence=True, persistence_type='memory', labelStyle={'display': 'inline-block'}
-        ),
-        dcc.Input(id='new_crypto', persistence=True, persistence_type='memory', debounce=True, value='', type='text'),
-        html.Br(),
-        # html.Label('Период'),
         dcc.RadioItems(
             id='Period',
             options=[{'label': i, 'value': i} for i in ['1d', '1h', '1m']],
@@ -43,8 +47,8 @@ app.layout = html.Div([
         ),
         dcc.RadioItems(
             id='Act',
-            options=[{'label': i, 'value': i} for i in ['Open', 'Close']],
-            value='Open'
+            options=[{'label': i, 'value': i} for i in ['Свечи', 'Хейкен Аши']],
+            value='Хейкен Аши'
         ),
         html.Label('Количество максимумов '),
         dcc.Input(
@@ -59,16 +63,16 @@ app.layout = html.Div([
         dcc.Slider(
             id='Days',
             min=1,
-            max=200,
-            value=7,
-            marks={i: str(i) for i in range(0, 201, 10)},
-            step=1) if True else
-        dcc.Slider(
-            id='Days',
-            min=1,
             max=30,
             value=7,
             marks={i: str(i) for i in range(0, 31, 1)},
+            step=1) if Input('Period', 'value') == '1m' else
+        dcc.Slider(
+            id='Days',
+            min=1,
+            max=200,
+            value=7,
+            marks={i: str(i) for i in range(0, 201, 10)},
             step=1)
     ]),
     dcc.Interval(
@@ -134,32 +138,36 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
     maxvols_g = maxvols
     act_g = act
     maxv = df['Volume'].nlargest(maxvols).index
-    df_last = df[act][-1]
-    df['lsl'] = df[act] - df_last
+    df_last = df['Open'][-1]
+    df['lsl'] = df['Open'] - df_last
     df['ls_color'] = df['lsl'].where(df['lsl'] >= 0, 'blue').where(df['lsl'] < 0, 'red')
     vol_l = df['Volume'][df['lsl'] < 0].sum()
     vol_s = df['Volume'][df['lsl'] >= 0].sum()
-    price_max = df[act].max()
-    price_min = df[act].min()
+    price_max = df['Open'].max()
+    price_min = df['Open'].min()
     grid = (price_max - price_min) / 100
-    df['Prof_Act'] = df[act] // grid * grid
+    df['Prof_Act'] = df['Open'] // grid * grid
     df['rank'] = df['Volume'][maxv].rank()
     dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev].groupby(['Prof_Act']).sum()
     fig = make_subplots(rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
                         shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.01, column_widths=[0.8, 0.2])
     # Grafik Candelstik
     df_ha = HA(df)
+    df_act = df if act == 'Свечи' else df_ha
+    # print(df.tail(1))
+    # print(df_ha.tail(1))
+    # print(df_act.tail(1))
     fig.add_trace(
         go.Candlestick(
             # x=df.index, open=df['Open'], close=df['Close'], high=df['High'], low=df['Low'],
-            x=df_ha.index, open=df_ha['Open'], close=df_ha['Close'], high=df_ha['High'], low=df_ha['Low'],
+            x=df_act.index, open=df_act['Open'], close=df_act['Close'], high=df_act['High'], low=df_act['Low'],
             increasing=dict(line_color='blue'), decreasing=dict(line_color='red'), showlegend=False
         ), 1, 1, secondary_y=False,
     )
     # SMA(7d)
     fig.add_trace(
         go.Scatter(
-            x=df.index, y=SMA(df[act], 7 * sbars), mode='lines', name='SMA(7d)',
+            x=df.index, y=SMA(df['Open'], 7 * sbars), mode='lines', name='SMA(7d)',
             line=dict(
                 width=2,
                 color='magenta',
@@ -170,7 +178,7 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
     # SMA(30d)
     fig.add_trace(
         go.Scatter(
-            x=df.index, y=SMA(df[act], 30 * sbars), mode='lines', name='SMA(30d)',
+            x=df.index, y=SMA(df['Open'], 30 * sbars), mode='lines', name='SMA(30d)',
             line=dict(
                 width=2,
                 color='lime',
@@ -181,7 +189,7 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
     # SMA(60d)
     fig.add_trace(
         go.Scatter(
-            x=df.index, y=SMA(df[act], 60 * sbars), mode='lines', name='SMA(60d)',
+            x=df.index, y=SMA(df['Open'], 60 * sbars), mode='lines', name='SMA(60d)',
             line=dict(
                 width=2,
                 color='red',
@@ -210,8 +218,8 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
     fig.add_trace(
         go.Scatter(
             x=[df.index[-1]],
-            y=[df[act][-1]],
-            text=df[act][-1],
+            y=[df['Open'][-1]],
+            text=df['Open'][-1],
             textposition="top right",
             mode="text",
             showlegend=False,
@@ -226,8 +234,8 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
     fig.add_trace(
         go.Scatter(
             x=[df.index[-1] for _ in range(maxvols)],
-            y=df[act][maxv],
-            text=df[act][maxv],
+            y=df['Open'][maxv],
+            text=df['Open'][maxv],
             textposition="top right",
             mode="text",
             showlegend=False
@@ -236,7 +244,7 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
     fig.add_trace(
         go.Scatter(
             x=[maxv[i] for i in range(maxvols)],
-            y=df[act][maxv],
+            y=df['Open'][maxv],
             marker=dict(
                 size=(df['Volume'][maxv] / df['Volume'][maxv].max() * 30).astype('int64'),
                 # size=df['Volume'][maxv].rank()*5,
@@ -244,7 +252,7 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
                 line=dict(color=df.Volume, width=1)
             ),
             mode='markers',
-            # text=df[act][maxv],
+            # text=df['Open'][maxv],
             # textposition="top right",
             # mode="text",
             showlegend=False
@@ -253,7 +261,7 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
     [fig.add_shape(
         dict(
             type="line", xref='x', yref='y', x0=maxv[i], x1=df.index[-1],
-            y0=df[act][maxv][i], y1=df[act][maxv][i],
+            y0=df['Open'][maxv][i], y1=df['Open'][maxv][i],
             line=dict(color=df['ls_color'][maxv][i], width=df['rank'][maxv][i])
         )
     ) for i in range(maxvols)]
@@ -261,11 +269,11 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
     [fig.add_annotation(
         dict(
             x=maxv[i],
-            y=df[act][maxv][i],
+            y=df['Open'][maxv][i],
             xref="x",
             yref="y",
             text=f"V:{df['Volume'][maxv][i]:,.0f}",
-            hovertext=f"{df[act][maxv][i]}",
+            hovertext=f"{df['Open'][maxv][i]}",
             showarrow=True,
             arrowhead=2,
             arrowsize=1,
