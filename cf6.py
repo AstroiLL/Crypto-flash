@@ -7,35 +7,31 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objects as go
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from plotly.subplots import make_subplots
 
 from DiLL.crypto import Crypto
 from DiLL.utils import SMA, hd, HA
 
-cry = Crypto(exchange='BITMEX', crypto='BTC/USD', period='1h', indexes=True)
-cry.update_crypto()
-df = cry.load_crypto(limit=2_400)
-df_exch = cry.get_list_exch()
+df_exch = Crypto().get_list_exch()
+
 refresh = {'1m': 60, '1h': 240, '1d': 400}
-# diap_days = 10
 
 refr = 120
-maxvols_g = 4
-act_g = 'Open'
 vol_lev = 0.6
 
 app = dash.Dash()
 app.layout = html.Div([
+    dcc.Store(id='Global', data={'act_g': 'Heiken', 'maxvols_g': 4}, storage_type='local'),
     html.Details([
-        html.Summary('Выбор крипты', style={"font-size": "22"}),
+        html.Summary('Select crypto', style={"font-size": "22"}),
         html.Div([
             dcc.RadioItems(
                 id='Crypto',
                 options=[{'label': i, 'value': i} for i in df_exch['Crypto']],
-                value='BTC/USD', persistence=True, persistence_type='memory', labelStyle={'display': 'inline-block'}
+                value='BTC/USD', persistence=True, persistence_type='local', labelStyle={'display': 'inline-block'}
             ),
-            dcc.Input(id='new_crypto', persistence=True, persistence_type='memory', debounce=True, value='',
+            dcc.Input(id='new_crypto', persistence=True, persistence_type='local', debounce=True, value='',
                       type='text'),
         ]),
     ]),
@@ -47,8 +43,8 @@ app.layout = html.Div([
         ),
         dcc.RadioItems(
             id='Act',
-            options=[{'label': i, 'value': i} for i in ['Свечи', 'Хейкен Аши']],
-            value='Хейкен Аши'
+            options=[{'label': i, 'value': i} for i in ['Candle', 'Heiken']],
+            value='Heiken'
         ),
         html.Label('Количество максимумов '),
         dcc.Input(
@@ -63,17 +59,12 @@ app.layout = html.Div([
         dcc.Slider(
             id='Days',
             min=1,
-            max=30,
-            value=7,
-            marks={i: str(i) for i in range(0, 31, 1)},
-            step=1) if Input('Period', 'value') == '1m' else
-        dcc.Slider(
-            id='Days',
-            min=1,
             max=200,
             value=7,
             marks={i: str(i) for i in range(0, 201, 10)},
-            step=1)
+            step=1,
+            tooltip={'always_visible': True, 'placement': 'bottom'}
+        )
     ]),
     dcc.Interval(
         id='interval-component',
@@ -83,7 +74,7 @@ app.layout = html.Div([
     html.Br(),
     html.Hr(),
     html.Div([
-        html.Button('Обновить', id='Button')
+        html.Button('Refresh', id='Button')
     ], style={'display': 'block', 'margin-left': 'calc(50% - 110px)'}),
     html.Div([dcc.Graph(id='out')])
 ])
@@ -98,9 +89,11 @@ app.layout = html.Div([
      Input('Act', 'value'),
      Input('Button', 'n_clicks'),
      Input('Maxvols', 'value'),
-     Input('interval-component', 'n_intervals')])
-def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals):
-    global df, cry, refr, maxvols_g, act_g, df_exch, df_exch
+     Input('interval-component', 'n_intervals')],
+    [State('Global', 'data')])
+def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals, data):
+    # global df, cry, refr, maxvols_g, act_g, df_exch, df_exch
+    global refr
     _ = but
     _ = intervals
     refr = refresh[period]
@@ -121,22 +114,22 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
         sbars = 1440
         days = days if days < 30 else 30
         bars = days * 1440
-    if maxvols == maxvols_g and act == act_g:
-        cry = Crypto(exchange=exchange, crypto=crypto, period=period, indexes=True)
-        cry.update_crypto()
-        df = cry.load_crypto(limit=bars)
-        bars = cry.limit
-        if period == '1h':
-            # days = days if days < 60 else 60
-            bars = days * 24
-            sbars = 24
-        elif period == '1m':
-            sbars = 1440
-            days = days if days < 30 else 30
-            bars = days * 1440
-    df_exch = cry.get_list_exch()
-    maxvols_g = maxvols
-    act_g = act
+    # if maxvols == data['maxvols_g'] and act == data['act_g']:
+    cry = Crypto(exchange=exchange, crypto=crypto, period=period, indexes=True)
+    cry.update_crypto()
+    df = cry.load_crypto(limit=bars)
+    bars = cry.limit
+    if period == '1h':
+        # days = days if days < 60 else 60
+        bars = days * 24
+        sbars = 24
+    elif period == '1m':
+        sbars = 1440
+        days = days if days < 30 else 30
+        bars = days * 1440
+    # df_exch = cry.get_list_exch()
+    data['maxvols_g'] = maxvols
+    data['act_g'] = act
     maxv = df['Volume'].nlargest(maxvols).index
     df_last = df['Open'][-1]
     df['lsl'] = df['Open'] - df_last
@@ -151,9 +144,9 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
     dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev].groupby(['Prof_Act']).sum()
     fig = make_subplots(rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
                         shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.01, column_widths=[0.8, 0.2])
-    # Grafik Candelstik
+    # Grafik Candlestik
     df_ha = HA(df)
-    df_act = df if act == 'Свечи' else df_ha
+    df_act = df if act == 'Candle' else df_ha
     # print(df.tail(1))
     # print(df_ha.tail(1))
     # print(df_act.tail(1))
@@ -198,11 +191,11 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
         ), 1, 1, secondary_y=False,
     )
     # Vert Vol
-    if False:
-        fig.add_trace(
-            go.Bar(x=df.index, y=df['Volume'].where(df['Volume'] >= df['Volume'].max() * vol_lev, 0), name='VolV',
-                   marker=dict(color='black'), showlegend=True, opacity=0.7, width=4000000),
-            row=1, col=1, secondary_y=True)
+    # if False:
+    #     fig.add_trace(
+    #         go.Bar(x=df.index, y=df['Volume'].where(df['Volume'] >= df['Volume'].max() * vol_lev, 0), name='VolV',
+    #                marker=dict(color='black'), showlegend=True, opacity=0.7, width=4000000),
+    #         row=1, col=1, secondary_y=True)
     # Hor Vol
     if dfg.shape[0] > 1:
         fig.add_trace(go.Bar(
@@ -283,10 +276,10 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals)
         )
     ) for i in range(maxvols)]
     voldir = vol_l - vol_s
-    dir = 'Up' if voldir >= 0 else 'Down'
+    dirs = 'Up' if voldir >= 0 else 'Down'
     fig.update_layout(
-        title=f"Crypto-flash6 {exchange} {crypto} {bars}*{period}={days}D  SMA(7d+30d+60d)  VolDir: {hd(voldir)} {dir}",
-        xaxis_title="Время",
+        title=f"Crypto-flash6 {exchange} {crypto} {bars}*{period}={days}D SMA(7d+30d+60d) VolDir: {hd(voldir)} {dirs}",
+        xaxis_title="Date",
         yaxis_title=f"{crypto}",
         height=700,
         xaxis_rangeslider_visible=False,
