@@ -13,7 +13,8 @@ from plotly.subplots import make_subplots
 from DiLL.crypto import Crypto
 from DiLL.utils import SMA, hd, HA
 
-df_exch = Crypto().get_list_exch()
+cry = Crypto()
+df_exch = cry.get_list_exch()
 
 refresh = {'1m': 60, '1h': 240, '1d': 400}
 
@@ -96,6 +97,7 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals,
     global refr
     _ = but
     _ = intervals
+    df = cry.df
     refr = refresh[period]
     bars = days
     sbars = 1
@@ -114,10 +116,9 @@ def update_graph(new_crypto, crypto, period, days, act, but, maxvols, intervals,
         sbars = 1440
         days = days if days < 30 else 30
         bars = days * 1440
-    # if maxvols == data['maxvols_g'] and act == data['act_g']:
-    cry = Crypto(exchange=exchange, crypto=crypto, period=period, indexes=True)
-    cry.update_crypto()
-    df = cry.load_crypto(limit=bars)
+    if maxvols == data['maxvols_g'] and act == data['act_g']:
+        cry.connect(exchange=exchange, crypto=crypto, period=period, indexes=True)
+        df = cry.load_crypto(limit=bars)
     bars = cry.limit
     if period == '1h':
         # days = days if days < 60 else 60

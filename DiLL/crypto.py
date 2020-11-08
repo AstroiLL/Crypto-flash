@@ -33,27 +33,38 @@ class Crypto:
     Периоды 1d 1h 1m
     """
 
-    def __init__(self, exchange='BITMEX', crypto='BTC/USD', period=None, indexes=True, tz=3, update=True):
-        if verbose: print(f'==============\nInit {exchange}.{crypto}')
+    def __init__(self, exchange='BITMEX', crypto='BTC/USD', period='1d', indexes=True, tz=3, update=True):
         try:
             create_engine(f'{mysql_url}').connect()
         except:
             print('Error open MySQL')
             exit(1)
         self.exchange = exchange
-        if self.exchange != 'BITMEX' and self.exchange != 'BINANCE':
-            print(f'Incorrect exchange {self.exchange}')
-            exit(2)
-        self.crypto = crypto
         self.dict_period = {'1m': M1, '1h': H1, '1d': D1}
         self.limit = None
         self.last_date = 0
+        self.df = pd.DataFrame()
+        self.crypto = crypto
+        self.period = period
         self.indexes = indexes
         self.tz = tz
-        self.df = pd.DataFrame()
         self.update = update
-        if period is None: return
-        self.period = period
+        self.conn = None
+        self.connect(exchange=exchange, crypto=crypto, period=period, indexes=indexes, tz=tz, update=update)
+
+    def connect(self, exchange=None, crypto=None, period=None, indexes=None, tz=None, update=None):
+        if exchange is not None: self.exchange = exchange
+        if crypto is not None: self.crypto = crypto
+        if period is not None: self.period = period
+        if indexes is not None: self.indexes = indexes
+        if tz is not None: self.tz = tz
+        if update is not None: self.update = update
+        if self.period is None:
+            return
+        if verbose: print(f'==============\nInit {self.exchange}.{self.crypto}')
+        if self.exchange != 'BITMEX' and self.exchange != 'BINANCE':
+            print(f'Incorrect exchange {self.exchange}')
+            exit(2)
         try:
             self.conn = create_engine(f'{mysql_url}/{self.exchange}.{self.crypto}').connect()
         except:
