@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import ccxt
 import pandas as pd
 from sqlalchemy import create_engine
+
 from .env import mysql_url
 
 # Константы
@@ -18,6 +19,8 @@ M1 = 60000  # ms
 M5 = M1 * 5
 # H1s = 3600  # s
 verbose = False
+
+
 # mysql_url = 'mysql://user:pass@127.0.0.1:3307'
 # mysql_url = os.environ['MYSQL_URL']
 
@@ -29,10 +32,11 @@ class Crypto:
     Биржи BITMEX BINANCE
     Периоды 1d 1h 1m
     """
-    def __init__(self, exchange='BITMEX', crypto='BTC/USD', period='1d', indexes=True, tz=3, update=True):
+
+    def __init__(self, exchange='BITMEX', crypto='BTC/USD', period=None, indexes=True, tz=3, update=True):
         if verbose: print(f'==============\nInit {exchange}.{crypto}')
         try:
-            conn = create_engine(f'{mysql_url}').connect()
+            create_engine(f'{mysql_url}').connect()
         except:
             print('Error open MySQL')
             exit(1)
@@ -42,13 +46,14 @@ class Crypto:
             exit(2)
         self.crypto = crypto
         self.dict_period = {'1m': M1, '1h': H1, '1d': D1}
-        self.period = period
         self.limit = None
         self.last_date = 0
         self.indexes = indexes
         self.tz = tz
         self.df = pd.DataFrame()
         self.update = update
+        if period is None: return
+        self.period = period
         try:
             self.conn = create_engine(f'{mysql_url}/{self.exchange}.{self.crypto}').connect()
         except:
@@ -67,7 +72,7 @@ class Crypto:
                 # self.delete({self.exchange}.{self.crypto})
                 exit(5)
         print(f"Table {self.period} has total {count_records} records")
-        self.get_list_exch()
+        # self.get_list_exch()
 
     def get_count_records(self):
         """Количество котировок в базе"""
@@ -153,6 +158,7 @@ class Crypto:
     def _get_crypto_from_exchange(self, since=None, limit=500):
         """Получить котировки с биржи от даты since количеством limit"""
         print(f"Get {self.crypto} from {self.exchange} {self.period}")
+        exchange = None
         if self.exchange == 'BITMEX':
             exchange = ccxt.bitmex()
         elif self.exchange == 'BINANCE':
