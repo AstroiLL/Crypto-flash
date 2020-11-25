@@ -19,7 +19,7 @@ df_exch = cry.get_list_exch()
 refresh = {'1m': 60, '1h': 240, '1d': 400}
 
 refr = 120
-vol_lev = 0.6
+vol_lev = 0.4
 
 app = dash.Dash()
 app.layout = html.Div([
@@ -47,11 +47,11 @@ app.layout = html.Div([
             options=[{'label': i, 'value': i} for i in ['Candle', 'Heiken']],
             value='Heiken'
         ),
-        html.Label('Количество максимумов '),
+        html.Label('Number of peaks '),
         dcc.Input(
             id="Maxvols",
             type="number",
-            placeholder="Количество максимумов",
+            placeholder="Number of peaks",
             value=4,
             min=0,
         ),
@@ -154,7 +154,6 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
     df_act = df if act == 'Candle' else df_ha
     fig.add_trace(
         go.Candlestick(
-            # x=df.index, open=df['Open'], close=df['Close'], high=df['High'], low=df['Low'],
             x=df_act.index, open=df_act['Open'], close=df_act['Close'], high=df_act['High'], low=df_act['Low'],
             increasing=dict(line_color='blue'), decreasing=dict(line_color='red'), showlegend=False
         ), 1, 1, secondary_y=False,
@@ -204,9 +203,12 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
             x=dfg['Volume'],
             y=dfg.index,
             orientation='h',
-            marker=dict(color='blue'),
+            # marker=dict(color='blue'),
             name='VolH',
-            showlegend=False
+            showlegend=False,
+            marker_color=dfg['Volume'],
+            # texttemplate='%{x}', textposition='outside',
+            # width=10
         ), 1, 2
         )
     # End price
