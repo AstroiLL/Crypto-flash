@@ -57,12 +57,21 @@ app.layout = html.Div([
         ),
     ], style={'columnCount': 3}),
     html.Div([
+        # dcc.Slider(
+        #     id='Hours',
+        #     min=1,
+        #     max=24*7,
+        #     value=24,
+        #     marks={i: str(i) for i in range(0, 24*7+1, 24)},
+        #     step=1,
+        #     tooltip={'always_visible': True, 'placement': 'bottom'}
+        # )
         dcc.Slider(
             id='Hours',
-            min=1,
-            max=24*7,
+            min=4,
+            max=24 * 7,
             value=24,
-            marks={i: str(i) for i in range(0, 24*7+1, 24)},
+            marks={**{f'{6*i}': f'{6*i}h' for i in range(1, 4)}, **{f'{24*i}': f'{i}D' for i in range(1, 8)}},
             step=1,
             tooltip={'always_visible': True, 'placement': 'bottom'}
         )
