@@ -12,6 +12,9 @@ from sqlalchemy import create_engine
 
 from .env import mysql_url
 
+# mysql_url = 'mysql://user:pass@127.0.0.1:3307'
+# mysql_url = os.environ['MYSQL_URL']
+
 # Константы
 D1 = 86400000  # ms
 H1 = 3600000  # ms
@@ -19,11 +22,6 @@ M1 = 60000  # ms
 M5 = M1 * 5
 # H1s = 3600  # s
 verbose = False
-
-
-# mysql_url = 'mysql://user:pass@127.0.0.1:3307'
-# mysql_url = os.environ['MYSQL_URL']
-
 
 class Crypto:
     """
@@ -89,13 +87,15 @@ class Crypto:
         """Количество котировок в базе"""
         return self.conn.execute(f"SELECT COUNT(*) FROM {self.period}").fetchone()[0]
 
-    def get_fist_date(self):
+    def get_fist_date(self, local=False):
         """Первая дата котировок в базе"""
         df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date LIMIT 1", con=self.conn)
-        if verbose: print(f"Fist date {df.at[0, 'Date']}")
-        return df.at[0, 'Date']
+        fist_date = df.at[0, 'Date']
+        if local: fist_date += timedelta(hours=self.tz)
+        if verbose: print(f"Fist date {fist_date}")
+        return fist_date
 
-    def get_last_date(self):
+    def get_last_date(self, local=False):
         """Последняя дата котировок в базе"""
         count_records = self.get_count_records()
         print(f"Table {self.period} has total {count_records} records")
@@ -104,7 +104,9 @@ class Crypto:
             if not self.update: exit(4)
             self._get_crypto_from_exchange()
         df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC LIMIT 1", con=self.conn)
-        return df.at[0, 'Date']
+        last_date = df.at[0, 'Date']
+        if local: last_date += timedelta(hours=self.tz)
+        return last_date
 
     def load_crypto(self, limit=None):
         """Загрузить из базы limit котировок"""
@@ -113,6 +115,28 @@ class Crypto:
             print(f"Table {self.period} has total {count_records} records")
             print(f"Load {self.crypto} from SQL {self.period}")
         if limit is not None: self.limit = limit
+        if self.limit is None:
+            self.df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC", con=self.conn)
+            self.limit = self.df.shape[0]
+        else:
+            self.df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC LIMIT {self.limit}", con=self.conn)
+            self.limit = min(self.df.shape[0], self.limit)
+        self.last_date = self.df.at[0, 'Date']
+        if verbose: print("Last date from mySQL", self.last_date)
+        self.df.sort_values('Date', ascending=True, inplace=True)
+        self.df['Date'] += timedelta(hours=self.tz)
+        if self.indexes:
+            self.df.set_index('Date', drop=True, inplace=True)
+        print(f'Loaded {self.limit} bars {self.period}')
+        return self.df
+
+    def load_crypto_date(self, limit=None, from_date=None):
+        """Загрузить из базы котировки с from_date limit"""
+        if verbose:
+            count_records = self.get_count_records()
+            print(f"Table {self.period} has total {count_records} records")
+            print(f"Load {self.crypto} from SQL {self.period}")
+        # if limit is not None: self.limit = limit
         if self.limit is None:
             self.df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC", con=self.conn)
             self.limit = self.df.shape[0]
@@ -166,6 +190,7 @@ class Crypto:
             print('Error write to MySQL')
             pass
 
+    # Работа с биржей
     def _get_crypto_from_exchange(self, since=None, limit=500):
         """Получить котировки с биржи от даты since количеством limit"""
         print(f"Get {self.crypto} from {self.exchange} {self.period}")
