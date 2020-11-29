@@ -24,25 +24,31 @@ def continuity(df, freq='D'):
 
 
 if __name__ == '__main__':
-    cry_d = Crypto(exchange='BITMEX', crypto='BTC/USD', period='1d', indexes=True, update=True)
-    # cry_d.update_crypto()
-    df_d = cry_d.load_crypto()
+    hours = 4
+    cry_h = Crypto()
+    cry_h.connect(period='1h')
+    cry_h.update_crypto()
+    df_h = cry_h.load_crypto(limit=hours)
+    print(cry_h.get_last_date(local=True))
+    print(df_h)
 
-    cry_m = Crypto(exchange='BITMEX', crypto='BTC/USD', period='1h', indexes=True, update=True)
-    # cry_m.update_crypto()
-    df_m = cry_m.load_crypto()
-    # # print(df_m)
+    cry_m = Crypto()
+    cry_m.connect(period='1m')
+    cry_m.update_crypto()
+    df_m = cry_m.load_crypto(limit=hours*60)
+    print(cry_m.get_last_date(local=True))
+    print(df_m)
 
     # continuity(df_d)
-    # exit()
+    exit()
 
-    start_d = df_m.index[0]
-    index = df_d.index > start_d
-
-    for day in df_d.index[index][:-1]:
-        # print(day, find_max_vol(df_m, day))
-        day_m = find_max_vol(df_m, day)
-        df_d.loc[df_d.index == day, 'Vol_date'] = day_m
-    # df_d.loc['Vol_date'] = df_d.applymap(find_max(df_d, df_d.index))
-    # print(df_d.index[-1], '<>', find_max_vol(df_m, df_d.index[0]))
-    print(df_d)
+    # start_d = df_m.index[0]
+    # index = df_d.index > start_d
+    #
+    # for day in df_d.index[index][:-1]:
+    #     # print(day, find_max_vol(df_m, day))
+    #     day_m = find_max_vol(df_m, day)
+    #     df_d.loc[df_d.index == day, 'Vol_date'] = day_m
+    # # df_d.loc['Vol_date'] = df_d.applymap(find_max(df_d, df_d.index))
+    # # print(df_d.index[-1], '<>', find_max_vol(df_m, df_d.index[0]))
+    # print(df_d)
