@@ -13,7 +13,7 @@ from plotly.subplots import make_subplots
 from DiLL.crypto import Crypto
 from DiLL.utils import SMA, hd, HA
 
-cry = Crypto()
+cry = Crypto(verbose=True)
 df_exch = cry.get_list_exch()
 
 refresh = {'1m': 60, '1h': 240, '1d': 400}

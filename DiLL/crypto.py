@@ -21,7 +21,10 @@ H1 = 3600000  # ms
 M1 = 60000  # ms
 M5 = M1 * 5
 # H1s = 3600  # s
-verbose = False
+
+dict_period = {'1m': M1, '1h': H1, '1d': D1}
+tz = 3
+
 
 class Crypto:
     """
@@ -31,35 +34,34 @@ class Crypto:
     Периоды 1d 1h 1m
     """
 
-    def __init__(self, exchange='BITMEX', crypto='BTC/USD', period='1d', indexes=True, tz=3, update=True):
+    def __init__(self, exchange='BITMEX', crypto='BTC/USD', period='1d', indexes=True, update=True,
+                 verbose=False):
         try:
             create_engine(f'{mysql_url}').connect()
         except:
             print('Error open MySQL')
             exit(1)
         self.exchange = exchange
-        self.dict_period = {'1m': M1, '1h': H1, '1d': D1}
         self.limit = None
         self.last_date = 0
         self.df = pd.DataFrame()
         self.crypto = crypto
         self.period = period
         self.indexes = indexes
-        self.tz = tz
         self.update = update
         self.conn = None
-        self.connect(exchange=exchange, crypto=crypto, period=period, indexes=indexes, tz=tz, update=update)
+        self.verbose = verbose
+        self.connect(exchange=exchange, crypto=crypto, period=period, indexes=indexes, update=update)
 
-    def connect(self, exchange=None, crypto=None, period=None, indexes=None, tz=None, update=None):
+    def connect(self, exchange=None, crypto=None, period=None, indexes=None, update=None):
         if exchange is not None: self.exchange = exchange
         if crypto is not None: self.crypto = crypto
         if period is not None: self.period = period
         if indexes is not None: self.indexes = indexes
-        if tz is not None: self.tz = tz
         if update is not None: self.update = update
         if self.period is None:
             return
-        if verbose: print(f'==============\nInit {self.exchange}.{self.crypto}')
+        if self.verbose: print(f'==============\nInit {self.exchange}.{self.crypto}')
         if self.exchange != 'BITMEX' and self.exchange != 'BINANCE':
             print(f'Incorrect exchange {self.exchange}')
             exit(2)
@@ -91,8 +93,8 @@ class Crypto:
         """Первая дата котировок в базе"""
         df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date LIMIT 1", con=self.conn)
         fist_date = df.at[0, 'Date']
-        if local: fist_date += timedelta(hours=self.tz)
-        if verbose: print(f"Fist date {fist_date}")
+        if local: fist_date += timedelta(hours=tz)
+        if self.verbose: print(f"Fist date {fist_date}")
         return fist_date
 
     def get_last_date(self, local=False):
@@ -105,68 +107,72 @@ class Crypto:
             self._get_crypto_from_exchange()
         df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC LIMIT 1", con=self.conn)
         last_date = df.at[0, 'Date']
-        if local: last_date += timedelta(hours=self.tz)
+        if local: last_date += timedelta(hours=tz)
         return last_date
 
     def load_crypto(self, limit=None):
         """Загрузить из базы limit котировок"""
-        if verbose:
+        if self.verbose:
             count_records = self.get_count_records()
             print(f"Table {self.period} has total {count_records} records")
             print(f"Load {self.crypto} from SQL {self.period}")
         if limit is not None: self.limit = limit
+        df = pd.DataFrame()
         if self.limit is None:
-            self.df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC", con=self.conn)
-            self.limit = self.df.shape[0]
+            df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC", con=self.conn)
+            self.limit = df.shape[0]
         else:
-            self.df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC LIMIT {self.limit}", con=self.conn)
-            self.limit = min(self.df.shape[0], self.limit)
-        self.last_date = self.df.at[0, 'Date']
-        if verbose: print("Last date from mySQL", self.last_date)
-        self.df.sort_values('Date', ascending=True, inplace=True)
-        self.df['Date'] += timedelta(hours=self.tz)
+            df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC LIMIT {self.limit}", con=self.conn)
+            self.limit = min(df.shape[0], self.limit)
+        self.last_date = df.at[0, 'Date']
+        if self.verbose: print("Last date from mySQL", self.last_date)
+        df.sort_values('Date', ascending=True, inplace=True)
+        df['Date'] += timedelta(hours=tz)
         if self.indexes:
-            self.df.set_index('Date', drop=True, inplace=True)
+            df.set_index('Date', drop=True, inplace=True)
         print(f'Loaded {self.limit} bars {self.period}')
-        return self.df
+        self.df = df
+        return df
 
     def load_crypto_date(self, limit=None, from_date=None):
-        """Загрузить из базы котировки с from_date limit"""
-        if verbose:
+        """Загрузить из базы котировки с from_date длиной limit"""
+        if self.verbose:
             count_records = self.get_count_records()
             print(f"Table {self.period} has total {count_records} records")
             print(f"Load {self.crypto} from SQL {self.period}")
         # if limit is not None: self.limit = limit
+        df = pd.DataFrame()
         if self.limit is None:
-            self.df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC", con=self.conn)
-            self.limit = self.df.shape[0]
+            df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC", con=self.conn)
+            self.limit = df.shape[0]
         else:
-            self.df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC LIMIT {self.limit}", con=self.conn)
-            self.limit = min(self.df.shape[0], self.limit)
-        self.last_date = self.df.at[0, 'Date']
-        if verbose: print("Last date from mySQL", self.last_date)
-        self.df.sort_values('Date', ascending=True, inplace=True)
-        self.df['Date'] += timedelta(hours=self.tz)
+            df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC LIMIT {self.limit}", con=self.conn)
+            self.limit = min(df.shape[0], self.limit)
+        self.last_date = df.at[0, 'Date']
+        if self.verbose: print("Last date from mySQL", self.last_date)
+        df.sort_values('Date', ascending=True, inplace=True)
+        df['Date'] += timedelta(hours=tz)
         if self.indexes:
-            self.df.set_index('Date', drop=True, inplace=True)
+            df.set_index('Date', drop=True, inplace=True)
         print(f'Loaded {self.limit} bars {self.period}')
-        return self.df
+        self.df = df
+        return df
 
     def update_crypto(self):
         """Обновить базу котировок от последней даты до текущей"""
         if not self.update:
             print(f"Update in mode update=False")
             return
-        if verbose: print(f"Update {self.crypto} from {self.exchange} {self.period}")
+        if self.verbose: print(f"Update {self.crypto} from {self.exchange} {self.period}")
         self.last_date = self.get_last_date()
         if self.last_date == 0:
             self._get_crypto_from_exchange()
             self.last_date = self.get_last_date()
-        if verbose: print("Last date from mySQL", self.last_date)
+        if self.verbose: print("Last date from mySQL", self.last_date)
         today = datetime.utcnow()
-        if verbose: print('Today:', today)
+        if self.verbose: print('Today:', today)
         difs_td = today - self.last_date
-        if verbose: print('Today - last_date =', difs_td)
+        if self.verbose: print('Today - last_date =', difs_td)
         # difs = 0
         if self.period == '1d':
             difs = difs_td.days
@@ -203,12 +209,12 @@ class Crypto:
             print(f'Incorrect exchange {self.exchange}')
             exit(3)
         if since is None:
-            since = exchange.milliseconds() - self.dict_period[self.period] * limit
+            since = exchange.milliseconds() - dict_period[self.period] * limit
         else:
             since = exchange.parse8601(since + 'T00:00:00Z')
         # print(exchange.iso8601(since))
         while limit > 0:
-            if verbose: print('Load limit', limit, self.period)
+            if self.verbose: print('Load limit', limit, self.period)
             lmt = limit if limit <= 750 else 750
             try:
                 fetch = exchange.fetch_ohlcv(self.crypto, self.period, since=since, limit=lmt)
@@ -219,7 +225,7 @@ class Crypto:
                 df = pd.DataFrame(fetch, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
                 df['Date'] = pd.to_datetime(df['Date'], unit='ms', infer_datetime_format=True)
                 self._crypto_to_sql(df)
-            since += self.dict_period[self.period] * lmt
+            since += dict_period[self.period] * lmt
             limit -= lmt
             if limit > 0: time.sleep(exchange.rateLimit // 100)
 
@@ -259,7 +265,7 @@ ALTER TABLE `1m`
   ADD PRIMARY KEY (`Date`) USING BTREE;
 COMMIT;
         """
-        if verbose: print(f'Created base {self.exchange}.{self.crypto}')
+        if self.verbose: print(f'Created base {self.exchange}.{self.crypto}')
         conn = create_engine(f'{mysql_url}/').connect()
         conn.execute(base1 + base2, con=conn)
         conn = create_engine(f'{mysql_url}/EXCHANGE').connect()
@@ -271,5 +277,5 @@ COMMIT;
         """Получить список существующих на сервере баз данных баз котировок"""
         conn = create_engine(f'{mysql_url}/EXCHANGE').connect()
         df = pd.read_sql(f"SELECT * FROM Exchange", con=conn)
-        if verbose: print(df)
+        if self.verbose: print(df)
         return df

@@ -25,14 +25,14 @@ def continuity(df, freq='D'):
 
 if __name__ == '__main__':
     hours = 4
-    cry_h = Crypto()
+    cry_h = Crypto(verbose=True)
     cry_h.connect(period='1h')
     cry_h.update_crypto()
     df_h = cry_h.load_crypto(limit=hours)
     print(cry_h.get_last_date(local=True))
     print(df_h)
 
-    cry_m = Crypto()
+    cry_m = Crypto(verbose=True)
     cry_m.connect(period='1m')
     cry_m.update_crypto()
     df_m = cry_m.load_crypto(limit=hours*60)
