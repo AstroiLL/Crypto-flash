@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import ccxt
 import pandas as pd
 from sqlalchemy import create_engine
+from DiLL.utils import VWAP
 
 from .env import mysql_url
 
@@ -47,7 +48,7 @@ class Crypto:
         self.df = pd.DataFrame()
         self.crypto = crypto
         self.period = period
-        self.indexes = indexes
+        # self.indexes = indexes
         self.update = update
         self.conn = None
         self.verbose = verbose
@@ -127,9 +128,13 @@ class Crypto:
         self.last_date = df.at[0, 'Date']
         if self.verbose: print("Last date from mySQL", self.last_date)
         df.sort_values('Date', ascending=True, inplace=True)
-        df['Date'] += timedelta(hours=tz)
-        if self.indexes:
-            df.set_index('Date', drop=True, inplace=True)
+        df.set_index('Date', drop=True, inplace=True)
+        df = VWAP(df)
+        # df.reset_index(inplace=True)
+        # df['Date'] += timedelta(hours=tz)
+        df.index += timedelta(hours=tz)
+        # if self.indexes:
+        #     df.set_index('Date', drop=True, inplace=True)
         print(f'Loaded {self.limit} bars {self.period}')
         self.df = df
         return df
@@ -151,9 +156,11 @@ class Crypto:
         self.last_date = df.at[0, 'Date']
         if self.verbose: print("Last date from mySQL", self.last_date)
         df.sort_values('Date', ascending=True, inplace=True)
-        df['Date'] += timedelta(hours=tz)
-        if self.indexes:
-            df.set_index('Date', drop=True, inplace=True)
+        df.set_index('Date', drop=True, inplace=True)
+        df = VWAP(df)
+        df.index += timedelta(hours=tz)
+        # if self.indexes:
+        #     df.set_index('Date', drop=True, inplace=True)
         print(f'Loaded {self.limit} bars {self.period}')
         self.df = df
         return df

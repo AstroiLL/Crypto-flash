@@ -11,7 +11,7 @@ from dash.dependencies import Input, Output, State
 from plotly.subplots import make_subplots
 
 from DiLL.crypto import Crypto
-from DiLL.utils import SMA, hd, HA
+from DiLL.utils import SMA, hd, HA, VWAP
 
 cry = Crypto(verbose=True)
 df_exch = cry.get_list_exch()
@@ -160,6 +160,17 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
             increasing=dict(line_color='blue'), decreasing=dict(line_color='red'), showlegend=False
         ), 1, 1, secondary_y=False,
     )
+    # VWAP
+    fig.add_trace(
+        go.Scatter(
+            x=df.index, y=df['vwap'], mode='markers', name='VWAP',
+            marker=dict(
+                # width=2,
+                color='black',
+            ),
+            showlegend=True
+        ), 1, 1, secondary_y=False,
+    )
     # SMA(7d)
     fig.add_trace(
         go.Scatter(
@@ -171,28 +182,28 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
             showlegend=True
         ), 1, 1, secondary_y=False,
     )
-    # SMA(30d)
-    fig.add_trace(
-        go.Scatter(
-            x=df.index, y=SMA(df['Open'], 30 * sbars), mode='lines', name='SMA(30d)',
-            line=dict(
-                width=2,
-                color='lime',
-            ),
-            showlegend=True
-        ), 1, 1, secondary_y=False,
-    )
-    # SMA(60d)
-    fig.add_trace(
-        go.Scatter(
-            x=df.index, y=SMA(df['Open'], 60 * sbars), mode='lines', name='SMA(60d)',
-            line=dict(
-                width=2,
-                color='red',
-            ),
-            showlegend=True
-        ), 1, 1, secondary_y=False,
-    )
+    # # SMA(30d)
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=df.index, y=SMA(df['Open'], 30 * sbars), mode='lines', name='SMA(30d)',
+    #         line=dict(
+    #             width=2,
+    #             color='lime',
+    #         ),
+    #         showlegend=True
+    #     ), 1, 1, secondary_y=False,
+    # )
+    # # SMA(60d)
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=df.index, y=SMA(df['Open'], 60 * sbars), mode='lines', name='SMA(60d)',
+    #         line=dict(
+    #             width=2,
+    #             color='red',
+    #         ),
+    #         showlegend=True
+    #     ), 1, 1, secondary_y=False,
+    # )
     # Vert Vol
     # if False:
     #     fig.add_trace(

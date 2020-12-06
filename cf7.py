@@ -167,6 +167,17 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
             increasing=dict(line_color='blue'), decreasing=dict(line_color='red'), showlegend=False
         ), 1, 1, secondary_y=False,
     )
+    # VWAP
+    fig.add_trace(
+        go.Scatter(
+            x=df.index, y=df['vwap'], mode='markers', name='VWAP',
+            marker=dict(
+                # width=2,
+                color='black',
+            ),
+            showlegend=True
+        ), 1, 1, secondary_y=False,
+    )
     # SMA(7d)
     fig.add_trace(
         go.Scatter(
@@ -178,28 +189,28 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
             showlegend=True
         ), 1, 1, secondary_y=False,
     )
-    # SMA(30d)
-    fig.add_trace(
-        go.Scatter(
-            x=df.index, y=SMA(df['Open'], 30 * sbars), mode='lines', name='SMA(30d)',
-            line=dict(
-                width=2,
-                color='lime',
-            ),
-            showlegend=True
-        ), 1, 1, secondary_y=False,
-    )
-    # SMA(60d)
-    fig.add_trace(
-        go.Scatter(
-            x=df.index, y=SMA(df['Open'], 60 * sbars), mode='lines', name='SMA(60d)',
-            line=dict(
-                width=2,
-                color='red',
-            ),
-            showlegend=True
-        ), 1, 1, secondary_y=False,
-    )
+    # # SMA(30d)
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=df.index, y=SMA(df['Open'], 30 * sbars), mode='lines', name='SMA(30d)',
+    #         line=dict(
+    #             width=2,
+    #             color='lime',
+    #         ),
+    #         showlegend=True
+    #     ), 1, 1, secondary_y=False,
+    # )
+    # # SMA(60d)
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=df.index, y=SMA(df['Open'], 60 * sbars), mode='lines', name='SMA(60d)',
+    #         line=dict(
+    #             width=2,
+    #             color='red',
+    #         ),
+    #         showlegend=True
+    #     ), 1, 1, secondary_y=False,
+    # )
     # Vert Vol
     # if False:
     #     fig.add_trace(
@@ -303,4 +314,4 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
 
 
 if __name__ == '__main__':
-    app.run_server(port=8052, debug=True, use_reloader=True)
+    app.run_server(port=8051, debug=True, use_reloader=True)

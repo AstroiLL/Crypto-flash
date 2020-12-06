@@ -10,6 +10,7 @@ import matplotlib.dates as mdates
 import pandas as pd
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
+from datetime import datetime as dt
 
 # from sqlalchemy import create_engine
 
@@ -37,7 +38,32 @@ def SMA(x: pd.Series, period: int = 20) -> pd.Series:
     :param period: Период sma
     :return: Series
     """
-    return (x.rolling(period).mean())
+    return x.rolling(period).mean()
+
+
+def begin_today():
+    today = dt.utcnow()
+    return today.combine(today.date(), today.min.time())
+
+
+def VWAP(df):
+    """
+    Средневзвешенная средняя по объему
+    :param df: DataFrame
+    :return: DataFrame
+    """
+    def vwap(dff):
+        q = dff['Volume'].values
+        p = dff['Open'].values
+        return dff.assign(vwap=(p * q).cumsum() / q.cumsum())
+    return df.groupby(df.index.date, group_keys=False).apply(vwap)
+
+# Variant
+# df = df.assign(
+#     vwap=df.eval(
+#         'wgtd = price * quantity', inplace=False
+#     ).groupby(df.index.date).cumsum().eval('wgtd / quantity')
+# )
 
 
 def hd(x, precision=2):
