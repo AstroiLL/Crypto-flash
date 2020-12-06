@@ -48,15 +48,47 @@ def begin_today():
 
 def VWAP(df):
     """
-    Средневзвешенная средняя по объему
-    :param df: DataFrame
-    :return: DataFrame
+    Средневзвешенная средняя по объему за день
     """
-    def vwap(dff):
+    def __vwap(dff):
         q = dff['Volume'].values
         p = dff['Open'].values
         return dff.assign(vwap=(p * q).cumsum() / q.cumsum())
-    return df.groupby(df.index.date, group_keys=False).apply(vwap)
+    return df.groupby(df.index.date, group_keys=False).apply(__vwap)
+
+
+def _vwap(df):
+    q = df['Volume'].values
+    p = df['Open'].values
+    return df.assign(vwap=(p * q).cumsum() / q.cumsum())
+
+
+def vwap(df, period='1D'):
+    """
+    Средневзвешенная средняя по объему за период
+    """
+    if period == '1M':
+        group_index = df.index.month
+    if period == '1W':
+        group_index = df.index.isocalendar().week
+    if period == '1D':
+        group_index = df.index.date
+    return df.groupby(group_index, group_keys=False).apply(_vwap)
+
+
+def VWAP_d(df):
+    """
+    Средневзвешенная средняя по объему за день
+    """
+    return df.groupby(df.index.date, group_keys=False).apply(_vwap)
+
+
+def VWAP_p(df, period=20):
+    """
+    Средневзвешенная средняя по объему за период
+    """
+    return df.groupby(df.index.isocalendar().week, group_keys=False).apply(_vwap)
+
 
 # Variant
 # df = df.assign(

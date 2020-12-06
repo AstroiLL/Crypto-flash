@@ -11,7 +11,7 @@ from dash.dependencies import Input, Output, State
 from plotly.subplots import make_subplots
 
 from DiLL.crypto import Crypto
-from DiLL.utils import SMA, hd, HA, VWAP
+from DiLL.utils import SMA, hd, HA, vwap
 
 cry = Crypto(verbose=True)
 df_exch = cry.get_list_exch()
@@ -62,7 +62,7 @@ app.layout = html.Div([
             id='Hours',
             min=4,
             max=24 * 7,
-            value=24,
+            value=48,
             marks={**{f'{6 * i}': f'{6 * i}h' for i in range(1, 4)}, **{f'{24 * i}': f'{i}D' for i in range(1, 8)}},
             step=1,
             tooltip={'always_visible': True, 'placement': 'bottom'}
@@ -105,6 +105,7 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
     # coef for sma
     sbars = 24
     print('>' + new_crypto + '<')
+    vwap_enable = True
     if new_crypto != '':
         crypto = new_crypto
     if crypto == 'BTC/USD':
@@ -112,8 +113,9 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
     else:
         exchange = 'BINANCE'
     if period == '1d':
-        bars = 4 if hours <= 24 * 4 else hours // 24
+        bars = 30
         sbars = 1
+        vwap_enable = False
     if period == '1h':
         bars = hours
         sbars = 24
@@ -121,12 +123,12 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
         bars = hours * 60
         sbars = 24 * 60
     if maxvols == data['maxvols_g'] and act == data['act_g']:
-        cry.connect(exchange=exchange, crypto=crypto, period=period, indexes=True)
+        cry.connect(exchange=exchange, crypto=crypto, period=period)
         cry.update_crypto()
         df = cry.load_crypto(limit=bars)
     bars = cry.limit
     if period == '1d':
-        bars = 4 if hours <= 24 * 4 else hours // 24
+        bars = 30
         sbars = 1
     if period == '1h':
         bars = hours
@@ -138,6 +140,7 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
     data['maxvols_g'] = maxvols
     data['act_g'] = act
     maxv = df['Volume'].nlargest(maxvols).index
+    if vwap_enable: df = vwap(df,'1D')
     df_last = df['Open'][-1]
     df['lsl'] = df['Open'] - df_last
     df['ls_color'] = df['lsl'].where(df['lsl'] >= 0, 'blue').where(df['lsl'] < 0, 'red')
@@ -161,16 +164,17 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
         ), 1, 1, secondary_y=False,
     )
     # VWAP
-    fig.add_trace(
-        go.Scatter(
-            x=df.index, y=df['vwap'], mode='markers', name='VWAP',
-            marker=dict(
-                # width=2,
-                color='black',
-            ),
-            showlegend=True
-        ), 1, 1, secondary_y=False,
-    )
+    if vwap_enable:
+        fig.add_trace(
+            go.Scatter(
+                x=df.index, y=df['vwap'], mode='markers', name='VWAP',
+                marker=dict(
+                    # width=2,
+                    color='black',
+                ),
+                showlegend=True
+            ), 1, 1, secondary_y=False,
+        )
     # SMA(7d)
     fig.add_trace(
         go.Scatter(
@@ -182,28 +186,6 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
             showlegend=True
         ), 1, 1, secondary_y=False,
     )
-    # # SMA(30d)
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=df.index, y=SMA(df['Open'], 30 * sbars), mode='lines', name='SMA(30d)',
-    #         line=dict(
-    #             width=2,
-    #             color='lime',
-    #         ),
-    #         showlegend=True
-    #     ), 1, 1, secondary_y=False,
-    # )
-    # # SMA(60d)
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=df.index, y=SMA(df['Open'], 60 * sbars), mode='lines', name='SMA(60d)',
-    #         line=dict(
-    #             width=2,
-    #             color='red',
-    #         ),
-    #         showlegend=True
-    #     ), 1, 1, secondary_y=False,
-    # )
     # Vert Vol
     # if False:
     #     fig.add_trace(
