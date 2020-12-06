@@ -128,7 +128,7 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
         bars = hours * 60
         sbars = 24*60
     if maxvols == data['maxvols_g'] and act == data['act_g']:
-        cry.connect(exchange=exchange, crypto=crypto, period=period, indexes=True)
+        cry.connect(exchange=exchange, crypto=crypto, period=period)
         cry.update_crypto()
         df = cry.load_crypto(limit=bars)
     bars = cry.limit
