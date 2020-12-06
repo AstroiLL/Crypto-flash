@@ -35,7 +35,7 @@ class Crypto:
     Периоды 1d 1h 1m
     """
 
-    def __init__(self, exchange='BITMEX', crypto='BTC/USD', period='1d', indexes=True, update=True,
+    def __init__(self, exchange='BITMEX', crypto='BTC/USD', period='1d', update=True,
                  verbose=False):
         try:
             create_engine(f'{mysql_url}').connect()
@@ -52,13 +52,13 @@ class Crypto:
         self.update = update
         self.conn = None
         self.verbose = verbose
-        self.connect(exchange=exchange, crypto=crypto, period=period, indexes=indexes, update=update)
+        self.connect(exchange=exchange, crypto=crypto, period=period, update=update)
 
-    def connect(self, exchange=None, crypto=None, period=None, indexes=None, update=None):
+    def connect(self, exchange=None, crypto=None, period=None, update=None):
         if exchange is not None: self.exchange = exchange
         if crypto is not None: self.crypto = crypto
         if period is not None: self.period = period
-        if indexes is not None: self.indexes = indexes
+        # if indexes is not None: self.indexes = indexes
         if update is not None: self.update = update
         if self.period is None:
             return
