@@ -20,6 +20,7 @@ refresh = {'1m': 60, '1h': 240, '1d': 400}
 
 refr = 120
 vol_lev = 0.4
+start = True
 
 app = dash.Dash()
 app.layout = html.Div([
@@ -41,12 +42,12 @@ app.layout = html.Div([
         dcc.RadioItems(
             id='Period',
             options=[{'label': i, 'value': i} for i in ['1d', '1h', '1m']],
-            value='1h'
+            value='1h', persistence=True, persistence_type='local',
         ),
         dcc.RadioItems(
             id='Act',
             options=[{'label': i, 'value': i} for i in ['Candle', 'Heiken']],
-            value='Heiken'
+            value='Heiken', persistence=True, persistence_type='local',
         ),
         html.Label('Number of peaks '),
         dcc.Input(
@@ -54,7 +55,7 @@ app.layout = html.Div([
             type="number",
             placeholder="Number of peaks",
             value=4,
-            min=0,
+            min=0, persistence=True, persistence_type='local',
         ),
     ], style={'columnCount': 3}),
     html.Div([
@@ -65,7 +66,7 @@ app.layout = html.Div([
             value=48,
             marks={**{f'{6 * i}': f'{6 * i}h' for i in range(1, 4)}, **{f'{24 * i}': f'{i}D' for i in range(1, 8)}},
             step=1,
-            tooltip={'always_visible': True, 'placement': 'bottom'}
+            tooltip={'always_visible': True, 'placement': 'bottom'}, persistence=True, persistence_type='local',
         )
     ]),
     dcc.Interval(
@@ -96,16 +97,16 @@ app.layout = html.Div([
     [State('Global', 'data')])
 def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals, data):
     # global df, cry, refr, maxvols_g, act_g, df_exch, df_exch
-    global refr
-    _ = but
-    _ = intervals
+    global refr, start
+    # _ = but
+    # _ = intervals
     df = cry.df
+    # print(df)
     refr = refresh[period]
     bars = hours
     # coef for sma
     sbars = 24
     print('>' + new_crypto + '<')
-    vwap_enable = True
     if new_crypto != '':
         crypto = new_crypto
     if crypto == 'BTC/USD':
@@ -115,17 +116,17 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
     if period == '1d':
         bars = 30
         sbars = 1
-        vwap_enable = False
     if period == '1h':
         bars = hours
         sbars = 24
     if period == '1m':
         bars = hours * 60
         sbars = 24 * 60
-    if maxvols == data['maxvols_g'] and act == data['act_g']:
+    if maxvols == data['maxvols_g'] and act == data['act_g'] or start:
         cry.connect(exchange=exchange, crypto=crypto, period=period)
         cry.update_crypto()
         df = cry.load_crypto(limit=bars)
+        start = False
     bars = cry.limit
     if period == '1d':
         bars = 30
@@ -140,7 +141,10 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
     data['maxvols_g'] = maxvols
     data['act_g'] = act
     maxv = df['Volume'].nlargest(maxvols).index
-    if vwap_enable: df = vwap(df,'1D')
+    vwap_info_w = '1W'
+    vwap_info_d = '1D'
+    df = vwap(df, vwap_info_w)
+    if period == '1h' or period == '1m': df = vwap(df, vwap_info_d)
     df_last = df['Open'][-1]
     df['lsl'] = df['Open'] - df_last
     df['ls_color'] = df['lsl'].where(df['lsl'] >= 0, 'blue').where(df['lsl'] < 0, 'red')
@@ -153,7 +157,7 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
     df['rank'] = df['Volume'][maxv].rank()
     dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev].groupby(['Prof_Act']).sum()
     fig = make_subplots(rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
-                        shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.01, column_widths=[0.8, 0.2])
+                        shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.01, column_widths=[0.9, 0.1])
     # Grafik Candlestik
     df_ha = HA(df)
     df_act = df if act == 'Candle' else df_ha
@@ -163,11 +167,22 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
             increasing=dict(line_color='blue'), decreasing=dict(line_color='red'), showlegend=False
         ), 1, 1, secondary_y=False,
     )
-    # VWAP
-    if vwap_enable:
+    # VWAP(1W)
+    fig.add_trace(
+        go.Scatter(
+            x=df.index, y=df[f'vwap_{vwap_info_w}'], mode='markers', name=f'VWAP({vwap_info_w})',
+            marker=dict(
+                # width=2,
+                color='purple',
+            ),
+            showlegend=True
+        ), 1, 1, secondary_y=False,
+    )
+    if period == '1h' or period == '1m':
+        # VWAP(1D)
         fig.add_trace(
             go.Scatter(
-                x=df.index, y=df['vwap'], mode='markers', name='VWAP',
+                x=df.index, y=df[f'vwap_{vwap_info_d}'], mode='markers', name=f'VWAP({vwap_info_d})',
                 marker=dict(
                     # width=2,
                     color='black',
@@ -175,17 +190,18 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
                 showlegend=True
             ), 1, 1, secondary_y=False,
         )
-    # SMA(7d)
-    fig.add_trace(
-        go.Scatter(
-            x=df.index, y=SMA(df['Open'], 7 * sbars), mode='lines', name='SMA(7d)',
-            line=dict(
-                width=2,
-                color='magenta',
-            ),
-            showlegend=True
-        ), 1, 1, secondary_y=False,
-    )
+    if period == '1d':
+        # SMA(7d)
+        fig.add_trace(
+            go.Scatter(
+                x=df.index, y=SMA(df['Open'], 7 * sbars), mode='lines', name='SMA(7d)',
+                line=dict(
+                    width=2,
+                    color='magenta',
+                ),
+                showlegend=True
+            ), 1, 1, secondary_y=False,
+        )
     # Vert Vol
     # if False:
     #     fig.add_trace(
@@ -269,9 +285,9 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
         )
     ) for i in range(maxvols)]
     voldir = vol_l - vol_s
-    dirs = 'Up' if voldir >= 0 else 'Down'
+    dirs = '^' if voldir >= 0 else 'v'
     fig.update_layout(
-        title=f"Crypto-flash8 {exchange} {crypto} {bars}*{period}={hours}h SMA(7d+30d+60d) VolDir: {hd(voldir)} {dirs}",
+        title=f"Crypto-flash8 {exchange} {crypto} {bars}*{period}={hours}h {dirs} {hd(voldir,sign=True)} {but} {intervals}",
         xaxis_title="Date",
         yaxis_title=f"{crypto}",
         height=700,

@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import ccxt
 import pandas as pd
 from sqlalchemy import create_engine
-from DiLL.utils import VWAP, VWAP_d, VWAP_p
+# from DiLL.utils import VWAP, VWAP_d, VWAP_p
 
 from .env import mysql_url
 

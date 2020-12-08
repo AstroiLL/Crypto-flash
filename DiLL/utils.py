@@ -57,37 +57,24 @@ def VWAP(df):
     return df.groupby(df.index.date, group_keys=False).apply(__vwap)
 
 
-def _vwap(df):
-    q = df['Volume'].values
-    p = df['Open'].values
-    return df.assign(vwap=(p * q).cumsum() / q.cumsum())
 
-
-def vwap(df, period='1D'):
+def vwap(df, period='1D', price='Open'):
     """
     Средневзвешенная средняя по объему за период
     """
+    def _vwap(_df):
+        q = _df['Volume'].values
+        p = _df[price].values
+        return _df.assign(vwap=(p * q).cumsum() / q.cumsum())
     if period == '1M':
         group_index = df.index.month
     if period == '1W':
         group_index = df.index.isocalendar().week
     if period == '1D':
         group_index = df.index.date
-    return df.groupby(group_index, group_keys=False).apply(_vwap)
-
-
-def VWAP_d(df):
-    """
-    Средневзвешенная средняя по объему за день
-    """
-    return df.groupby(df.index.date, group_keys=False).apply(_vwap)
-
-
-def VWAP_p(df, period=20):
-    """
-    Средневзвешенная средняя по объему за период
-    """
-    return df.groupby(df.index.isocalendar().week, group_keys=False).apply(_vwap)
+    df = df.groupby(group_index, group_keys=False).apply(_vwap)
+    df.rename(columns={'vwap': f'vwap_{period}'}, inplace=True)
+    return df
 
 
 # Variant
@@ -98,7 +85,7 @@ def VWAP_p(df, period=20):
 # )
 
 
-def hd(x, precision=2):
+def hd(x, precision=2, sign=False):
     """
     Округляет большие числа и преобразует их в строку в виде удобном для восприятия человеком.
     Добавляя после числа
@@ -113,6 +100,7 @@ def hd(x, precision=2):
     y = 0.0
     suf = ''
     pref = ''
+    if sign: pref = '+'
     x = float(x)
     if x < 0:
         x = abs(x)
