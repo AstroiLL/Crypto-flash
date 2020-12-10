@@ -13,7 +13,7 @@ from plotly.subplots import make_subplots
 from DiLL.crypto import Crypto
 from DiLL.utils import SMA, hd, HA, vwap
 
-cry = Crypto(verbose=True)
+cry = Crypto(verbose=False)
 df_exch = cry.get_list_exch()
 
 refresh = {'1m': 60, '1h': 240, '1d': 400}
@@ -96,7 +96,6 @@ app.layout = html.Div([
      Input('interval-component', 'n_intervals')],
     [State('Global', 'data')])
 def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals, data):
-    # global df, cry, refr, maxvols_g, act_g, df_exch, df_exch
     global refr, start
     # _ = but
     # _ = intervals
@@ -122,11 +121,16 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
     if period == '1m':
         bars = hours * 60
         sbars = 24 * 60
+    # print(maxvols, data['maxvols_g'], act, data['act_g'])
     if maxvols == data['maxvols_g'] and act == data['act_g'] or start:
         cry.connect(exchange=exchange, crypto=crypto, period=period)
         cry.update_crypto()
         df = cry.load_crypto(limit=bars)
         start = False
+    data['maxvols_g'] = maxvols
+    data['act_g'] = act
+    # print(maxvols, data['maxvols_g'], act, data['act_g'])
+    # print(df)
     bars = cry.limit
     if period == '1d':
         bars = 30
@@ -138,8 +142,6 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
         bars = hours * 60
         sbars = 24 * 60
     # df_exch = cry.get_list_exch()
-    data['maxvols_g'] = maxvols
-    data['act_g'] = act
     maxv = df['Volume'].nlargest(maxvols).index
     vwap_info_w = '1W'
     vwap_info_d = '1D'
@@ -161,10 +163,23 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
     # Grafik Candlestik
     df_ha = HA(df)
     df_act = df if act == 'Candle' else df_ha
+    # print(maxv)
     fig.add_trace(
         go.Candlestick(
             x=df_act.index, open=df_act['Open'], close=df_act['Close'], high=df_act['High'], low=df_act['Low'],
-            increasing=dict(line_color='blue'), decreasing=dict(line_color='red'), showlegend=False
+            increasing=dict(line=dict(color='blue', width=1)),
+            decreasing=dict(line=dict(color='red', width=1)),
+            showlegend=False,
+            opacity=0.4
+        ), 1, 1, secondary_y=False,
+    )
+    fig.add_trace(
+        go.Candlestick(
+            x=maxv, open=df_act['Open'][maxv], close=df_act['Close'][maxv], high=df_act['High'][maxv], low=df_act['Low'][maxv],
+            increasing=dict(line=dict(color='blue', width=3)),
+            decreasing=dict(line=dict(color='red', width=3)),
+            showlegend=False,
+            opacity=1
         ), 1, 1, secondary_y=False,
     )
     # VWAP(1W)
