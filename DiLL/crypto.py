@@ -205,8 +205,9 @@ class Crypto:
         elif self.exchange == 'BINANCE':
             exchange = ccxt.binance()
         else:
-            print(f'Incorrect exchange {self.exchange}')
-            exit(3)
+            print(f'Incorrect exchange {self.exchange} seting BITMEX')
+            exchange = ccxt.bitmex()
+            self.exchange = 'BITMEX'
         if since is None:
             since = exchange.milliseconds() - dict_period[self.period] * limit
         else:
