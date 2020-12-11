@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# import pandas as pd
+import pandas as pd
 # from pandas import DataFrame
 # import numpy as np
 # from datetime import datetime as dt
@@ -18,8 +18,13 @@ df_exch = cry_1h.get_list_exch()
 cry_1h.connect(exchange='BITMEX', crypto='BTC/USD', period='1h')
 cry_1h.update_crypto()
 df_1h = cry_1h.load_crypto(limit=168)
-start = False
-print(df_1h.info())
+# print(df_1h.info())
+
+cry_1m = Crypto(verbose=True)
+cry_1m.connect(exchange='BITMEX', crypto='BTC/USD', period='1m')
+cry_1m.update_crypto()
+df_1m = cry_1m.load_crypto(limit=168*60)
+# print(df_1m.info())
 
 refresh = {'1m': 60, '1h': 240, '1d': 400}
 
@@ -96,7 +101,7 @@ app.layout = html.Div([
      Input('Maxvols', 'value'),
      Input('interval-component', 'n_intervals')])
 def update_graph(hours, act, but, maxvols, intervals):
-    global refr, start
+    global refr
     refr = refresh['1h']
     bars = hours
     df = cry_1h.df
@@ -113,6 +118,8 @@ def update_graph(hours, act, but, maxvols, intervals):
     df['Prof_Act'] = df['Open'] // grid * grid
     maxv = df['Volume'].nlargest(maxvols).index
     df['rank'] = df['Volume'][maxv].rank()
+    df['Open_max'] = df_1m['Open'][df_1m['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()].resample('1h').mean()
+    print(df['Open_max'][maxv])
     dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev].groupby(['Prof_Act']).sum()
     fig = make_subplots(rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
                         shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.01, column_widths=[0.9, 0.1])
@@ -133,7 +140,7 @@ def update_graph(hours, act, but, maxvols, intervals):
         go.Candlestick(
             x=maxv, open=df_act['Open'][maxv], close=df_act['Close'][maxv], high=df_act['High'][maxv], low=df_act['Low'][maxv],
             increasing=dict(line=dict(color='green', width=3)),
-            decreasing=dict(line=dict(color='green', width=3)),
+            decreasing=dict(line=dict(color='purple', width=3)),
             showlegend=False,
             opacity=1
         ), 1, 1, secondary_y=False,
@@ -185,8 +192,8 @@ def update_graph(hours, act, but, maxvols, intervals):
     fig.add_trace(
         go.Scatter(
             x=[df.index[-1]],
-            y=[df['Open'][-1]],
-            text=df['Open'][-1],
+            y=[df['Open_max'][-1]],
+            text=df['Open_max'][-1],
             textposition="top right",
             mode="text",
             showlegend=False,
@@ -195,8 +202,8 @@ def update_graph(hours, act, but, maxvols, intervals):
     fig.add_trace(
         go.Scatter(
             x=[df.index[-1] for _ in range(maxvols)],
-            y=df['Open'][maxv],
-            text=df['Open'][maxv],
+            y=df['Open_max'][maxv],
+            text=df['Open_max'][maxv],
             textposition="top right",
             mode="text",
             showlegend=False
@@ -205,7 +212,7 @@ def update_graph(hours, act, but, maxvols, intervals):
     fig.add_trace(
         go.Scatter(
             x=[maxv[i] for i in range(maxvols)],
-            y=df['Open'][maxv],
+            y=df['Open_max'][maxv],
             marker=dict(
                 size=(df['Volume'][maxv] / df['Volume'][maxv].max() * 30).astype('int64'),
                 # size=df_1h['Volume'][maxv].rank()*5,
@@ -222,7 +229,7 @@ def update_graph(hours, act, but, maxvols, intervals):
     [fig.add_shape(
         dict(
             type="line", xref='x', yref='y', x0=maxv[i], x1=df.index[-1],
-            y0=df['Open'][maxv][i], y1=df['Open'][maxv][i],
+            y0=df['Open_max'][maxv][i], y1=df['Open_max'][maxv][i],
             line=dict(color=df['ls_color'][maxv][i], width=df['rank'][maxv][i])
         )
     ) for i in range(maxvols)]
@@ -230,11 +237,11 @@ def update_graph(hours, act, but, maxvols, intervals):
     [fig.add_annotation(
         dict(
             x=maxv[i],
-            y=df['Open'][maxv][i],
+            y=df['Open_max'][maxv][i],
             xref="x",
             yref="y",
             text=f"V:{df['Volume'][maxv][i]:,.0f}",
-            hovertext=f"{df['Open'][maxv][i]}",
+            hovertext=f"{df['Open_max'][maxv][i]}",
             showarrow=True,
             arrowhead=2,
             arrowsize=1,
