@@ -127,6 +127,7 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
         cry.update_crypto()
         df = cry.load_crypto(limit=bars)
         start = False
+        print(df.info())
     data['maxvols_g'] = maxvols
     data['act_g'] = act
     # print(maxvols, data['maxvols_g'], act, data['act_g'])
@@ -176,8 +177,8 @@ def update_graph(new_crypto, crypto, period, hours, act, but, maxvols, intervals
     fig.add_trace(
         go.Candlestick(
             x=maxv, open=df_act['Open'][maxv], close=df_act['Close'][maxv], high=df_act['High'][maxv], low=df_act['Low'][maxv],
-            increasing=dict(line=dict(color='blue', width=3)),
-            decreasing=dict(line=dict(color='red', width=3)),
+            increasing=dict(line=dict(color='green', width=3)),
+            decreasing=dict(line=dict(color='green', width=3)),
             showlegend=False,
             opacity=1
         ), 1, 1, secondary_y=False,
