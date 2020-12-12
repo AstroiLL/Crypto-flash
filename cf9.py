@@ -131,13 +131,13 @@ def update_graph(hours, act, but, maxvols, intervals):
 
     df = df[-hours:]
 
-    grid = (df['Open'].max() - df['Open'].min()) / 100
-    df['Prof_Act'] = df['Open'] // grid * grid
-
     maxv = df['Volume'].nlargest(maxvols).index
     df['rank'] = df['Volume'][maxv].rank()
     df['Open_max'] = cry_1m.df['Open'][cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()].resample('1h').mean()
     # print(df['Open_max'][maxv])
+    #  TODO dfg исправить
+    grid = (df['Open_max'].max() - df['Open_max'].min()) / 100
+    df['Prof_Act'] = df['Open_max'] // grid * grid
     dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev].groupby(['Prof_Act']).sum()
     fig = make_subplots(rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
                         shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.01, column_widths=[0.9, 0.1])
