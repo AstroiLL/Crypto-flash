@@ -13,46 +13,46 @@ from plotly.subplots import make_subplots
 from DiLL.crypto import Crypto
 from DiLL.utils import hd, HA, vwap
 
-cry_1h = Crypto(verbose=True)
+cry_1h = Crypto(verbose=False)
 df_exch = cry_1h.get_list_exch()
 cry_1h.connect(exchange='BITMEX', crypto='BTC/USD', period='1h')
 cry_1h.update_crypto()
-df_1h = cry_1h.load_crypto(limit=168)
+cry_1h.load_crypto(limit=168)
 # print(df_1h.info())
 
-cry_1m = Crypto(verbose=True)
+cry_1m = Crypto(verbose=False)
 cry_1m.connect(exchange='BITMEX', crypto='BTC/USD', period='1m')
 cry_1m.update_crypto()
-df_1m = cry_1m.load_crypto(limit=168*60)
+cry_1m.load_crypto(limit=168*60)
 # print(df_1m.info())
 
-refresh = {'1m': 60, '1h': 240, '1d': 400}
+# refresh = {'1m': 60, '1h': 240, '1d': 400}
 
-refr = 120
+# refr = 120
 vol_lev = 0.4
 
 app = dash.Dash()
 app.layout = html.Div([
     # TODO починить сохранение сессии
     # dcc.Store(id='Global', data={'act_g': 'Heiken', 'maxvols_g': 4}, storage_type='local'),
-    html.Details([
-        html.Summary('Select crypto', style={"font-size": "22"}),
-        html.Div([
-            dcc.RadioItems(
-                id='Crypto',
-                options=[{'label': i, 'value': i} for i in df_exch['Crypto']],
-                value='BTC/USD', persistence=True, persistence_type='local', labelStyle={'display': 'inline-block'}
-            ),
-            dcc.Input(id='new_crypto', persistence=True, persistence_type='local', debounce=True, value='',
-                      type='text'),
-        ]),
-    ]),
+    # html.Details([
+    #     html.Summary('Select crypto', style={"font-size": "22"}),
+    #     html.Div([
+    #         dcc.RadioItems(
+    #             id='Crypto',
+    #             options=[{'label': i, 'value': i} for i in df_exch['Crypto']],
+    #             value='BTC/USD', persistence=True, persistence_type='local', labelStyle={'display': 'inline-block'}
+    #         ),
+    #         dcc.Input(id='new_crypto', persistence=True, persistence_type='local', debounce=True, value='',
+    #                   type='text'),
+    #     ]),
+    # ]),
     html.Div([
-        dcc.RadioItems(
-            id='Period',
-            options=[{'label': i, 'value': i} for i in ['1d', '1h', '1m']],
-            value='1h', persistence=True, persistence_type='local',
-        ),
+        # dcc.RadioItems(
+        #     id='Period',
+        #     options=[{'label': i, 'value': i} for i in ['1d', '1h', '1m']],
+        #     value='1h', persistence=True, persistence_type='local',
+        # ),
         dcc.RadioItems(
             id='Act',
             options=[{'label': i, 'value': i} for i in ['Candle', 'Heiken']],
@@ -70,7 +70,7 @@ app.layout = html.Div([
     html.Div([
         dcc.Slider(
             id='Hours',
-            min=4,
+            min=5,
             max=24 * 7,
             value=48,
             marks={**{f'{6 * i}': f'{6 * i}h' for i in range(1, 4)}, **{f'{24 * i}': f'{i}D' for i in range(1, 8)}},
@@ -80,7 +80,7 @@ app.layout = html.Div([
     ]),
     dcc.Interval(
         id='interval-component',
-        interval=refr * 1000,  # in milliseconds
+        interval=60 * 1000,  # in milliseconds
         n_intervals=0
     ),
     html.Br(),
@@ -88,12 +88,24 @@ app.layout = html.Div([
     html.Div([
         html.Button('Refresh', id='Button')
     ], style={'display': 'block', 'margin-left': 'calc(50% - 110px)'}),
+    html.Div(id='output-state'),
     html.Div([dcc.Graph(id='out')])
 ])
 
 
 @app.callback(
-    # TODO сделать разные callback's
+    Output('output-state', 'children'),
+    [Input('Button', 'n_clicks'),
+     Input('interval-component', 'n_intervals')])
+def update_df(but, intervals):
+    cry_1h.update_crypto()
+    cry_1h.load_crypto(limit=168)
+    cry_1m.update_crypto()
+    cry_1m.load_crypto(limit=168*60)
+    return f'update_df {but} {intervals}'
+
+
+@app.callback(
     Output('out', 'figure'),
     [Input('Hours', 'value'),
      Input('Act', 'value'),
@@ -101,25 +113,31 @@ app.layout = html.Div([
      Input('Maxvols', 'value'),
      Input('interval-component', 'n_intervals')])
 def update_graph(hours, act, but, maxvols, intervals):
-    global refr
-    refr = refresh['1h']
+    # global refr
+    # refr = refresh['1h']
+    print('update_graph', but, intervals)
     bars = hours
     df = cry_1h.df
+
     vwap_info_w = '1W'
     vwap_info_d = '1D'
     df = vwap(df, vwap_info_w)
     df = vwap(df, vwap_info_d)
-    df = df[-hours:]
+
     df['lsl'] = df['Open'] - df['Open'][-1]
     df['ls_color'] = df['lsl'].where(df['lsl'] >= 0, 'blue').where(df['lsl'] < 0, 'red')
     vol_l = df['Volume'][df['lsl'] < 0].sum()
     vol_s = df['Volume'][df['lsl'] >= 0].sum()
+
+    df = df[-hours:]
+
     grid = (df['Open'].max() - df['Open'].min()) / 100
     df['Prof_Act'] = df['Open'] // grid * grid
+
     maxv = df['Volume'].nlargest(maxvols).index
     df['rank'] = df['Volume'][maxv].rank()
-    df['Open_max'] = df_1m['Open'][df_1m['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()].resample('1h').mean()
-    print(df['Open_max'][maxv])
+    df['Open_max'] = cry_1m.df['Open'][cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()].resample('1h').mean()
+    # print(df['Open_max'][maxv])
     dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev].groupby(['Prof_Act']).sum()
     fig = make_subplots(rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
                         shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.01, column_widths=[0.9, 0.1])
@@ -169,11 +187,12 @@ def update_graph(hours, act, but, maxvols, intervals):
         ), 1, 1, secondary_y=False,
     )
     # Vert Vol
-    # if False:
-    #     fig.add_trace(
-    #         go.Bar(x=df_1h.index, y=df_1h['Volume'].where(df_1h['Volume'] >= df_1h['Volume'].max() * vol_lev, 0), name='VolV',
-    #                marker=dict(color='black'), showlegend=True, opacity=0.7, width=4000000),
-    #         row=1, col=1, secondary_y=True)
+    if True:
+        fig.add_trace(
+            go.Bar(x=df.index, y=df['Volume'].where(df['Volume'] >= df['Volume'].max() * vol_lev, 0), name='VolV',
+                   marker=dict(color='grey'), showlegend=True, opacity=0.2, #width=3000000
+                   ),
+            row=1, col=1, secondary_y=True)
     # Hor Vol
     if dfg.shape[0] > 1:
         fig.add_trace(go.Bar(
@@ -191,11 +210,11 @@ def update_graph(hours, act, but, maxvols, intervals):
     # End price
     fig.add_trace(
         go.Scatter(
-            x=[df.index[-1]],
-            y=[df['Open_max'][-1]],
-            text=df['Open_max'][-1],
-            textposition="top right",
-            mode="text",
+            x=[cry_1m.df.index[-1]],
+            y=[cry_1m.df['Close'][-1]],
+            text=f"{cry_1m.df['Close'][-1]}",
+            textposition="middle right",
+            mode="text+markers",
             showlegend=False,
         ), 1, 1, secondary_y=False)
     # Level price
