@@ -123,8 +123,8 @@ def update_graph(hours, act, but, maxvols, intervals):
     vwap_info_d = '1D'
     df = vwap(df, vwap_info_w)
     df = vwap(df, vwap_info_d)
-
-    df['lsl'] = df['Open'] - df['Open'][-1]
+    # TODO lsl color
+    df['lsl'] = df['Open'] - cry_1m.df['Close'][-1]
     df['ls_color'] = df['lsl'].where(df['lsl'] >= 0, 'blue').where(df['lsl'] < 0, 'red')
     vol_l = df['Volume'][df['lsl'] < 0].sum()
     vol_s = df['Volume'][df['lsl'] >= 0].sum()
