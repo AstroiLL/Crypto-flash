@@ -24,9 +24,9 @@ M5 = M1 * 5
 # H1s = 3600  # s
 
 def ep(*args):
-    '''
+    """
     print and exit
-    '''
+    """
     print(args)
     exit()
 
@@ -55,7 +55,6 @@ def VWAP(df):
         p = dff['Open'].values
         return dff.assign(vwap=(p * q).cumsum() / q.cumsum())
     return df.groupby(df.index.date, group_keys=False).apply(__vwap)
-
 
 
 def vwap(df, period='1D', price='Open'):
@@ -94,9 +93,10 @@ def hd(x, precision=2, sign=False):
     k для тысяч
     :param x: число для преобразования
     :param precision: число знаков после точки (пример для 2: 3 861 647 -> 3.86M, по умолчанию 2)
+    :param sign: отображать или нет знак +
     :return: строку вида "3.86M"
     """
-    if precision < 0: return (str(x))
+    if precision < 0: return str(x)
     y = 0.0
     suf = ''
     pref = ''
@@ -127,7 +127,7 @@ def lev2font(x, max_v, lev_m, max_f, min_f):
     x = float(x)
     # print(x)
     font = int((((max_f - min_f) * (x - max_v * lev_m)) / (max_v * (1 - lev_m))) + min_f)
-    return (font if font >= 0 else 0)
+    return font if font >= 0 else 0
 
 
 def wa(group):
