@@ -59,12 +59,15 @@ def VWAP(df):
 
 def vwap(df, period='1D', price='Open'):
     """
-    Средневзвешенная средняя по объему за период
+    Средневзвешенная средняя по объему за фиксированный период
+    Добавляет в DataFrame поле с именем vwap_{period}
     """
     def _vwap(_df):
         q = _df['Volume'].values
         p = _df[price].values
         return _df.assign(vwap=(p * q).cumsum() / q.cumsum())
+
+    group_index = None
     if period == '1M':
         group_index = df.index.month
     if period == '1W':
@@ -73,6 +76,23 @@ def vwap(df, period='1D', price='Open'):
         group_index = df.index.date
     df = df.groupby(group_index, group_keys=False).apply(_vwap)
     df.rename(columns={'vwap': f'vwap_{period}'}, inplace=True)
+    return df
+
+
+def vwapi(df, period=24, price='Open'):
+    """
+    Средневзвешенная средняя по объему за плавающий период
+    Добавляет в DataFrame поле с именем vwap_{period}
+    """
+    def _vwap(_df):
+        print(_df)
+        q = _df['Volume'].values
+        p = _df[price].values
+        return (p * q).cumsum() / q.cumsum()
+
+    df[f'vwap_{period}'] = df.rolling(period).apply(_vwap)
+
+    # df.rename(columns={'vwap': f'vwap_{period}'}, inplace=True)
     return df
 
 
