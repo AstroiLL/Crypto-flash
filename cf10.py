@@ -9,9 +9,10 @@ import dash_html_components as html
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output
 from plotly.subplots import make_subplots
+import plotly.io as pio
 
 from DiLL.crypto import Crypto
-from DiLL.utils import hd, HA, vwap
+from DiLL.utils import hd, HA, vwap, vwapi
 
 cry_1h = Crypto(verbose=False)
 df_exch = cry_1h.get_list_exch()
@@ -48,11 +49,11 @@ app.layout = html.Div([
         # html.Label('Volume level '),
         dcc.Slider(
             id='VolLevel',
-            min=100,
-            max=300,
-            value=150,
-            marks={f'{i}': f'{i}M' for i in range(100, 300, 10)},
-            step=10,
+            min=200,
+            max=500,
+            value=300,
+            marks={f'{i}': f'{i}M' for i in range(200, 500, 20)},
+            step=20,
             tooltip={'always_visible': True, 'placement': 'bottom'},
             persistence=True, persistence_type='local',
         ),
@@ -117,8 +118,12 @@ def update_graph(hours, lev, act, but, intervals):
     lev *= 1e6
     vwap_info_w = '1W'
     vwap_info_d = '1D'
-    df = vwap(df, vwap_info_w)
-    df = vwap(df, vwap_info_d)
+    vwap_info_i = 24
+    df = vwap(df, period=vwap_info_w)
+    df = vwap(df, period=vwap_info_d)
+    # print(df)
+    # TODO VWAP за аериод
+    # df = vwapi(df, period=vwap_info_i)
 
     df['lsl'] = df['Open'] - cry_1m.df['Close'][-1]
     df['ls_color'] = df['lsl'].where(df['lsl'] >= 0, 'blue').where(df['lsl'] < 0, 'red')
@@ -132,6 +137,7 @@ def update_graph(hours, lev, act, but, intervals):
     df['rank'] = df['Volume'][maxv].rank()
     # берем из массива минут, группируем по часам, находим в каждом часе индекс максимума и
     # Open максимума этого часа прописываем в Open_max массива часов
+    # TODO добавить время всплеска объема
     df['Open_max'] = cry_1m.df['Open'][cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()].resample('1h').mean()
     # print(df['Open_max'][maxv])
     #  TODO dfg исправить
@@ -185,11 +191,23 @@ def update_graph(hours, lev, act, but, intervals):
             showlegend=True
         ), 1, 1, secondary_y=False,
     )
+    # # VWAP(i)
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=df.index, y=df[f'vwap_{vwap_info_i}'], mode='markers', name=f'VWAP({vwap_info_i})',
+    #         marker=dict(
+    #             # width=2,
+    #             color='yellow',
+    #         ),
+    #         showlegend=True
+    #     ), 1, 1, secondary_y=False,
+    # )
     # Vert Vol
     if True:
         fig.add_trace(
             go.Bar(x=df.index, y=df['Volume'].where(df['Volume'] >= lev*0.8, 0), name='VolV',
-                   marker=dict(color='grey'), showlegend=True, opacity=0.2, #width=3000000
+                   marker=dict(color='grey'), showlegend=True, opacity=0.2,
+                   # width=3000000
                    ),
             row=1, col=1, secondary_y=True)
     # Hor Vol
@@ -285,6 +303,8 @@ def update_graph(hours, lev, act, but, intervals):
             color="blue"
         )
     )
+    # pio.write_image(fig=fig, file=f'btc{intervals}.jpg', format='jpg')
+    # pio.write_json(fig=fig, file=f'btc{intervals}.json', pretty=True)
     return fig
 
 
