@@ -9,7 +9,7 @@ import dash_html_components as html
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output
 from plotly.subplots import make_subplots
-import plotly.io as pio
+# import plotly.io as pio
 
 from DiLL.crypto import Crypto
 from DiLL.utils import hd, HA, vwap, vwapi
@@ -111,19 +111,18 @@ def update_df(but, intervals):
      Input('interval-component', 'n_intervals')])
 def update_graph(hours, lev, act, but, intervals):
     # global refr
-    # refr = refresh['1h']вцфывфф
+    # refr = refresh['1h']
     # print('update_graph', but, intervals)
     bars = hours
     df = cry_1h.df
     lev *= 1e6
     vwap_info_w = '1W'
     vwap_info_d = '1D'
-    vwap_info_i = 24
+    vwap_info_i = 12
     df = vwap(df, period=vwap_info_w)
     df = vwap(df, period=vwap_info_d)
+    df = vwap(df, period=vwap_info_i)
     # print(df)
-    # TODO VWAP за аериод
-    # df = vwapi(df, period=vwap_info_i)
 
     df['lsl'] = df['Open'] - cry_1m.df['Close'][-1]
     df['ls_color'] = df['lsl'].where(df['lsl'] >= 0, 'blue').where(df['lsl'] < 0, 'red')
@@ -191,17 +190,17 @@ def update_graph(hours, lev, act, but, intervals):
             showlegend=True
         ), 1, 1, secondary_y=False,
     )
-    # # VWAP(i)
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=df.index, y=df[f'vwap_{vwap_info_i}'], mode='markers', name=f'VWAP({vwap_info_i})',
-    #         marker=dict(
-    #             # width=2,
-    #             color='yellow',
-    #         ),
-    #         showlegend=True
-    #     ), 1, 1, secondary_y=False,
-    # )
+    # VWAP(i)
+    fig.add_trace(
+        go.Scatter(
+            x=df.index, y=df[f'vwap_{vwap_info_i}'], mode='markers', name=f'VWAP({vwap_info_i})',
+            marker=dict(
+                # width=1,
+                color='yellow',
+            ),
+            showlegend=True
+        ), 1, 1, secondary_y=False,
+    )
     # Vert Vol
     if True:
         fig.add_trace(

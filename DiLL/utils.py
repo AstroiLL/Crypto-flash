@@ -33,7 +33,7 @@ def ep(*args):
 
 def SMA(x: pd.Series, period: int = 20) -> pd.Series:
     """
-    Скользящая средняя
+    Вычеслить скользящую среднюю для серии
     :param x: Series
     :param period: Период sma
     :return: Series
@@ -48,7 +48,7 @@ def begin_today():
 
 def VWAP(df):
     """
-    Средневзвешенная средняя по объему за день
+    Вычеслить средневзвешенную среднюю по объему за день (устарело)
     """
     def __vwap(dff):
         q = dff['Volume'].values
@@ -59,8 +59,8 @@ def VWAP(df):
 
 def vwap(df, period='1D', price='Open'):
     """
-    Средневзвешенная средняя по объему за фиксированный период
-    Добавляет в DataFrame поле с именем vwap_{period}
+    Вычеслить средневзвешенную среднюю по объему за фиксированный период 1MN 1W 1D
+    и записать в DataFrame в поле с именем vwap_{period}
     """
     def _vwap(_df):
         q = _df['Volume'].values
@@ -68,46 +68,23 @@ def vwap(df, period='1D', price='Open'):
         return _df.assign(vwap=(p * q).cumsum() / q.cumsum())
 
     group_index = None
-    if period == '1M':
+    if period == '1MN':
         group_index = df.index.month
-    if period == '1W':
+    elif period == '1W':
         group_index = df.index.isocalendar().week
-    if period == '1D':
+    elif period == '1D':
         group_index = df.index.date
+    else:
+        group_index = pd.Grouper(freq=f'{period}h')
     df = df.groupby(group_index, group_keys=False).apply(_vwap)
     df.rename(columns={'vwap': f'vwap_{period}'}, inplace=True)
     return df
 
 
-def vwapi(df, period=24, price='Open'):
-    """
-    Средневзвешенная средняя по объему за плавающий период
-    Добавляет в DataFrame поле с именем vwap_{period}
-    """
-    def _vwap(_df):
-        print(_df)
-        q = _df['Volume'].values
-        p = _df[price].values
-        return (p * q).cumsum() / q.cumsum()
-
-    df[f'vwap_{period}'] = df.rolling(period).apply(_vwap)
-
-    # df.rename(columns={'vwap': f'vwap_{period}'}, inplace=True)
-    return df
-
-
-# Variant
-# df = df.assign(
-#     vwap=df.eval(
-#         'wgtd = price * quantity', inplace=False
-#     ).groupby(df.index.date).cumsum().eval('wgtd / quantity')
-# )
-
-
 def hd(x, precision=2, sign=False):
     """
-    Округляет большие числа и преобразует их в строку в виде удобном для восприятия человеком.
-    Добавляя после числа
+    Округлить большие числа и преобразовать в строку, в удобном для восприятия человеком виде.
+    Добавить после числа:
     G для миллиардов
     M для миллионов
     k для тысяч
