@@ -12,7 +12,7 @@ from plotly.subplots import make_subplots
 # import plotly.io as pio
 
 from DiLL.crypto import Crypto
-from DiLL.utils import hd, HA, vwap, vwapi
+from DiLL.utils import hd, HA, vwap
 
 cry_1h = Crypto(verbose=False)
 df_exch = cry_1h.get_list_exch()
