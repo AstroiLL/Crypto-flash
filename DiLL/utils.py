@@ -46,15 +46,26 @@ def begin_today():
     return today.combine(today.date(), today.min.time())
 
 
-def VWAP(df):
-    """
-    Вычеслить средневзвешенную среднюю по объему за день (устарело)
-    """
-    def __vwap(dff):
-        q = dff['Volume'].values
-        p = dff['Open'].values
-        return dff.assign(vwap=(p * q).cumsum() / q.cumsum())
-    return df.groupby(df.index.date, group_keys=False).apply(__vwap)
+# def VWAP(df):
+#     """
+#     Вычеслить средневзвешенную среднюю по объему за день (устарело)
+#     """
+#     def __vwap(dff):
+#         q = dff['Volume'].values
+#
+#     today = dtscalcnow()
+#     return today.combine(today.date(), today.min.time())
+#
+#
+# def VWAP(df):
+#     """
+#     Вычеслить средневзвешенную среднюю по объему за день (устарело)
+#     """
+#     def __vwap(dff):
+#         q = dff
+#         p = dff['Open'].values
+#         return dff.assign(vwap=(p * q).cumsum() / q.cumsum())
+#     return df.groupby(df.index.date, group_keys=False).apply(__vwap)
 
 
 def vwap(df, period='1D', price='Open'):
@@ -62,9 +73,14 @@ def vwap(df, period='1D', price='Open'):
     Вычеслить средневзвешенную среднюю по объему за фиксированный период 1MN 1W 1D
     и записать в DataFrame в поле с именем vwap_{period}
     """
-    def _vwap(_df):
+
+    def _vwap_ass(_df):
         q = _df['Volume'].values
         p = _df[price].values
+        if len(price) == 2:
+            p = (_df[price[0]].values + _df[price[1]].values) / 2
+        elif len(price) == 3:
+            p = (_df[price[0]].values + _df[price[1]].values + _df[price[2]].values) / 3
         return _df.assign(vwap=(p * q).cumsum() / q.cumsum())
 
     group_index = None
@@ -75,8 +91,14 @@ def vwap(df, period='1D', price='Open'):
     elif period == '1D':
         group_index = df.index.date
     else:
-        group_index = pd.Grouper(freq=f'{period}h')
-    df = df.groupby(group_index, group_keys=False).apply(_vwap)
+        # TODO price list
+        df['mul'] = df[price] * df['Volume']
+        df['mul_sum'] = df['mul'].rolling(period).sum()
+        df['div'] = df['Volume'].rolling(period).sum()
+        df['vwap'] = df['mul_sum'] / df['div']
+        df.rename(columns={'vwap': f'vwap_{period}'}, inplace=True)
+        return df
+    df = df.groupby(group_index, group_keys=False).apply(_vwap_ass)
     df.rename(columns={'vwap': f'vwap_{period}'}, inplace=True)
     return df
 

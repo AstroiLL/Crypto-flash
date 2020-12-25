@@ -118,9 +118,9 @@ def update_graph(hours, lev, act, but, intervals):
     lev *= 1e6
     vwap_info_w = '1W'
     vwap_info_d = '1D'
-    vwap_info_i = 12
-    df = vwap(df, period=vwap_info_w)
-    df = vwap(df, period=vwap_info_d)
+    vwap_info_i = 24
+    df = vwap(df, period=vwap_info_w, price=['Open', 'High', 'Low'])
+    df = vwap(df, period=vwap_info_d, price=['Open', 'High', 'Low'])
     df = vwap(df, period=vwap_info_i)
     # print(df)
 
@@ -145,9 +145,11 @@ def update_graph(hours, lev, act, but, intervals):
     dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev].groupby(['Prof_Act']).sum()
     fig = make_subplots(rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
                         shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.01, column_widths=[0.9, 0.1])
-    # Grafik Candlestik
-    df_ha = HA(df)
-    df_act = df if act == 'Candle' else df_ha
+    # Heiken Ashi OR Candles
+    if act == 'Candle':
+        df_act = df
+    else:
+        df_act = HA(df)
     # print(maxv)
     fig.add_trace(
         go.Candlestick(
@@ -193,7 +195,7 @@ def update_graph(hours, lev, act, but, intervals):
     # VWAP(i)
     fig.add_trace(
         go.Scatter(
-            x=df.index, y=df[f'vwap_{vwap_info_i}'], mode='markers', name=f'VWAP({vwap_info_i})',
+            x=df.index, y=df[f'vwap_{vwap_info_i}'], mode='markers', name=f'VWAP({vwap_info_i}h)',
             marker=dict(
                 # width=1,
                 color='yellow',
@@ -231,6 +233,7 @@ def update_graph(hours, lev, act, but, intervals):
             text=f"{cry_1m.df['Close'][-1]}",
             textposition="middle right",
             mode="text+markers",
+            marker=dict(color='red', size=10, symbol='star'),
             showlegend=False,
         ), 1, 1, secondary_y=False)
     # Level price
