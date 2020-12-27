@@ -123,8 +123,13 @@ def update_graph(hours, lev, act, but, intervals):
     df = vwap(df, period=vwap_info_d, price=['Open', 'High', 'Low'])
     df = vwap(df, period=vwap_info_i)
     # print(df)
-
-    df['lsl'] = df['Open'] - cry_1m.df['Close'][-1]
+    end_price = cry_1m.df['Close'][-1]
+    # берем из массива минут, группируем по часам, находим в каждом часе индекс максимума и
+    # Open максимума этого часа прописываем в Open_max массива часов
+    df['Open_max'] = cry_1m.df['Open'][cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()].resample('1h').mean()
+    df['Date_max'] = cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax().resample('1h').max()
+    print(df['Date_max'][-5:])
+    df['lsl'] = df['Open_max'] - end_price
     df['ls_color'] = df['lsl'].where(df['lsl'] >= 0, 'blue').where(df['lsl'] < 0, 'red')
     vol_l = df['Volume'][df['lsl'] < 0].sum()
     vol_s = df['Volume'][df['lsl'] >= 0].sum()
@@ -134,17 +139,12 @@ def update_graph(hours, lev, act, but, intervals):
     maxv = df[df['Volume'] >= lev].index
     # print(len(maxv))
     df['rank'] = df['Volume'][maxv].rank()
-    # берем из массива минут, группируем по часам, находим в каждом часе индекс максимума и
-    # Open максимума этого часа прописываем в Open_max массива часов
-    # TODO добавить время всплеска объема
-    df['Open_max'] = cry_1m.df['Open'][cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()].resample('1h').mean()
-    # print(df['Open_max'][maxv])
     #  TODO dfg исправить
     grid = (df['Open_max'].max() - df['Open_max'].min()) / 100
     df['Prof_Act'] = df['Open_max'] // grid * grid
     dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev].groupby(['Prof_Act']).sum()
     fig = make_subplots(rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
-                        shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.01, column_widths=[0.9, 0.1])
+                        shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.03, column_widths=[1, 0.1])
     # Heiken Ashi OR Candles
     if act == 'Candle':
         df_act = df
@@ -157,7 +157,8 @@ def update_graph(hours, lev, act, but, intervals):
             increasing=dict(line=dict(color='blue', width=1)),
             decreasing=dict(line=dict(color='red', width=1)),
             showlegend=False,
-            opacity=0.4
+            opacity=0.4,
+            hoverinfo='none'
         ), 1, 1, secondary_y=False,
     )
     fig.add_trace(
@@ -166,7 +167,8 @@ def update_graph(hours, lev, act, but, intervals):
             increasing=dict(line=dict(color='green', width=3)),
             decreasing=dict(line=dict(color='purple', width=3)),
             showlegend=False,
-            opacity=1
+            opacity=1,
+            hoverinfo='none'
         ), 1, 1, secondary_y=False,
     )
     # VWAP(1W)
@@ -208,7 +210,7 @@ def update_graph(hours, lev, act, but, intervals):
         fig.add_trace(
             go.Bar(x=df.index, y=df['Volume'].where(df['Volume'] >= lev*0.8, 0), name='VolV',
                    marker=dict(color='grey'), showlegend=True, opacity=0.2,
-                   # width=3000000
+                   hoverinfo='none'
                    ),
             row=1, col=1, secondary_y=True)
     # Hor Vol
@@ -229,12 +231,13 @@ def update_graph(hours, lev, act, but, intervals):
     fig.add_trace(
         go.Scatter(
             x=[cry_1m.df.index[-1]],
-            y=[cry_1m.df['Close'][-1]],
-            text=f"{cry_1m.df['Close'][-1]}",
+            y=[end_price],
+            text=f"{end_price}",
             textposition="middle right",
             mode="text+markers",
             marker=dict(color='red', size=10, symbol='star'),
             showlegend=False,
+            hoverinfo='none'
         ), 1, 1, secondary_y=False)
     # Level price
     fig.add_trace(
@@ -251,11 +254,13 @@ def update_graph(hours, lev, act, but, intervals):
         go.Scatter(
             x=[maxv[i] for i in range(len(maxv))],
             y=df['Open_max'][maxv],
+            hoverinfo="text",
+            hovertext=df['Date_max'][maxv].dt.time,
             marker=dict(
                 size=(df['Volume'][maxv] / df['Volume'][maxv].max() * 30).astype('int64'),
-                # size=df_1h['Volume'][maxv].rank()*5,
                 color=df['ls_color'][maxv],
-                line=dict(color=df.Volume, width=1)
+                line=dict(color=df.Volume, width=1),
+
             ),
             mode='markers',
             # text=df_1h['Open'][maxv],
@@ -271,7 +276,7 @@ def update_graph(hours, lev, act, but, intervals):
             line=dict(color=df['ls_color'][maxv][i], width=df['rank'][maxv][i])
         )
     ) for i in range(len(maxv))]
-    # Levels
+    # Levels annotation
     [fig.add_annotation(
         dict(
             x=maxv[i],
@@ -291,13 +296,17 @@ def update_graph(hours, lev, act, but, intervals):
     voldir = vol_l - vol_s
     dirs = '^' if voldir >= 0 else 'v'
     fig.update_layout(
-        title=f"Crypto-flash-11 BITMEX BTC/USD {bars}h {dirs} {hd(voldir,sign=True)} {hd(lev, precision=0)} {intervals}",
+        title=f"Crypto-flash-11 BITMEX BTC/USD {dirs} {hd(voldir,sign=True)} end_price: {end_price} " +
+        f"VWAP({vwap_info_w}):{hd(end_price-df['vwap_1W'][-1],1,True)} " +
+        f"VWAP({vwap_info_d}):{hd(end_price-df['vwap_1D'][-1],1,True)} " +
+        f"VWAP({vwap_info_i}h):{hd(end_price-df['vwap_'+str(vwap_info_i)][-1],1,True)} ",
         xaxis_title="Date",
         yaxis_title=f"BTC/USD",
-        height=700,
+        height=690,
         xaxis_rangeslider_visible=False,
         # legend_orientation="h",
         legend=dict(x=0, y=1, orientation='h'),
+        hovermode="x",
         font=dict(
             # family="Courier New, monospace",
             family="Roboto mono",
@@ -311,4 +320,4 @@ def update_graph(hours, lev, act, but, intervals):
 
 
 if __name__ == '__main__':
-    app.run_server(port=8051, debug=True, use_reloader=True)
+    app.run_server(port=8051, debug=False, use_reloader=True)
