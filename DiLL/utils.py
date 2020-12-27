@@ -116,13 +116,14 @@ def hd(x, precision=2, sign=False):
     :return: строку вида "3.86M"
     """
     if precision < 0: return str(x)
-    y = 0.0
     suf = ''
     pref = ''
     if sign: pref = '+'
     x = float(x)
+    y = x
     if x < 0:
         x = abs(x)
+        y = x
         pref = '-'
     if x >= 1e9:
         y = x / 1e9
