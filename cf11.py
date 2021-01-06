@@ -128,7 +128,7 @@ def update_graph(hours, lev, act, but, intervals):
     # Open максимума этого часа прописываем в Open_max массива часов
     df['Open_max'] = cry_1m.df['Open'][cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()].resample('1h').mean()
     df['Date_max'] = cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax().resample('1h').max()
-    print(df['Date_max'][-5:])
+    # print(df['Date_max'][-5:])
     df['lsl'] = df['Open_max'] - end_price
     df['ls_color'] = df['lsl'].where(df['lsl'] >= 0, 'blue').where(df['lsl'] < 0, 'red')
     vol_l = df['Volume'][df['lsl'] < 0].sum()
@@ -139,7 +139,6 @@ def update_graph(hours, lev, act, but, intervals):
     maxv = df[df['Volume'] >= lev].index
     # print(len(maxv))
     df['rank'] = df['Volume'][maxv].rank()
-    #  TODO dfg исправить
     grid = (df['Open_max'].max() - df['Open_max'].min()) / 100
     df['Prof_Act'] = df['Open_max'] // grid * grid
     dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev].groupby(['Prof_Act']).sum()
