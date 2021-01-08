@@ -94,12 +94,13 @@ app.layout = html.Div([
     html.Br(),
     slider_hours,
     interval,
+    html.Div(id='output-reload'),
     graph,
 ])
 
 
 @app.callback(
-    Output('output-state', 'children'),
+    Output('output-reload', 'children'),
     [Input('Button', 'n_clicks'),
      Input('interval-component', 'n_intervals')])
 def update_df(but, intervals):
@@ -107,7 +108,7 @@ def update_df(but, intervals):
     cry_1h.load_crypto(limit=168)
     cry_1m.update_crypto()
     cry_1m.load_crypto(limit=168*60)
-    return
+    return "a"
 
 
 @app.callback(
@@ -121,7 +122,7 @@ def update_graph(hours, lev, act, but, intervals):
     # global refr
     # refr = refresh['1h']
     # print('update_graph', but, intervals)
-    bars = hours
+    # bars = hours
     df = cry_1h.df
     lev *= 1e6
     vwap_info_w = '1W'
@@ -323,6 +324,7 @@ def update_graph(hours, lev, act, but, intervals):
     )
     # pio.write_image(fig=fig, file=f'btc{intervals}.jpg', format='jpg')
     # pio.write_json(fig=fig, file=f'btc{intervals}.json', pretty=True)
+    # print(but, intervals)
     return fig
 
 
