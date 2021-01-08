@@ -202,10 +202,10 @@ def update_graph(hours, lev, act, but, intervals):
             showlegend=True
         ), 1, 1, secondary_y=False,
     )
-    # VWAP(i)
+    # VWMA(i)
     fig.add_trace(
         go.Scatter(
-            x=df.index, y=df[f'vwap_{vwap_info_i}'], mode='markers', name=f'VWAP({vwap_info_i}h)',
+            x=df.index, y=df[f'vwap_{vwap_info_i}'], mode='markers', name=f'VWMA({vwap_info_i}h)',
             marker=dict(
                 # width=1,
                 color='yellow',
@@ -307,7 +307,7 @@ def update_graph(hours, lev, act, but, intervals):
         title=f"{dirs} {hd(voldir,sign=True)} end_price: {end_price} " +
         f"VWAP({vwap_info_w}):{hd(end_price-df['vwap_1W'][-1],1,True)} " +
         f"VWAP({vwap_info_d}):{hd(end_price-df['vwap_1D'][-1],1,True)} " +
-        f"VWAP({vwap_info_i}h):{hd(end_price-df['vwap_'+str(vwap_info_i)][-1],1,True)} ",
+        f"VWMA({vwap_info_i}h):{hd(end_price-df['vwap_'+str(vwap_info_i)][-1],1,True)} ",
         xaxis_title="Date",
         yaxis_title=f"BTC/USD",
         height=640,
