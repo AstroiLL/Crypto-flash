@@ -15,22 +15,24 @@ from plotly.subplots import make_subplots
 from DiLL.crypto import Crypto
 from DiLL.utils import hd, HA, vwap
 
+all_period = 336
+
 cry_1h = Crypto(verbose=False)
 df_exch = cry_1h.get_list_exch()
 cry_1h.connect(exchange='BITMEX', crypto='BTC/USD', period='1h')
 cry_1h.update_crypto()
-cry_1h.load_crypto(limit=168)
+cry_1h.load_crypto(limit=all_period)
 # print(df_1h.info())
 
 cry_1m = Crypto(verbose=False)
 cry_1m.connect(exchange='BITMEX', crypto='BTC/USD', period='1m')
 cry_1m.update_crypto()
-cry_1m.load_crypto(limit=168*60)
+cry_1m.load_crypto(limit=all_period*60)
 # print(df_1m.info())
 
 # refresh = {'1m': 60, '1h': 240, '1d': 400}
 
-# refr = 120
+
 vol_lev = 0.4
 # nav_item = dbc.NavItem(dbc.NavLink("BitMEX", href="https://bitmex.com/"))
 
@@ -62,11 +64,11 @@ navbar = dbc.NavbarSimple(
 )
 slider_vol = dcc.Slider(
     id='VolLevel',
-    min=200,
-    max=500,
-    value=300,
-    marks={f'{i}': f'{i}M' for i in range(200, 500, 20)},
-    step=20,
+    min=300,
+    max=800,
+    value=500,
+    marks={f'{i}': f'{i}M' for i in range(300, 800, 50)},
+    step=50,
     tooltip={'always_visible': True, 'placement': 'bottom'},
     persistence=True, persistence_type='local',
 )
@@ -105,10 +107,10 @@ app.layout = html.Div([
      Input('interval-component', 'n_intervals')])
 def update_df(but, intervals):
     cry_1h.update_crypto()
-    cry_1h.load_crypto(limit=168)
+    cry_1h.load_crypto(limit=all_period)
     cry_1m.update_crypto()
-    cry_1m.load_crypto(limit=168*60)
-    return "a"
+    cry_1m.load_crypto(limit=all_period*60)
+    return "."
 
 
 @app.callback(
@@ -127,7 +129,7 @@ def update_graph(hours, lev, act, but, intervals):
     lev *= 1e6
     vwap_info_w = '1W'
     vwap_info_d = '1D'
-    vwap_info_i = 24
+    vwap_info_i = 48
     df = vwap(df, period=vwap_info_w, price=['Open', 'High', 'Low'])
     df = vwap(df, period=vwap_info_d, price=['Open', 'High', 'Low'])
     df = vwap(df, period=vwap_info_i)
@@ -304,7 +306,7 @@ def update_graph(hours, lev, act, but, intervals):
     voldir = vol_l - vol_s
     dirs = '^' if voldir >= 0 else 'v'
     fig.update_layout(
-        title=f"{dirs} {hd(voldir,sign=True)} end_price: {end_price} " +
+        title=f"{dirs} {hd(voldir,sign=True)} all_period:{all_period/24}d end_price: {end_price} " +
         f"VWAP({vwap_info_w}):{hd(end_price-df['vwap_1W'][-1],1,True)} " +
         f"VWAP({vwap_info_d}):{hd(end_price-df['vwap_1D'][-1],1,True)} " +
         f"VWMA({vwap_info_i}h):{hd(end_price-df['vwap_'+str(vwap_info_i)][-1],1,True)} ",
