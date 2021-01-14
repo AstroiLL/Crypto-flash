@@ -3,7 +3,8 @@ from DiLL.crypto import Crypto
 
 if __name__ == '__main__':
     per = '1m'
-    cry = Crypto(exchange='BITMEX', crypto='BTC/USD', period=per, update=True)
+    crypto = 'ETH/USD'
+    cry = Crypto(exchange='BITMEX', crypto=crypto, period=per, update=True)
     cry.update_crypto()
     df = cry.load_crypto()
-    df.to_hdf(f'../Data/BTC/btc-{per}.tf', mode='w', key=per, format='f')
+    df.to_hdf(f'../Data/BTC/{crypto.replace("/","-")}-{per}.tf', mode='w', key=per, format='f')

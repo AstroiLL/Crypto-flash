@@ -16,16 +16,22 @@ from DiLL.crypto import Crypto
 from DiLL.utils import hd, HA, vwap
 
 all_period = 336
+# ETH
+# crypto = 'ETH/USD'
+# vol_scale = 5*1e3
+# BTC
+crypto = 'BTC/USD'
+vol_scale = 1e6
 
 cry_1h = Crypto(verbose=False)
 df_exch = cry_1h.get_list_exch()
-cry_1h.connect(exchange='BITMEX', crypto='BTC/USD', period='1h')
+cry_1h.connect(exchange='BITMEX', crypto=crypto, period='1h')
 cry_1h.update_crypto()
 cry_1h.load_crypto(limit=all_period)
 # print(df_1h.info())
 
 cry_1m = Crypto(verbose=False)
-cry_1m.connect(exchange='BITMEX', crypto='BTC/USD', period='1m')
+cry_1m.connect(exchange='BITMEX', crypto=crypto, period='1m')
 cry_1m.update_crypto()
 cry_1m.load_crypto(limit=all_period*60)
 # print(df_1m.info())
@@ -57,7 +63,7 @@ refresh = dbc.Button("Refresh", id="Button", color="primary", outline=True, size
 
 navbar = dbc.NavbarSimple(
     children=[refresh, type_bars, dropdown],
-    brand="Crypto Flash 12 BitMEX BTC/USD",
+    brand=f"Crypto Flash 12 BitMEX {crypto}",
     brand_href="#",
     sticky="top",
     # className="mb-5",
@@ -120,13 +126,13 @@ def update_df(but, intervals):
      Input('Bar', 'value'),
      Input('Button', 'n_clicks'),
      Input('interval-component', 'n_intervals')])
-def update_graph(hours, lev, act, but, intervals):
+def update_graph(hours, vol_level, act, but, intervals):
     # global refr
     # refr = refresh['1h']
     # print('update_graph', but, intervals)
     # bars = hours
     df = cry_1h.df
-    lev *= 1e6
+    lev = vol_level * vol_scale
     vwap_info_w = '1W'
     vwap_info_d = '1D'
     vwap_info_i = 48
@@ -199,7 +205,7 @@ def update_graph(hours, lev, act, but, intervals):
             x=df.index, y=df[f'vwap_{vwap_info_d}'], mode='markers', name=f'VWAP({vwap_info_d})',
             marker=dict(
                 # width=2,
-                color='black',
+                color='blue',
             ),
             showlegend=True
         ), 1, 1, secondary_y=False,
@@ -210,19 +216,29 @@ def update_graph(hours, lev, act, but, intervals):
             x=df.index, y=df[f'vwap_{vwap_info_i}'], mode='markers', name=f'VWMA({vwap_info_i}h)',
             marker=dict(
                 # width=1,
-                color='yellow',
+                color='red',
+            ),
+            showlegend=True
+        ), 1, 1, secondary_y=False,
+    )
+    # maxVol
+    fig.add_trace(
+        go.Scatter(
+            x=df.index, y=df['Open_max'], mode='lines+markers', name='maxVol',
+            marker=dict(
+                symbol='x',
+                color='grey',
             ),
             showlegend=True
         ), 1, 1, secondary_y=False,
     )
     # Vert Vol
-    if True:
-        fig.add_trace(
-            go.Bar(x=df.index, y=df['Volume'].where(df['Volume'] >= lev*0.8, 0), name='VolV',
-                   marker=dict(color='grey'), showlegend=True, opacity=0.2,
-                   hoverinfo='none'
-                   ),
-            row=1, col=1, secondary_y=True)
+    fig.add_trace(
+        go.Bar(x=df.index, y=df['Volume'].where(df['Volume'] >= lev*0.8, 0), name='VolV',
+               marker=dict(color='grey'), showlegend=True, opacity=0.2,
+               hoverinfo='none'
+               ),
+        row=1, col=1, secondary_y=True)
     # Hor Vol
     if dfg.shape[0] > 1:
         fig.add_trace(go.Bar(
@@ -311,7 +327,7 @@ def update_graph(hours, lev, act, but, intervals):
         f"VWAP({vwap_info_d}):{hd(end_price-df['vwap_1D'][-1],1,True)} " +
         f"VWMA({vwap_info_i}h):{hd(end_price-df['vwap_'+str(vwap_info_i)][-1],1,True)} ",
         xaxis_title="Date",
-        yaxis_title=f"BTC/USD",
+        yaxis_title=f"{crypto}",
         height=640,
         xaxis_rangeslider_visible=False,
         # legend_orientation="h",
