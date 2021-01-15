@@ -8,3 +8,4 @@ if __name__ == '__main__':
     cry.update_crypto()
     df = cry.load_crypto()
     df.to_hdf(f'../Data/BTC/{crypto.replace("/","-")}-{per}.tf', mode='w', key=per, format='f')
+    

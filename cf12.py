@@ -60,9 +60,9 @@ type_bars = dbc.RadioItems(
     value='Heiken', persistence=True, persistence_type='local',
 )
 refresh = dbc.Button("Refresh", id="Button", color="primary", outline=True, size="sm", block=False)
-
+dump = dbc.Badge(" ", color="light")
 navbar = dbc.NavbarSimple(
-    children=[refresh, type_bars, dropdown],
+    children=[refresh, dump, type_bars, dump, dropdown],
     brand=f"Crypto Flash 12 BitMEX {crypto}",
     brand_href="#",
     sticky="top",
