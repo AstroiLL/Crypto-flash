@@ -15,26 +15,14 @@ from DiLL.crypto import Crypto
 from DiLL.utils import hd, HA, vwap
 
 # TODO выбор all_period
-# TODO выбор crypto vol_scale
-all_period = 336
-# ETH
-# crypto = 'ETH/USD'
-# vol_scale = 5*1e3
-# BTC
-# crypto = 'BTC/USD'
-# vol_scale = 1e6
+
+# all_period = 336
 
 cry_1h = Crypto(verbose=False)
-df_exch = cry_1h.get_list_exch()
 cry_1m = Crypto(verbose=False)
-cry_1h.connect(exchange='BITMEX', crypto='BTC/USD', period='1h')
-cry_1h.update_crypto()
-cry_1h.load_crypto(limit=all_period)
-cry_1m.connect(exchange='BITMEX', crypto='BTC/USD', period='1m')
-cry_1m.update_crypto()
-cry_1m.load_crypto(limit=all_period * 60)
+# df_exch = cry_1h.get_list_exch()
 
-vol_lev = 0.4
+vol_lev_hor = 0.4
 # nav_item = dbc.NavItem(dbc.NavLink("BitMEX", href="https://bitmex.com/"))
 
 locations = dcc.Location(id="url")
@@ -67,6 +55,7 @@ type_bars = dbc.RadioItems(
     options=[{'label': i, 'value': i} for i in ['Candle', 'Heiken']],
     value='Heiken', persistence=True, persistence_type='local',
 )
+all_period_input = dbc.Input(id="all_period", type="number", min=168, step=168, value=168, bs_size='md')
 crypto_label = dbc.Badge(id='crypto', color="light")
 refresh = dbc.Button([crypto_label, "Refresh"], id="Button", color="primary", outline=True, size="sm", block=False)
 reload = dbc.Badge(id='reload', color="light")
@@ -74,6 +63,7 @@ dump = dbc.Badge(' ', color="light")
 navbar = dbc.NavbarSimple(
     children=[
         reload,
+        all_period_input,
         max_vol_options,
         dump,
         type_bars,
@@ -87,11 +77,11 @@ navbar = dbc.NavbarSimple(
 )
 slider_vol = dcc.Slider(
     id='VolLevel',
-    min=300,
-    max=800,
-    value=500,
-    marks={f'{i}': f'{i}M' for i in range(300, 800, 50)},
-    step=50,
+    min=20,
+    max=60,
+    value=50,
+    marks={f'{i}': f'{i}%' for i in range(25, 60, 5)},
+    step=1,
     tooltip={'always_visible': True, 'placement': 'bottom'},
     persistence=True, persistence_type='local',
 )
@@ -111,11 +101,11 @@ interval_reload = dcc.Interval(
 )
 
 graph = dcc.Graph(id='graph_out')
-store = dcc.Store(id='data', storage_type='local')
+# store = dcc.Store(id='data', storage_type='local')
 app = dash.Dash(external_stylesheets=[dbc.themes.SKETCHY])
 app.layout = html.Div([
     locations,
-    store,
+    # store,
     navbar,
     html.Br(),
     slider_vol,
@@ -126,38 +116,46 @@ app.layout = html.Div([
     graph,
 ])
 
-
-@app.callback(Output("crypto", "children"), [Input("url", "pathname")], State('data', 'data'))
-def render_page_content(pathname, data):
-    data = data or {'crypto': 'BTC/USD', 'vol_scale': 1e6}
-    data['crypto'] = 'BTC/USD'
-    data['vol_scale'] = 1e6
+# TODO repair select crypto
+def connect_base(pathname, all_p):
+    crypto = 'BTC/USD'
     if pathname == "/ETH":
-        data['crypto'] = 'ETH/USD'
-        data['vol_scale'] = 5e3
+        crypto = 'ETH/USD'
     elif pathname == "/DOGE":
-        data['crypto'] = 'DOGE/USD'
-        data['vol_scale'] = .0001
-    crypto = data['crypto']
+        crypto = 'DOGE/USD'
     cry_1h.connect(exchange='BITMEX', crypto=crypto, period='1h')
     cry_1h.update_crypto()
-    cry_1h.load_crypto(limit=all_period)
+    cry_1h.load_crypto(limit=all_p)
+
     cry_1m.connect(exchange='BITMEX', crypto=crypto, period='1m')
     cry_1m.update_crypto()
-    cry_1m.load_crypto(limit=all_period * 60)
-    return f"{crypto}"
+    cry_1m.load_crypto(limit=all_p * 60)
+    return crypto
+
+@app.callback(Output("crypto", "children"),
+              [Input("url", "pathname"),
+               Input("all_period", "value"),
+               Input('Button', 'n_clicks'),
+               Input('interval-reload', 'n_intervals')
+               ])
+def render_page_content(pathname, all_p, but, n):
+    crypto = connect_base(pathname, all_p)
+    return crypto
 
 
-@app.callback(
-    Output('reload', "children"),
-    [Input('Button', 'n_clicks'),
-     Input('interval-reload', 'n_intervals')])
-def update_df(but, intervals):
-    cry_1h.update_crypto()
-    cry_1h.load_crypto(limit=all_period)
-    cry_1m.update_crypto()
-    cry_1m.load_crypto(limit=all_period*60)
-    return f"{intervals}"
+# @app.callback(
+#     Output('reload', "children"),
+#     [Input('Button', 'n_clicks'),
+#      Input('interval-reload', 'n_intervals')])
+# def update_df(but, n):
+#     if cry_1h.crypto is None:
+#         connect_base('/')
+#     else:
+#         cry_1h.update_crypto()
+#         cry_1h.load_crypto(limit=all_period)
+#         cry_1m.update_crypto()
+#         cry_1m.load_crypto(limit=all_period*60)
+#     return f"{n}"
 
 
 @app.callback(
@@ -168,21 +166,17 @@ def update_df(but, intervals):
      Input('Button', 'n_clicks'),
      Input('interval-reload', 'n_intervals'),
      Input("url", "pathname"),
-     Input("max_vol_options", "checked")],
-    State('data', 'data'))
-def update_graph(hours, vol_level, act, but, intervals, pathname, mvo, data):
-    data = data or {'crypto': 'BTC/USD', 'vol_scale': 1e6}
-    crypto = data['crypto']
-    vol_scale = data['vol_scale']
+     Input("all_period", "value"),
+     Input("max_vol_options", "checked")])
+def update_graph(hours, vol_level, act, but, intervals, pathname, all_p, mvo):
     df = cry_1h.df
-    lev = vol_level * vol_scale
+    lev = vol_level * df['Volume'].max() * 0.01
     vwap_info_w = '1W'
     vwap_info_d = '1D'
     vwap_info_i = 48
     df = vwap(df, period=vwap_info_w, price=['Open', 'High', 'Low'])
     df = vwap(df, period=vwap_info_d, price=['Open', 'High', 'Low'])
     df = vwap(df, period=vwap_info_i)
-    # print(df)
     end_price = cry_1m.df['Close'][-1]
     # берем из массива минут, группируем по часам, находим в каждом часе индекс максимума и
     # Open максимума этого часа прописываем в Open_max массива часов
@@ -201,7 +195,7 @@ def update_graph(hours, vol_level, act, but, intervals, pathname, mvo, data):
     df['rank'] = df['Volume'][maxv].rank()
     grid = (df['Open_max'].max() - df['Open_max'].min()) / 100
     df['Prof_Bar'] = df['Open_max'] // grid * grid
-    dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev].groupby(['Prof_Bar']).sum()
+    dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev_hor].groupby(['Prof_Bar']).sum()
     fig = make_subplots(rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
                         shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.03, column_widths=[1, 0.1])
     # Heiken Ashi OR Candles
@@ -395,12 +389,12 @@ def update_graph(hours, vol_level, act, but, intervals, pathname, mvo, data):
     #     ]
     # )
     fig.update_layout(
-        title=f"{dirs} {hd(voldir,sign=True)} all_period:{all_period/24}d end_price: {end_price} " +
+        title=f"{dirs} {hd(voldir,sign=True)} all_period:{all_p/24}d end_price: {end_price} " +
         f"VWAP({vwap_info_w}):{hd(end_price-df['vwap_1W'][-1],1,True)} " +
         f"VWAP({vwap_info_d}):{hd(end_price-df['vwap_1D'][-1],1,True)} " +
         f"VWMA({vwap_info_i}h):{hd(end_price-df['vwap_'+str(vwap_info_i)][-1],1,True)} ",
         xaxis_title="Date",
-        yaxis_title=f"{crypto}",
+        yaxis_title=f"{cry_1h.crypto}",
         height=640,
         xaxis_rangeslider_visible=False,
         # legend_orientation="h",

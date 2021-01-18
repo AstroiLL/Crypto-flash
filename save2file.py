@@ -2,10 +2,18 @@ from DiLL.crypto import Crypto
 # import pandas as pd
 
 if __name__ == '__main__':
-    per = '1m'
+    per = '1h'
     crypto = 'ETH/USD'
-    cry = Crypto(exchange='BITMEX', crypto=crypto, period=per, update=True)
+    pref = '1'
+    cry = Crypto()
+    cry.connect(exchange='BITMEX', crypto=crypto, period=per, update=True)
     cry.update_crypto()
     df = cry.load_crypto()
-    df.to_hdf(f'../Data/BTC/{crypto.replace("/","-")}-{per}.tf', mode='w', key=per, format='f')
-    
+    # df.to_hdf(f'../Data/BTC/{pref}-{crypto.replace("/","-")}-{per}.tf', mode='w', key=per, format='f')
+    print(df)
+    cry.connect(exchange='BITMEX', crypto='BTC/USD', period='1d', update=True)
+    cry.update_crypto()
+    df = cry.load_crypto()
+    # df.to_hdf(f'../Data/BTC/{pref}-{crypto.replace("/","-")}-{per}.tf', mode='w', key=per, format='f')
+    print(df)
+
