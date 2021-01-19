@@ -65,7 +65,7 @@ class Crypto:
             print(f'Incorrect exchange {self.exchange}')
             exit(2)
         try:
-            self.conn = create_engine(f'{mysql_url}/{self.exchange}.{self.crypto}').connect()
+            self.conn = create_engine(f'{mysql_url}/{self.exchange}.{self.crypto}', pool_pre_ping=True).connect()
         except:
             print(f'No base {self.exchange}.{self.crypto}')
             if not self.update: exit(3)
@@ -86,7 +86,9 @@ class Crypto:
 
     def get_count_records(self):
         """Количество котировок в базе"""
-        return self.conn.execute(f"SELECT COUNT(*) FROM {self.period}").fetchone()[0]
+        count = self.conn.execute(f"SELECT COUNT(*) FROM {self.period}").fetchone()[0]
+        print(count)
+        return count
 
     def get_fist_date(self, local=False):
         """Первая дата котировок в базе"""

@@ -14,7 +14,7 @@ from plotly.subplots import make_subplots
 from DiLL.crypto import Crypto
 from DiLL.utils import hd, HA, vwap
 
-# TODO выбор all_period
+
 
 # all_period = 336
 
@@ -55,14 +55,14 @@ type_bars = dbc.RadioItems(
     options=[{'label': i, 'value': i} for i in ['Candle', 'Heiken']],
     value='Heiken', persistence=True, persistence_type='local',
 )
-all_period_input = dbc.Input(id="all_period", type="number", min=168, step=168, value=168, bs_size='md')
+all_period_input = dbc.Input(id="all_period", type="number", min=168, step=168, value=336, bs_size='md')
 crypto_label = dbc.Badge(id='crypto', color="light")
 refresh = dbc.Button([crypto_label, "Refresh"], id="Button", color="primary", outline=True, size="sm", block=False)
-reload = dbc.Badge(id='reload', color="light")
+# reload = dbc.Badge(id='reload', color="light")
 dump = dbc.Badge(' ', color="light")
 navbar = dbc.NavbarSimple(
     children=[
-        reload,
+        # reload,
         all_period_input,
         max_vol_options,
         dump,
@@ -139,6 +139,7 @@ def connect_base(pathname, all_p):
                Input('interval-reload', 'n_intervals')
                ])
 def render_page_content(pathname, all_p, but, n):
+    print('Refresh ', pathname, n)
     crypto = connect_base(pathname, all_p)
     return crypto
 
@@ -168,7 +169,11 @@ def render_page_content(pathname, all_p, but, n):
      Input("url", "pathname"),
      Input("all_period", "value"),
      Input("max_vol_options", "checked")])
-def update_graph(hours, vol_level, act, but, intervals, pathname, all_p, mvo):
+def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
+    # print(cry_1h.df)
+    if cry_1h.df.empty:
+        print('Graph ', pathname, n)
+        connect_base(pathname, all_p)
     df = cry_1h.df
     lev = vol_level * df['Volume'].max() * 0.01
     vwap_info_w = '1W'
