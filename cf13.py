@@ -125,11 +125,11 @@ def connect_base(pathname, all_p):
         crypto = 'DOGE/USD'
     elif pathname == "/LTC":
         crypto = 'LTC/USD'
-    cry_1h.connect(exchange='BITMEX', crypto=crypto, period='1h')
+    cry_1h.open(exchange='BITMEX', crypto=crypto, period='1h')
     cry_1h.update_crypto()
     cry_1h.load_crypto(limit=all_p)
 
-    cry_1m.connect(exchange='BITMEX', crypto=crypto, period='1m')
+    cry_1m.open(exchange='BITMEX', crypto=crypto, period='1m')
     cry_1m.update_crypto()
     cry_1m.load_crypto(limit=all_p * 60)
     return crypto
@@ -172,7 +172,7 @@ def render_page_content(pathname, all_p, but, n):
      Input("all_period", "value"),
      Input("max_vol_options", "checked")])
 def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
-    # print(cry_1h.df)
+    print('Update',pathname, all_p)
     if cry_1h.df.empty:
         print('Graph ', pathname, n)
         connect_base(pathname, all_p)
@@ -402,7 +402,8 @@ def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
         f"VWMA({vwap_info_i}h):{hd(end_price-df['vwap_'+str(vwap_info_i)][-1],1,True)} ",
         xaxis_title="Date",
         yaxis_title=f"{cry_1h.crypto}",
-        height=640,
+        height=650,
+        # width=1024,
         xaxis_rangeslider_visible=False,
         # legend_orientation="h",
         legend=dict(x=0, y=1, orientation='h'),

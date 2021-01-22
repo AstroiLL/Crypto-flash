@@ -47,29 +47,25 @@ class Crypto:
         self.period = period
         # self.indexes = indexes
         self.update = update
-        self.conn = None
+        # self.conn = None
+        self.conn_str = None
         self.verbose = verbose
+        self.connect = self.open
         # self.connect(exchange=exchange, crypto=crypto, period=period, update=update)
 
+    def _connect(self):
+            return create_engine(self.conn_str, pool_pre_ping=True).connect()
 
-    def connect(self, exchange=None, crypto=None, period=None, update=None):
-        if exchange is not None: self.exchange = exchange
-        if crypto is not None: self.crypto = crypto
-        if period is not None: self.period = period
-        # if indexes is not None: self.indexes = indexes
-        if update is not None: self.update = update
-        if self.period is None:
-            return
-        if self.verbose: print(f'==============\nInit {self.exchange}.{self.crypto} {self.period}')
-        if self.exchange != 'BITMEX' and self.exchange != 'BINANCE':
-            print(f'Incorrect exchange {self.exchange}')
-            exit(2)
+    def _check_connect(self):
         try:
-            self.conn = create_engine(f'{mysql_url}/{self.exchange}.{self.crypto}', pool_pre_ping=True).connect()
+            conn = self._connect()
         except:
             print(f'No base {self.exchange}.{self.crypto}')
             if not self.update: exit(3)
+            conn.close()
             self._create_base()
+        else:
+            conn.close()
         count_records = self.get_count_records()
         if count_records == 0:
             print(f'Empty base {self.exchange}.{self.crypto}')
@@ -82,17 +78,46 @@ class Crypto:
                 # self.delete({self.exchange}.{self.crypto})
                 exit(5)
         print(f"Table {self.period} has total {count_records} records")
-        # self.get_list_exch()
+
+    # def connect(self, exchange=None, crypto=None, period=None, update=None):
+    #     self.open(exchange=exchange, crypto=crypto, period=period, update=update)
+
+    def open(self, exchange=None, crypto=None, period=None, update=None):
+        if exchange is not None: self.exchange = exchange
+        if crypto is not None: self.crypto = crypto
+        if period is not None: self.period = period
+        # if indexes is not None: self.indexes = indexes
+        if update is not None: self.update = update
+        if self.period is None:
+            return
+        if self.verbose: print(f'==============\nInit {self.exchange}.{self.crypto} {self.period}')
+        if self.exchange != 'BITMEX' and self.exchange != 'BINANCE':
+            print(f'Incorrect exchange {self.exchange}')
+            exit(2)
+        self.conn_str = f'{mysql_url}/{self.exchange}.{self.crypto}'
+        if self.verbose: print(self.conn_str)
+        self._check_connect()
 
     def get_count_records(self):
         """Количество котировок в базе"""
-        count = self.conn.execute(f"SELECT COUNT(*) FROM {self.period}").fetchone()[0]
-        print(count)
+        try:
+            conn = self._connect()
+            co = conn.execute(f"SELECT COUNT(*) FROM {self.period}")
+            conn.close()
+            # print(co)
+            count = co.fetchone()[0]
+        except:
+            print('error get_count')
+            return 0
+        # conn.close()
+        # print('count=', count)
         return count
 
     def get_fist_date(self, local=False):
         """Первая дата котировок в базе"""
-        df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date LIMIT 1", con=self.conn)
+        conn = self._connect()
+        df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date LIMIT 1", con=conn)
+        conn.close()
         fist_date = df.at[0, 'Date']
         if local: fist_date += timedelta(hours=tz)
         if self.verbose: print(f"Fist date {fist_date}")
@@ -106,7 +131,9 @@ class Crypto:
             print("Empty base")
             if not self.update: exit(4)
             self._get_crypto_from_exchange()
-        df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC LIMIT 1", con=self.conn)
+        conn = self._connect()
+        df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC LIMIT 1", con=conn)
+        conn.close()
         last_date = df.at[0, 'Date']
         if local: last_date += timedelta(hours=tz)
         return last_date
@@ -120,10 +147,14 @@ class Crypto:
         if limit is not None: self.limit = limit
         df = pd.DataFrame()
         if self.limit is None:
-            df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC", con=self.conn)
+            conn = self._connect()
+            df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC", con=conn)
+            conn.close()
             self.limit = df.shape[0]
         else:
-            df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC LIMIT {self.limit}", con=self.conn)
+            conn = self._connect()
+            df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC LIMIT {self.limit}", con=conn)
+            conn.close()
             self.limit = min(df.shape[0], self.limit)
         self.last_date = df.at[0, 'Date']
         if self.verbose: print("Last date from mySQL", self.last_date)
@@ -134,28 +165,6 @@ class Crypto:
         self.df = df
         return df
 
-    def load_crypto_date(self, limit=None, from_date=None):
-        """Загрузить из базы котировки с from_date длиной limit"""
-        if self.verbose:
-            count_records = self.get_count_records()
-            print(f"Table {self.period} has total {count_records} records")
-            print(f"Load {self.crypto} from SQL {self.period}")
-        # if limit is not None: self.limit = limit
-        df = pd.DataFrame()
-        if self.limit is None:
-            df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC", con=self.conn)
-            self.limit = df.shape[0]
-        else:
-            df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC LIMIT {self.limit}", con=self.conn)
-            self.limit = min(df.shape[0], self.limit)
-        self.last_date = df.at[0, 'Date']
-        if self.verbose: print("Last date from mySQL", self.last_date)
-        df.sort_values('Date', ascending=True, inplace=True)
-        df.set_index('Date', drop=True, inplace=True)
-        df.index += timedelta(hours=tz)
-        print(f'Loaded {self.limit} bars {self.period}')
-        self.df = df
-        return df
 
     def update_crypto(self):
         """Обновить базу котировок от последней даты до текущей"""
@@ -183,14 +192,18 @@ class Crypto:
             return None
         # if verbose: print(difs)
         if difs >= 1:
-            self.conn.execute(f"DELETE FROM {self.period} ORDER BY Date DESC LIMIT 1", con=self.conn)
+            conn = self._connect()
+            conn.execute(f"DELETE FROM {self.period} ORDER BY Date DESC LIMIT 1")
+            conn.close()
             self._get_crypto_from_exchange(limit=difs + 1)
 
     def _crypto_to_sql(self, df_app: pd.DataFrame):
         """Записать df_app в базу котировок"""
         df_app.set_index('Date', drop=True, inplace=True)
         try:
-            df_app.to_sql(self.period, con=self.conn, if_exists='append', index=True)
+            conn = self._connect()
+            df_app.to_sql(self.period, con=conn, if_exists='append', index=True)
+            conn.close()
         except:
             print('Error write to MySQL')
             pass
@@ -271,11 +284,13 @@ COMMIT;
         conn = create_engine(f'{mysql_url}/EXCHANGE').connect()
         ins = f"INSERT INTO `Exchange`(`Exchange`, `Crypto`) VALUES ('{self.exchange}','{self.crypto}')"
         conn.execute(ins, con=conn)
-        self.conn = create_engine(f'{mysql_url}/{self.exchange}.{self.crypto}').connect()
+        conn.close()
+        # self.conn = create_engine(f'{mysql_url}/{self.exchange}.{self.crypto}').connect()
 
     def get_list_exch(self):
         """Получить список существующих на сервере баз данных баз котировок"""
         conn = create_engine(f'{mysql_url}/EXCHANGE').connect()
         df = pd.read_sql(f"SELECT * FROM Exchange", con=conn)
+        conn.close()
         if self.verbose: print(df)
         return df
