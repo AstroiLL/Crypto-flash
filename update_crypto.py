@@ -2,22 +2,22 @@ from DiLL.crypto import Crypto
 import pandas as pd
 # import datetime as dt
 
-def find_max_vol(df, day):
-    # if df.index[day]:
-    #     return None
-    # try:
-    print(day)
+# def find_max_vol(df, day):
+#     # if df.index[day]:
+#     #     return None
+#     # try:
+#     print(day)
+#
+#     # day_m = df['Volume'].loc[day: day + pd.DateOffset(days=1)].idxmax()
+#     df_index = df[day]
+#     df_index_shift = df_index.shift(-1, freq='D')
+#     day_m = df['Volume'].loc[df_index: df_index_shift].idxmax()
+#     # except:
+#     #     return None
+#     return day_m
 
-    # day_m = df['Volume'].loc[day: day + pd.DateOffset(days=1)].idxmax()
-    df_index = df[day]
-    df_index_shift = df_index.shift(-1, freq='D')
-    day_m = df['Volume'].loc[df_index: df_index_shift].idxmax()
-    # except:
-    #     return None
-    return day_m
 
-
-def continuity(df, freq='D'):
+def continuity(df, freq='1h'):
     diff = df.index - df.index.shift(-1, freq=freq)
     print(diff.unique())
     # print(df[diff.days > 1])
