@@ -77,7 +77,7 @@ class Crypto:
                 if not self.update: exit(4)
                 # self.delete({self.exchange}.{self.crypto})
                 exit(5)
-        print(f"Table {self.period} has total {count_records} records")
+        if self.verbose: print(f"Table {self.period} has total {count_records} records")
 
     # def connect(self, exchange=None, crypto=None, period=None, update=None):
     #     self.open(exchange=exchange, crypto=crypto, period=period, update=update)
@@ -126,7 +126,7 @@ class Crypto:
     def get_last_date(self, local=False):
         """Последняя дата котировок в базе"""
         count_records = self.get_count_records()
-        print(f"Table {self.period} has total {count_records} records")
+        if self.verbose: print(f"Table {self.period} has total {count_records} records")
         if count_records == 0:
             print("Empty base")
             if not self.update: exit(4)
@@ -161,7 +161,7 @@ class Crypto:
         df.sort_values('Date', ascending=True, inplace=True)
         df.set_index('Date', drop=True, inplace=True)
         df.index += timedelta(hours=tz)
-        print(f'Loaded {self.limit} bars {self.period}')
+        if self.verbose: print(f'Loaded {self.limit} bars {self.period}')
         self.df = df
         return df
 
@@ -221,7 +221,7 @@ class Crypto:
     # Работа с биржей
     def _get_crypto_from_exchange(self, since=None, limit=500):
         """Получить котировки с биржи от даты since количеством limit"""
-        print(f"Get {self.crypto} from {self.exchange} {self.period}")
+        if self.verbose: print(f"Get {self.crypto} from {self.exchange} {self.period}")
         exchange = None
         if self.exchange == 'BITMEX':
             exchange = ccxt.bitmex()
@@ -231,8 +231,7 @@ class Crypto:
             print(f'Incorrect exchange {self.exchange} seting BITMEX')
             exchange = ccxt.bitmex()
             self.exchange = 'BITMEX'
-        time.sleep(exchange.rateLimit // 100)
-        print('since=', since)
+        # print('since=', since)
         if since is None:
             # Вычисляем время начала загрузки данных как разницу текущего времени и количества баров
             since_exch = exchange.milliseconds() - dict_period[self.period] * limit
@@ -241,6 +240,7 @@ class Crypto:
             since_exch = exchange.parse8601(since.strftime('%Y-%m-%d %H:%M:%S'))
         if self.verbose: print('Since', exchange.iso8601(since_exch))
         while limit > 0:
+            time.sleep(exchange.rateLimit // 500)
             if self.verbose: print('Load limit', limit, self.period)
             lmt = limit if limit <= 750 else 750
             try:
@@ -254,7 +254,7 @@ class Crypto:
                 self._crypto_to_sql(df)
             since_exch += dict_period[self.period] * lmt
             limit -= lmt
-            if limit > 0: time.sleep(exchange.rateLimit // 100)
+            # if limit > 0: time.sleep(exchange.rateLimit // 100)
 
     def _create_base(self):
         """Создать базы котировок для 1d 1h 1m"""
