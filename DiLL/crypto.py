@@ -130,7 +130,7 @@ class Crypto:
         if count_records == 0:
             print("Empty base")
             if not self.update: exit(4)
-            self._get_crypto_from_exchange()
+            self._get_crypto_from_exchange(limit=1000)
         conn = self._connect()
         df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC LIMIT 1", con=conn)
         conn.close()
@@ -197,6 +197,16 @@ class Crypto:
             conn.close()
             self._get_crypto_from_exchange(limit=difs + 1)
 
+    def update_crypto_from(self, from_date=None, count=None):
+        """Обновить базу котировок от последней даты до текущей"""
+        if not self.update:
+            print(f"Update in mode update=False")
+            return
+        if self.verbose: print(f"Update {self.crypto} from {self.exchange} {self.period}")
+        if self.verbose: print('From date:', from_date)
+        if count >= 1:
+            self._get_crypto_from_exchange(since=from_date, limit=count)
+
     def _crypto_to_sql(self, df_app: pd.DataFrame):
         """Записать df_app в базу котировок"""
         df_app.set_index('Date', drop=True, inplace=True)
@@ -221,16 +231,20 @@ class Crypto:
             print(f'Incorrect exchange {self.exchange} seting BITMEX')
             exchange = ccxt.bitmex()
             self.exchange = 'BITMEX'
+        time.sleep(exchange.rateLimit // 100)
+        print('since=', since)
         if since is None:
-            since = exchange.milliseconds() - dict_period[self.period] * limit
+            # Вычисляем время начала загрузки данных как разницу текущего времени и количества баров
+            since_exch = exchange.milliseconds() - dict_period[self.period] * limit
         else:
-            since = exchange.parse8601(since + 'T00:00:00Z')
-        # print(exchange.iso8601(since))
+            # Вычисляем время начала загрузки данных из входного времени
+            since_exch = exchange.parse8601(since.strftime('%Y-%m-%d %H:%M:%S'))
+        if self.verbose: print('Since', exchange.iso8601(since_exch))
         while limit > 0:
             if self.verbose: print('Load limit', limit, self.period)
             lmt = limit if limit <= 750 else 750
             try:
-                fetch = exchange.fetch_ohlcv(self.crypto, self.period, since=since, limit=lmt)
+                fetch = exchange.fetch_ohlcv(self.crypto, self.period, since=since_exch, limit=lmt)
             except:
                 print(f'Error fetch from {self.exchange}')
                 exit(1)
@@ -238,7 +252,7 @@ class Crypto:
                 df = pd.DataFrame(fetch, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
                 df['Date'] = pd.to_datetime(df['Date'], unit='ms', infer_datetime_format=True)
                 self._crypto_to_sql(df)
-            since += dict_period[self.period] * lmt
+            since_exch += dict_period[self.period] * lmt
             limit -= lmt
             if limit > 0: time.sleep(exchange.rateLimit // 100)
 
