@@ -19,7 +19,7 @@ from DiLL.utils import hd, HA, vwap
 # all_period = 336
 
 cry_1h = Crypto(verbose=False)
-cry_1m = Crypto(verbose=False)
+cry_1m = Crypto(verbose=True)
 # df_exch = cry_1h.get_list_exch()
 
 vol_lev_hor = 0.4
@@ -125,13 +125,13 @@ def connect_base(pathname, all_p):
         crypto = 'DOGE/USD'
     elif pathname == "/LTC":
         crypto = 'LTC/USD'
-    cry_1h.open(exchange='BITMEX', crypto=crypto, period='1h')
-    cry_1h.update_crypto()
-    cry_1h.load_crypto(limit=all_p)
+    cry_1h.open(exchange='BITMEX', crypto=crypto, period='1h', update=True)
+    cry_1h.load(limit=all_p)
+    cry_1h.repair_table()
 
-    cry_1m.open(exchange='BITMEX', crypto=crypto, period='1m')
-    cry_1m.update_crypto()
-    cry_1m.load_crypto(limit=all_p * 60)
+    cry_1m.open(exchange='BITMEX', crypto=crypto, period='1m', update=True)
+    cry_1m.load(limit=all_p * 60)
+    cry_1m.repair_table()
     return crypto
 
 @app.callback(Output("crypto", "children"),
@@ -172,9 +172,9 @@ def render_page_content(pathname, all_p, but, n):
      Input("all_period", "value"),
      Input("max_vol_options", "checked")])
 def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
-    print('Update',pathname, all_p)
+    print('Update', pathname, n)
     if cry_1h.df.empty:
-        print('Graph ', pathname, n)
+        print('Empty df ', pathname, n)
         connect_base(pathname, all_p)
     df = cry_1h.df
     lev = vol_level * df['Volume'].max() * 0.01
