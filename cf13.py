@@ -19,7 +19,7 @@ from DiLL.utils import hd, HA, vwap
 # all_period = 336
 
 cry_1h = Crypto(verbose=False)
-cry_1m = Crypto(verbose=True)
+cry_1m = Crypto(verbose=False)
 # df_exch = cry_1h.get_list_exch()
 
 vol_lev_hor = 0.4
@@ -258,10 +258,21 @@ def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
     # VWMA(i)
     fig.add_trace(
         go.Scatter(
-            x=df.index, y=df[f'vwap_{vwap_info_i}'], mode='markers', name=f'VWMA({vwap_info_i}h)',
+            x=df.index[-vwap_info_i:], y=df[f'vwap_{vwap_info_i}'][-vwap_info_i:], mode='markers', name=f'VWMA({vwap_info_i}h)>',
             marker=dict(
                 # width=1,
                 color='red',
+            ),
+            showlegend=True
+        ), 1, 1, secondary_y=False,
+    )
+    # VWMA(i)
+    fig.add_trace(
+        go.Scatter(
+            x=df.index[:vwap_info_i], y=df[f'vwap_{vwap_info_i}'][:vwap_info_i], mode='markers', name=f'<VWMA({vwap_info_i}h)',
+            marker=dict(
+                # width=1,
+                color='orange',
             ),
             showlegend=True
         ), 1, 1, secondary_y=False,

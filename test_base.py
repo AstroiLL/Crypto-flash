@@ -2,13 +2,17 @@ from DiLL.crypto import Crypto
 # import pandas as pd
 
 if __name__ == '__main__':
-    per = '1m'
-    crypto = 'BTC/USD'
-    cry = Crypto(verbose=False)
-    cry.open(exchange='BITMEX', crypto=crypto, period=per)
+    period = '1h'
+    if period == '1m':
+        per = '1min'
+    else:
+        per = period
+    crypto = 'DOGE/USD'
+    cry = Crypto(verbose=True)
+    cry.open(exchange='BITMEX', crypto=crypto, period=period)
     cry.update_crypto()
     df = cry.load_crypto()
-    df = df.resample('1min').first()
+    df = df.resample(per).first()
     holes = df[df['Open'].isna()].index
     # print(holes)
     holes = holes[::1]

@@ -212,7 +212,7 @@ class Crypto:
             self._get_from_exchange(since=from_date, limit=count)
 
     def repair_table(self, batch=1):
-        if self.verbose: print(f'Check_table {self.period}')
+        if self.verbose: print(f'Repair_table {self.period}')
         if self.period == '1m':
             per = '1min'
         else:
