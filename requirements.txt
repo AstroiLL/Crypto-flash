@@ -1,0 +1,9 @@
+joblib
+matplotlib
+pandas
+ccxt
+sqlalchemy
+dash
+plotly
+dill
+setuptools

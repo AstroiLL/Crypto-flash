@@ -51,6 +51,8 @@ class Crypto:
         self.conn_str = None
         self.verbose = verbose
         self.connect = self.open
+        self.update_crypto = self.updating
+        self.load_crypto = self.load
         # self.connect(exchange=exchange, crypto=crypto, period=period, update=update)
 
     def _connect(self):
@@ -83,6 +85,8 @@ class Crypto:
     #     self.open(exchange=exchange, crypto=crypto, period=period, update=update)
 
     def open(self, exchange=None, crypto=None, period=None, update=None):
+        """Открываем базу"""
+        self.limit = None
         if exchange is not None: self.exchange = exchange
         if crypto is not None: self.crypto = crypto
         if period is not None: self.period = period
@@ -212,6 +216,7 @@ class Crypto:
             self._get_from_exchange(since=from_date, limit=count)
 
     def repair_table(self, batch=1):
+        """Проверка базы на отсутствие пропусков и дозагрузка пропущеных значений"""
         if self.verbose: print(f'Repair_table {self.period}')
         if self.period == '1m':
             per = '1min'

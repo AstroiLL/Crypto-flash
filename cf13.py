@@ -10,13 +10,10 @@ import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
 from plotly.subplots import make_subplots
 # import plotly.io as pio
+# import pandas_ta as ta
 
 from DiLL.crypto import Crypto
-from DiLL.utils import hd, HA, vwap
-
-
-
-# all_period = 336
+from DiLL.utils import hd, HA, wvwma
 
 cry_1h = Crypto(verbose=False)
 cry_1m = Crypto(verbose=False)
@@ -128,7 +125,7 @@ def connect_base(pathname, all_p):
     cry_1h.open(exchange='BITMEX', crypto=crypto, period='1h', update=True)
     cry_1h.load(limit=all_p)
     cry_1h.repair_table()
-
+    # TODO Порядок действий?
     cry_1m.open(exchange='BITMEX', crypto=crypto, period='1m', update=True)
     cry_1m.load(limit=all_p * 60)
     cry_1m.repair_table()
@@ -178,12 +175,12 @@ def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
         connect_base(pathname, all_p)
     df = cry_1h.df
     lev = vol_level * df['Volume'].max() * 0.01
-    vwap_info_w = '1W'
-    vwap_info_d = '1D'
-    vwap_info_i = 48
-    df = vwap(df, period=vwap_info_w, price=['Open', 'High', 'Low'])
-    df = vwap(df, period=vwap_info_d, price=['Open', 'High', 'Low'])
-    df = vwap(df, period=vwap_info_i)
+    wvwma_1 = 24
+    wvwma_2 = 48
+    wvwma_3 = 168
+    df[f'wvwma_{wvwma_1}'] = wvwma(df['Open'], df['Volume'], length=wvwma_1)
+    df[f'wvwma_{wvwma_2}'] = wvwma(df['Open'], df['Volume'], length=wvwma_2)
+    df[f'wvwma_{wvwma_3}'] = wvwma(df['Open'], df['Volume'], length=wvwma_3)
     end_price = cry_1m.df['Close'][-1]
     # берем из массива минут, группируем по часам, находим в каждом часе индекс максимума и
     # Open максимума этого часа прописываем в Open_max массива часов
@@ -212,6 +209,72 @@ def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
         df_act = HA(df)
     # print(maxv)
     # fig.add_trace()
+    # maxVol
+    fig.add_trace(
+        go.Scatter(
+            x=df.index, y=df['Open_max'], mode='lines+markers', name='max Volume',
+            marker=dict(
+                symbol='cross',
+                color='grey',
+            ),
+            showlegend=True
+        ), 1, 1, secondary_y=False,
+    )
+    # VWMA(<1D)
+    fig.add_trace(
+        go.Scatter(
+            x=df.index[:-wvwma_1], y=df[f'wvwma_{wvwma_1}'][:-wvwma_1], mode='markers', name='<WVWMA(1D)',
+            marker=dict(
+                # width=1,
+                # color='cyan',
+            ),
+            showlegend=True
+        ), 1, 1, secondary_y=False,
+    )
+    # VWMA(1D>)
+    fig.add_trace(
+        go.Scatter(
+            x=df.index[-wvwma_1:], y=df[f'wvwma_{wvwma_1}'][-wvwma_1:], mode='markers', name='WVWMA(1D)>',
+            marker=dict(
+                # width=1,
+                # color='blue',
+            ),
+            showlegend=True
+        ), 1, 1, secondary_y=False,
+    )
+    # VWMA(<2D)
+    fig.add_trace(
+        go.Scatter(
+            x=df.index[:-wvwma_2], y=df[f'wvwma_{wvwma_2}'][:-wvwma_2], mode='markers', name='<WVWMA(2D)',
+            marker=dict(
+                # width=1,
+                # color='purple',
+            ),
+            showlegend=True
+        ), 1, 1, secondary_y=False,
+    )
+    # VWMA(2D>)
+    fig.add_trace(
+        go.Scatter(
+            x=df.index[-wvwma_2:], y=df[f'wvwma_{wvwma_2}'][-wvwma_2:], mode='markers', name='WVWMA(2D)>',
+            marker=dict(
+                # width=1,
+                # color='magenta',
+            ),
+            showlegend=True
+        ), 1, 1, secondary_y=False,
+    )
+    # VWMA(1W)
+    fig.add_trace(
+        go.Scatter(
+            x=df.index, y=df[f'wvwma_{wvwma_3}'], mode='markers', name='WVWMA(1W)',
+            marker=dict(
+                # width=1,
+                color='black',
+            ),
+            showlegend=True
+        ), 1, 1, secondary_y=False,
+    )
     fig.add_trace(
         go.Candlestick(
             x=df_act.index, open=df_act['Open'], close=df_act['Close'], high=df_act['High'], low=df_act['Low'],
@@ -232,69 +295,6 @@ def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
             hoverinfo='none'
         ), 1, 1, secondary_y=False,
     )
-    # VWAP(1W)
-    fig.add_trace(
-        go.Scatter(
-            x=df.index, y=df[f'vwap_{vwap_info_w}'], mode='markers', name=f'VWAP({vwap_info_w})',
-            marker=dict(
-                # width=2,
-                color='purple',
-            ),
-            showlegend=True
-        ), 1, 1, secondary_y=False,
-    )
-    # if period == '1h' or period == '1m':
-    # VWAP(1D)
-    fig.add_trace(
-        go.Scatter(
-            x=df.index, y=df[f'vwap_{vwap_info_d}'], mode='markers', name=f'VWAP({vwap_info_d})',
-            marker=dict(
-                # width=2,
-                color='blue',
-            ),
-            showlegend=True
-        ), 1, 1, secondary_y=False,
-    )
-    # VWMA(i)
-    fig.add_trace(
-        go.Scatter(
-            x=df.index[-vwap_info_i:], y=df[f'vwap_{vwap_info_i}'][-vwap_info_i:], mode='markers', name=f'VWMA({vwap_info_i}h)>',
-            marker=dict(
-                # width=1,
-                color='red',
-            ),
-            showlegend=True
-        ), 1, 1, secondary_y=False,
-    )
-    # VWMA(i)
-    fig.add_trace(
-        go.Scatter(
-            x=df.index[:vwap_info_i], y=df[f'vwap_{vwap_info_i}'][:vwap_info_i], mode='markers', name=f'<VWMA({vwap_info_i}h)',
-            marker=dict(
-                # width=1,
-                color='orange',
-            ),
-            showlegend=True
-        ), 1, 1, secondary_y=False,
-    )
-    # maxVol
-    fig.add_trace(
-        go.Scatter(
-            x=df.index, y=df['Open_max'], mode='lines+markers', name='max Volume',
-            marker=dict(
-                symbol='x',
-                color='grey',
-            ),
-            showlegend=True
-        ), 1, 1, secondary_y=False,
-    )
-    # Vert Vol
-    # fig.add_trace(
-    #     go.Volume(x=df.index, y=df['Volume'], name='Volume',
-    #            showlegend=True, opacity=0.2,
-    #            hoverinfo='none'
-    #            ),
-    #     row=1, col=1, secondary_y=True)
     # Vert Vol
     fig.add_trace(
         go.Bar(x=df.index, y=df['Volume'].where(df['Volume'] >= lev*0.8, 0), name='Volume',
@@ -393,24 +393,11 @@ def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
     ) for i in range(len(maxv))]
     voldir = vol_l - vol_s
     dirs = '^' if voldir >= 0 else 'v'
-    # fig.update_xaxes(
-    #     rangeslider_visible=False,
-    #     tickformatstops=[
-    #         dict(dtickrange=[None, 1000], value="%H:%M:%S.%L ms"),
-    #         dict(dtickrange=[1000, 60000], value="%H:%M:%S s"),
-    #         dict(dtickrange=[60000, 3600000], value="%H:%M m"),
-    #         dict(dtickrange=[3600000, 86400000], value="%H:%M h"),
-    #         dict(dtickrange=[86400000, 604800000], value="%e. %b d"),
-    #         dict(dtickrange=[604800000, "M1"], value="%e. %b w"),
-    #         dict(dtickrange=["M1", "M12"], value="%b '%y M"),
-    #         dict(dtickrange=["M12", None], value="%Y Y")
-    #     ]
-    # )
     fig.update_layout(
         title=f"{dirs} {hd(voldir,sign=True)} all_period:{all_p/24}d end_price: {end_price} " +
-        f"VWAP({vwap_info_w}):{hd(end_price-df['vwap_1W'][-1],1,True)} " +
-        f"VWAP({vwap_info_d}):{hd(end_price-df['vwap_1D'][-1],1,True)} " +
-        f"VWMA({vwap_info_i}h):{hd(end_price-df['vwap_'+str(vwap_info_i)][-1],1,True)} ",
+        f"VWMA({wvwma_1}h):{hd(end_price-df[f'wvwma_'+str(wvwma_1)][-1],1,True)} "+
+        f"VWMA({wvwma_2}h):{hd(end_price-df[f'wvwma_'+str(wvwma_2)][-1],1,True)} "+
+        f"VWMA({wvwma_3}h):{hd(end_price-df[f'wvwma_'+str(wvwma_3)][-1],1,True)} ",
         xaxis_title="Date",
         yaxis_title=f"{cry_1h.crypto}",
         height=650,

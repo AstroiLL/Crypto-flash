@@ -6,18 +6,18 @@ if __name__ == '__main__':
     crypto1 = 'BTC/USD'
     per2 = '1m'
     crypto2 = 'BTC/USD'
-    # pref = '1'
-    cry = Crypto()
-    # cry.open(exchange='BITMEX', crypto=crypto1, period=per1, update=True)
-    # cry.update_crypto()
-    # df = cry.load_crypto()
-    # # df.to_hdf(f'../Data/BTC/{pref}-{crypto.replace("/","-")}-{per}.tf', mode='w', key=per, format='f')
-    # print(df)
-    cry.open(exchange='BITMEX', crypto=crypto2, period=per2, update=True)
-    cry.update_crypto()
-    df = cry.load_crypto()
-    # df.to_hdf(f'../Data/BTC/{pref}-{crypto.replace("/","-")}-{per}.tf', mode='w', key=per, format='f')
-    print(df)
-    diff = df.index - df.index.shift(-1)
-    print(diff.unique())
+    pref = '1'
+    cry1 = Crypto()
+    cry1.open(exchange='BITMEX', crypto=crypto1, period=per1, update=True)
+    # cry1.update()
+    df1 = cry1.load()
+    df1.to_hdf(f'../Data/BTC/{pref}-{crypto1.replace("/","-")}-{per1}.tf', mode='w', key=per1, format='f')
+    print(df1)
+
+    cry2 = Crypto()
+    cry2.open(exchange='BITMEX', crypto=crypto2, period=per2, update=True)
+    # cry2.update()
+    df2 = cry2.load()
+    df2.to_hdf(f'../Data/BTC/{pref}-{crypto2.replace("/","-")}-{per2}.tf', mode='w', key=per2, format='f')
+    print(df2)
 

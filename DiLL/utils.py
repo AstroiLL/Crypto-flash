@@ -11,6 +11,7 @@ import pandas as pd
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from datetime import datetime as dt
+import pandas_ta as ta
 
 # from sqlalchemy import create_engine
 
@@ -101,6 +102,11 @@ def vwap(df, period='1D', price='Open'):
     df = df.groupby(group_index, group_keys=False).apply(_vwap_ass)
     df.rename(columns={'vwap': f'vwap_{period}'}, inplace=True)
     return df
+
+
+def wvwma(src, vol, length=48):
+    """WVwma"""
+    return ta.wma(src*vol, length=length)/ta.wma(vol, length=length)
 
 
 def hd(x, precision=2, sign=False):
