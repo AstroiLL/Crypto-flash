@@ -113,6 +113,7 @@ app.layout = html.Div([
     graph,
 ])
 
+
 # TODO repair select crypto
 def connect_base(pathname, all_p):
     crypto = 'BTC/USD'
@@ -130,6 +131,7 @@ def connect_base(pathname, all_p):
     cry_1m.load(limit=all_p * 60)
     cry_1m.repair_table()
     return crypto
+
 
 @app.callback(Output("crypto", "children"),
               [Input("url", "pathname"),
@@ -170,22 +172,22 @@ def render_page_content(pathname, all_p, but, n):
      Input("max_vol_options", "checked")])
 def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
     print('Update', pathname, n)
-    if cry_1h.df.empty:
+    if cry_1h.df.empty or n == 0:
         print('Empty df ', pathname, n)
         connect_base(pathname, all_p)
     df = cry_1h.df
     lev = vol_level * df['Volume'].max() * 0.01
-    wvwma_1 = 24
-    wvwma_2 = 48
-    wvwma_3 = 168
-    df[f'wvwma_{wvwma_1}'] = wvwma(df['Open'], df['Volume'], length=wvwma_1)
-    df[f'wvwma_{wvwma_2}'] = wvwma(df['Open'], df['Volume'], length=wvwma_2)
-    df[f'wvwma_{wvwma_3}'] = wvwma(df['Open'], df['Volume'], length=wvwma_3)
     end_price = cry_1m.df['Close'][-1]
     # берем из массива минут, группируем по часам, находим в каждом часе индекс максимума и
     # Open максимума этого часа прописываем в Open_max массива часов
     df['Open_max'] = cry_1m.df['Open'][cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()].resample('1h').mean()
     df['Date_max'] = cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax().resample('1h').max()
+    wvwma_1 = 24
+    wvwma_2 = 48
+    wvwma_3 = 168
+    df[f'wvwma_{wvwma_1}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_1)
+    df[f'wvwma_{wvwma_2}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_2)
+    df[f'wvwma_{wvwma_3}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_3)
     # print(df['Date_max'][-5:])
     df['lsl'] = df['Open_max'] - end_price
     df['ls_color'] = df['lsl'].where(df['lsl'] >= 0, 'blue').where(df['lsl'] < 0, 'red')

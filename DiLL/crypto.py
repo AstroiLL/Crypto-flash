@@ -8,8 +8,8 @@ import pandas as pd
 from sqlalchemy import create_engine
 # from DiLL.utils import VWAP, VWAP_d, VWAP_p
 
-from .env import mysql_url
-
+# from .env import mysql_url
+mysql_url = "mysql://bitok:bitok@10.10.10.200:3307"
 # mysql_url = 'mysql://user:pass@127.0.0.1:3307'
 # mysql_url = os.environ['MYSQL_URL']
 
@@ -344,3 +344,26 @@ COMMIT;
         conn.close()
         if self.verbose: print(df)
         return df
+
+
+class CryptoH():
+    def __init__(self, exchange=None, crypto=None, update=True, verbose=False):
+        self.cry_1h = Crypto(verbose=verbose)
+        self.cry_1h.open(exchange=exchange, crypto=crypto, period='1h', update=update)
+        self.cry_1m = Crypto(verbose=verbose)
+        self.cry_1m.open(exchange=exchange, crypto=crypto, period='1m', update=update)
+
+    def load(self, limit=None):
+        self.df_1h = self.cry_1h.load(limit=limit)
+        self.df_1m = self.cry_1m.load(limit=limit*168)
+
+    def filling(self):
+        # берем из массива минут, группируем по часам, находим в каждом часе индекс максимума и
+        # Open максимума этого часа прописываем в Open_max массива часов
+        self.df_1h['Open_max'] = self.cry_1m.df['Open'][self.cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()
+            ].resample('1h').mean()
+        self.df_1h['Date_max'] = self.cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax().resample('1h').max()
+        # print(self.df_1h[['Open_max', 'Date_max']][-5:])
+
+    def get_df(self):
+        return self.df_1h

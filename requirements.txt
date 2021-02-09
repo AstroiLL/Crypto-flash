@@ -2,6 +2,7 @@ joblib
 matplotlib
 pandas
 ccxt
+mysqlclient
 sqlalchemy
 dash
 plotly
