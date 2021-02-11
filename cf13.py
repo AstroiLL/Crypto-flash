@@ -182,6 +182,7 @@ def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
     # Open максимума этого часа прописываем в Open_max массива часов
     df['Open_max'] = cry_1m.df['Open'][cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()].resample('1h').mean()
     df['Date_max'] = cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax().resample('1h').max()
+    # TODO Выбор периодов линий на странице
     wvwma_1 = 24
     wvwma_2 = 48
     wvwma_3 = 168
@@ -227,8 +228,8 @@ def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
         go.Scatter(
             x=df.index[:-wvwma_1], y=df[f'wvwma_{wvwma_1}'][:-wvwma_1], mode='markers', name='<WVWMA(1D)',
             marker=dict(
-                # width=1,
-                # color='cyan',
+                size=4,
+                color='cyan',
             ),
             showlegend=True
         ), 1, 1, secondary_y=False,
@@ -238,8 +239,8 @@ def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
         go.Scatter(
             x=df.index[-wvwma_1:], y=df[f'wvwma_{wvwma_1}'][-wvwma_1:], mode='markers', name='WVWMA(1D)>',
             marker=dict(
-                # width=1,
-                # color='blue',
+                size=4,
+                color='blue',
             ),
             showlegend=True
         ), 1, 1, secondary_y=False,
@@ -249,8 +250,8 @@ def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
         go.Scatter(
             x=df.index[:-wvwma_2], y=df[f'wvwma_{wvwma_2}'][:-wvwma_2], mode='markers', name='<WVWMA(2D)',
             marker=dict(
-                # width=1,
-                # color='purple',
+                size=4,
+                color='yellow',
             ),
             showlegend=True
         ), 1, 1, secondary_y=False,
@@ -260,8 +261,8 @@ def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
         go.Scatter(
             x=df.index[-wvwma_2:], y=df[f'wvwma_{wvwma_2}'][-wvwma_2:], mode='markers', name='WVWMA(2D)>',
             marker=dict(
-                # width=1,
-                # color='magenta',
+                size=4,
+                color='orange',
             ),
             showlegend=True
         ), 1, 1, secondary_y=False,
@@ -271,8 +272,8 @@ def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
         go.Scatter(
             x=df.index, y=df[f'wvwma_{wvwma_3}'], mode='markers', name='WVWMA(1W)',
             marker=dict(
-                # width=1,
-                color='black',
+                size=6,
+                color='red',
             ),
             showlegend=True
         ), 1, 1, secondary_y=False,

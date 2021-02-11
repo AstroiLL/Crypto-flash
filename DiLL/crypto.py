@@ -64,7 +64,7 @@ class Crypto:
         except:
             print(f'No base {self.exchange}.{self.crypto}')
             if not self.update: exit(3)
-            conn.close()
+            #conn.close()
             self._create_base()
         else:
             conn.close()
@@ -88,6 +88,9 @@ class Crypto:
         """Открываем базу"""
         self.limit = None
         if exchange is not None: self.exchange = exchange
+        if self.exchange != 'BITMEX' and self.exchange != 'BINANCE':
+            print(f'Incorrect exchange {self.exchange} setting BITMEX')
+            self.exchange = 'BITMEX'
         if crypto is not None: self.crypto = crypto
         if period is not None: self.period = period
         # if indexes is not None: self.indexes = indexes
@@ -95,9 +98,6 @@ class Crypto:
         if self.period is None:
             return
         if self.verbose: print(f'==============\nInit {self.exchange}.{self.crypto} {self.period}')
-        if self.exchange != 'BITMEX' and self.exchange != 'BINANCE':
-            print(f'Incorrect exchange {self.exchange} setting BitMEX')
-            self.exchange = 'BITMEX'
         self.conn_str = f'{mysql_url}/{self.exchange}.{self.crypto}'
         if self.verbose: print(self.conn_str)
         self._check_connect()
@@ -294,6 +294,7 @@ class Crypto:
 
     def _create_base(self):
         """Создать базы котировок для 1d 1h 1m"""
+        # TODO Проверить на наличии пары на бирже
         base1 = f"CREATE DATABASE IF NOT EXISTS `{self.exchange}.{self.crypto}`; USE `{self.exchange}.{self.crypto}`;"
         base2 = """
 CREATE TABLE `1d` (
@@ -356,6 +357,10 @@ class CryptoH():
     def load(self, limit=None):
         self.df_1h = self.cry_1h.load(limit=limit)
         self.df_1m = self.cry_1m.load(limit=limit*168)
+
+    def updating(self):
+        self.df_1h = self.cry_1h.updating()
+        self.df_1m = self.cry_1m.updating()
 
     def filling(self):
         # берем из массива минут, группируем по часам, находим в каждом часе индекс максимума и
