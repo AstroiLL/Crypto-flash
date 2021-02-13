@@ -6,6 +6,7 @@ from DiLL.crypto import Crypto
 period = '1h'
 crypto = 'BTC/USD'
 # crypto = 'ETH/USD'
+# crypto = 'LTC/USD'
 # crypto = 'ADA/USD'
 exchange = 'BITMEX'
 # exchange = 'BINANCE'
@@ -25,9 +26,10 @@ def plot_wvwma(length=24, color='black', width=2):
                              name=f'WVWMA-{length / 24:.2f}D'))
 
 
-df['sma-2'] = ta.sma(df['Open'], length=2)
+df['sma_2'] = ta.sma(df['Open'], length=2)
+df['Open_wvwma_168'] = df['Open'] - wvwma(length=168)
 fig = go.Figure()
-fig.add_trace(go.Scatter(x=df.index[-48:], y=df['sma-2'][-48:], line_color='black', line_width=4, name='SMA-2'))
+fig.add_trace(go.Scatter(x=df.index[-48:], y=df['sma_2'][-48:], line_color='black', line_width=4, name='SMA-2'))
 plot_wvwma(length=6, color='cyan', width=2)
 plot_wvwma(length=12, color='blue', width=2)
 plot_wvwma(length=24, color='green', width=2)
@@ -35,3 +37,8 @@ plot_wvwma(length=48, color='orange', width=2)
 plot_wvwma(length=168, color='red', width=4)
 fig.update_layout(title=f"{exchange}.{crypto}", xaxis_title="Date", yaxis_title=f"{exchange}.{crypto}", )
 fig.show()
+
+fig1 = go.Figure()
+fig1.add_trace(go.Scatter(x=df.index[:], y=df['Open_wvwma_168'][:], line_color='black', line_width=4, name='Open_wvwma_168'))
+
+fig1.show()
