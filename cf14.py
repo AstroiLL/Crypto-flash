@@ -52,14 +52,28 @@ type_bars = dbc.RadioItems(
     options=[{'label': i, 'value': i} for i in ['Candle', 'Heiken']],
     value='Heiken', persistence=True, persistence_type='local',
 )
-all_period_input = dbc.Input(id="all_period", type="number", min=168, step=168, value=336, bs_size='md')
+period_wvwma = dbc.InputGroup(
+            [
+                dbc.InputGroupAddon("wvwma", addon_type="prepend"),
+                dbc.Input(id="period_wvwma", type="number", min=2, step=1, value=120,
+                          persistence=True, persistence_type='local')
+            ])
+all_period_input = dbc.InputGroup(
+            [
+                dbc.InputGroupAddon("period", addon_type="prepend"),
+                dbc.Input(id="all_period", type="number", min=168, step=168, value=504,
+                          persistence=True, persistence_type='local')
+            ])
+
+
 crypto_label = dbc.Badge(id='crypto', color="light")
-refresh = dbc.Button([crypto_label, "Refresh"], id="Button", color="primary", outline=True, size="sm", block=False)
+refresh = dbc.Button([crypto_label, "Refresh"], id="Button", color="primary", outline=True, block=False)
 # reload = dbc.Badge(id='reload', color="light")
 dump = dbc.Badge(' ', color="light")
 navbar = dbc.NavbarSimple(
     children=[
         # reload,
+        period_wvwma,
         all_period_input,
         max_vol_options,
         dump,
@@ -145,24 +159,10 @@ def render_page_content(pathname, all_p, but, n):
     return crypto
 
 
-# @app.callback(
-#     Output('reload', "children"),
-#     [Input('Button', 'n_clicks'),
-#      Input('interval-reload', 'n_intervals')])
-# def update_df(but, n):
-#     if cry_1h.crypto is None:
-#         connect_base('/')
-#     else:
-#         cry_1h.update_crypto()
-#         cry_1h.load_crypto(limit=all_period)
-#         cry_1m.update_crypto()
-#         cry_1m.load_crypto(limit=all_period*60)
-#     return f"{n}"
-
-
 @app.callback(
     Output('graph_out', 'figure'),
-    [Input('Hours', 'value'),
+    [Input('period_wvwma', 'value'),
+     Input('Hours', 'value'),
      Input('VolLevel', 'value'),
      Input('Bar', 'value'),
      Input('Button', 'n_clicks'),
@@ -170,7 +170,7 @@ def render_page_content(pathname, all_p, but, n):
      Input("url", "pathname"),
      Input("all_period", "value"),
      Input("max_vol_options", "checked")])
-def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
+def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, mvo):
     print('Update', pathname, n)
     if cry_1h.df.empty or n == 0:
         print('Empty df ', pathname, n)
@@ -186,6 +186,7 @@ def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
     wvwma_1 = 24
     wvwma_2 = 48
     wvwma_3 = 168
+    df[f'wvwma_{wvwma_0}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_0)
     df[f'wvwma_{wvwma_1}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_1)
     df[f'wvwma_{wvwma_2}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_2)
     df[f'wvwma_{wvwma_3}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_3)
@@ -274,6 +275,17 @@ def update_graph(hours, vol_level, act, but, n, pathname, all_p, mvo):
             marker=dict(
                 size=6,
                 color='red',
+            ),
+            showlegend=True
+        ), 1, 1, secondary_y=False,
+    )
+    # WVWMA_0
+    fig.add_trace(
+        go.Scatter(
+            x=df.index, y=df[f'wvwma_{wvwma_0}'], mode='lines', name=f'WVWMA({wvwma_0}h)',
+            line=dict(
+                width=2,
+                color='black',
             ),
             showlegend=True
         ), 1, 1, secondary_y=False,

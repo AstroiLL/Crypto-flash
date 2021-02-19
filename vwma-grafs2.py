@@ -6,9 +6,18 @@ from plotly.subplots import make_subplots
 from DiLL.crypto import Crypto
 
 period = '1h'
+pairs = {'BTC/USD': 'BITMEX',
+         'ETH/USD': 'BITMEX',
+         'ETH/BTC': 'BINANCE',
+         'ADA/BTC': 'BINANCE',
+         'ADA/USDC': 'BINANCE',
+         'DOT/BTC': 'BINANCE',
+         'FET/BTC': 'BINANCE',
+         'ETC/BTC': 'BINANCE',
 
-crypto = 'ETH/USD'
-exchange = 'BITMEX'
+         }
+crypto = 'ETC/BTC'
+exchange = pairs[crypto]
 cry = Crypto(verbose=False)
 cry.open(exchange=exchange, crypto=crypto, period=period, update=True)
 cry.updating()
@@ -63,6 +72,5 @@ plot(df, data=data_o, name=data_o, color_u='blue', color_d='red', width=4, row=3
 # plot(df, data=data_od, name=data_od, color_u='blue', color_d='red', width=4, row=3, col=1)
 plot(df, data=data_wd, name=data_wd, color_u='cyan', color_d='orange', width=2, row=3, col=1)
 
-fig.update_layout(title=f"{exchange}.{crypto}", xaxis_title="Date", yaxis_title=f"{exchange}.{crypto}", )
-
+fig.update_layout(title=f"{exchange} {crypto} 1h", xaxis_title="Date", yaxis_title=f"{exchange}.{crypto}", )
 fig.show()
