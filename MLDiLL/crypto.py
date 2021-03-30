@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import ccxt
 import pandas as pd
 from sqlalchemy import create_engine
-# from DiLL.utils import VWAP, VWAP_d, VWAP_p
+# from MLDiLL.utils import VWAP, VWAP_d, VWAP_p
 
 # from .env import mysql_url
 mysql_url = "mysql://bitok:bitok@10.10.10.200:3307"
@@ -295,6 +295,7 @@ class Crypto:
     def _create_base(self):
         """Создать базы котировок для 1d 1h 1m"""
         # TODO Проверить на наличии пары на бирже
+        print(f"Create base {self.exchange}.{self.crypto}")
         base1 = f"CREATE DATABASE IF NOT EXISTS `{self.exchange}.{self.crypto}`; USE `{self.exchange}.{self.crypto}`;"
         base2 = """
 CREATE TABLE `1d` (

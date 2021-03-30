@@ -12,8 +12,8 @@ from plotly.subplots import make_subplots
 # import plotly.io as pio
 # import pandas_ta as ta
 
-from DiLL.crypto import Crypto
-from DiLL.utils import hd, HA, wvwma
+from MLDiLL.crypto import Crypto
+from MLDiLL.utils import hd, HA, wvwma
 
 cry_1h = Crypto(verbose=False)
 cry_1m = Crypto(verbose=False)
@@ -77,6 +77,7 @@ navbar = dbc.NavbarSimple(
         all_period_input,
         max_vol_options,
         dump,
+
         type_bars,
         dropdown,
         dump,
@@ -200,9 +201,9 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, mvo):
 
     maxv = df[df['Volume'] >= lev].index
     # print(len(maxv))
-    df['rank'] = df['Volume'][maxv].rank()
+    df.loc[:, 'rank'] = df['Volume'][maxv].rank()
     grid = (df['Open_max'].max() - df['Open_max'].min()) / 100
-    df['Prof_Bar'] = df['Open_max'] // grid * grid
+    df.loc[:, 'Prof_Bar'] = df['Open_max'] // grid * grid
     dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev_hor].groupby(['Prof_Bar']).sum()
     fig = make_subplots(rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
                         shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.03, column_widths=[1, 0.1])

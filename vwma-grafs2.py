@@ -14,9 +14,10 @@ pairs = {'BTC/USD': 'BITMEX',
          'DOT/BTC': 'BINANCE',
          'FET/BTC': 'BINANCE',
          'ETC/BTC': 'BINANCE',
+         'TRX/BTC': 'BINANCE',
 
          }
-crypto = 'ETC/BTC'
+crypto = 'BTC/USD'
 exchange = pairs[crypto]
 cry = Crypto(verbose=False)
 cry.open(exchange=exchange, crypto=crypto, period=period, update=True)

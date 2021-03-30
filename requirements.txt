@@ -6,5 +6,6 @@ mysqlclient
 sqlalchemy
 dash
 plotly
-dill
+mldill
 setuptools
+pandas_ta

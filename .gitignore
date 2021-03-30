@@ -1,0 +1,9 @@
+/.idea/
+*.pyc
+*.egg-info
+/env
+/DiLL/.env
+*.h5
+env.py
+sma.py
+*.json
