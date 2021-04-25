@@ -54,13 +54,13 @@ type_bars = dbc.RadioItems(
 )
 period_wvwma = dbc.InputGroup(
             [
-                dbc.InputGroupAddon("wvwma", addon_type="prepend"),
+                dbc.InputGroupAddon("wvwma(h)", addon_type="prepend"),
                 dbc.Input(id="period_wvwma", type="number", min=2, step=1, value=120,
                           persistence=True, persistence_type='local')
             ])
 all_period_input = dbc.InputGroup(
             [
-                dbc.InputGroupAddon("period", addon_type="prepend"),
+                dbc.InputGroupAddon("period(h)", addon_type="prepend"),
                 dbc.Input(id="all_period", type="number", min=168, step=168, value=504,
                           persistence=True, persistence_type='local')
             ])
