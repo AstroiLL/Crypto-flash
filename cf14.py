@@ -27,7 +27,7 @@ dropdown = dbc.DropdownMenu(
     children=[
         dbc.DropdownMenuItem("BTC", href="/"),
         dbc.DropdownMenuItem("ETH", href="/ETH"),
-        dbc.DropdownMenuItem("DOGE", href="/DOGE"),
+        dbc.DropdownMenuItem("XRP", href="/XRP"),
         dbc.DropdownMenuItem("LTC", href="/LTC"),
     ],
     nav=True,
@@ -134,8 +134,8 @@ def connect_base(pathname, all_p):
     crypto = 'BTC/USD'
     if pathname == "/ETH":
         crypto = 'ETH/USD'
-    elif pathname == "/DOGE":
-        crypto = 'DOGE/USD'
+    elif pathname == "/XRP":
+        crypto = 'XRP/USD'
     elif pathname == "/LTC":
         crypto = 'LTC/USD'
     cry_1h.open(exchange='BITMEX', crypto=crypto, period='1h', update=True)
