@@ -47,28 +47,6 @@ def begin_today():
     return today.combine(today.date(), today.min.time())
 
 
-# def VWAP(df):
-#     """
-#     Вычеслить средневзвешенную среднюю по объему за день (устарело)
-#     """
-#     def __vwap(dff):
-#         q = dff['Volume'].values
-#
-#     today = dtscalcnow()
-#     return today.combine(today.date(), today.min.time())
-#
-#
-# def VWAP(df):
-#     """
-#     Вычеслить средневзвешенную среднюю по объему за день (устарело)
-#     """
-#     def __vwap(dff):
-#         q = dff
-#         p = dff['Open'].values
-#         return dff.assign(vwap=(p * q).cumsum() / q.cumsum())
-#     return df.groupby(df.index.date, group_keys=False).apply(__vwap)
-
-
 def vwap(df, period='1D', price='Open'):
     """
     Вычеслить средневзвешенную среднюю по объему за фиксированный период 1MN 1W 1D
@@ -105,20 +83,22 @@ def vwap(df, period='1D', price='Open'):
 
 
 def wvwma(src, vol, length=48):
-    """WVwma"""
+    """
+    WVwma - взвешенная объемно-взвешенная скользящая средняя за период
+    """
     return ta.wma(src*vol, length=length)/ta.wma(vol, length=length)
 
 
 def hd(x, precision=2, sign=False):
     """
-    Округлить большие числа и преобразовать в строку, в удобном для восприятия человеком виде.
+    Преобразовать большие числа в короткую строку в удобном виде для восприятия.
     Добавить после числа:
     G для миллиардов
     M для миллионов
     k для тысяч
     :param x: число для преобразования
-    :param precision: число знаков после точки (пример для 2: 3 861 647 -> 3.86M, по умолчанию 2)
-    :param sign: отображать или нет знак +
+    :param precision: число знаков после точки (пример для precision=2: 3 861 647 -> 3.86M), по умолчанию 2
+    :param sign: отображать или нет знак +, по умолчанию не отображать
     :return: строку вида "3.86M"
     """
     if precision < 0: return str(x)
@@ -147,6 +127,15 @@ def hd(x, precision=2, sign=False):
 
 
 def lev2font(x, max_v, lev_m, max_f, min_f):
+    """
+    Преобразовать уровень в размер фонта
+    :param x:
+    :param max_v:
+    :param lev_m:
+    :param max_f:
+    :param min_f:
+    :return:
+    """
     # if not isinstance(x,type(float)):
     #     return min_f
     # ep(x, max_v, lev_m, max_f, min_f)
@@ -363,40 +352,12 @@ def load_pkl(name="arima.pkl"):
     return arima
 
 
-"""
-class Disk():
-    def check_(self):
-        return os.path.isfile(self.name)
-
-    def load(self):
-        if check_():
-            arima = joblib.load(self.name)
-            self.loaded = True
-            print(f'Loaded {self.name}')
-        return arima
-
-    def __init__(self, name="arima.pkl", new=True):
-        self.name = name
-        self.var = None
-        self.loaded = False
-        if not new:
-            if check_():
-                self.var = load()
-                self.loaded = True
-
-    def delete(self):
-        if check_():
-            os.unlink(self.name)
-            print(f'Deleted {self.name}')
-
-    def save(self, var):
-        if self.loaded:
-            joblib.dump(var, self.name, compress=3)
-            print(f'Saved {self.name}')
-"""
-
-
 def HA(dataframe):
+    """
+    Преобразовать dataframe Candlestic в HeikenAshi
+    :param dataframe:
+    :return:
+    """
     df = dataframe.copy()
 
     df['HA_Close'] = (df.Open + df.High + df.Low + df.Close) / 4
