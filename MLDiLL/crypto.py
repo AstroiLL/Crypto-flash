@@ -1,4 +1,4 @@
-import time
+# import time
 # import os
 # from dotenv import load_dotenv
 from datetime import datetime, timedelta
@@ -348,7 +348,7 @@ COMMIT;
         return df
 
 
-class CryptoH():
+class CryptoH:
     def __init__(self, exchange=None, crypto=None, update=True, verbose=False):
         self.cry_1h = Crypto(verbose=verbose)
         self.cry_1h.open(exchange=exchange, crypto=crypto, period='1h', update=update)
