@@ -8,3 +8,4 @@ ru-RU.UTF8
 ![Версия 10](Crypto-flash-10.png)
 ![Версия 11](Crypto-flash-11.png)
 ![Версия 12](Crypto-flash-12.png)
+![Версия 14](Crypto-flash-14.png)
