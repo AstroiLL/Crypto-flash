@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
 from plotly.subplots import make_subplots
 # import plotly.io as pio
-# import pandas_ta as ta
+# import pandas_ta as ta    
 
 from MLDiLL.crypto import Crypto
 from MLDiLL.utils import hd, HA, wvwma
@@ -220,7 +220,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, mvo):
             x=df.index, y=df['Open_max'], mode='lines+markers', name='max Volume',
             marker=dict(
                 symbol='cross',
-                color='grey',
+                color=df['ls_color'],
             ),
             showlegend=True
         ), 1, 1, secondary_y=False,
@@ -421,7 +421,8 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, mvo):
         xaxis_rangeslider_visible=False,
         # legend_orientation="h",
         legend=dict(x=0, y=1, orientation='h'),
-        hovermode="x",
+        hovermode="x unified",
+        # margin={"r": 0, "t": 1, "l": 0, "b": 0}
     )
     # pio.write_image(fig=fig, file=f'btc{intervals}.jpg', format='jpg')
     # pio.write_json(fig=fig, file=f'btc{intervals}.json', pretty=True)
