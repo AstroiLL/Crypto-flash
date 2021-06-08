@@ -210,7 +210,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     vol_l = df['Volume'][df['lsl'] < 0].sum()
     vol_s = df['Volume'][df['lsl'] >= 0].sum()
 
-    # Создать массив разниц максимумов на каждом баре за период и цены на баре
+    # Синий если сумма предыдущих объемов p баров была выше, красный если ниже
     def v_compare(ser):
         d = df.loc[ser.index]
         d['l'] = d['Open_max'] - d['Open_max'][-1]
@@ -219,8 +219,6 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
         return d['Volume'][d['l'] >= 0].sum() - d['Volume'][d['l'] < 0].sum()
     df['lslv'] = df['Open_max'].rolling(window=p).apply(v_compare, raw=False)
     df['ls_color_v'] = df['lslv'].where(df['lslv'] >= 0, 'blue').where(df['lslv'] < 0, 'red')
-    # vol_l_v = df['Volume'][df['lslv'] < 0].sum()
-    # vol_s_v = df['Volume'][df['lslv'] >= 0].sum()
 
     df = df[-hours:]
     # Фильтровать по критерию Vol >= уровень
@@ -241,6 +239,9 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
         df_act = HA(df)
     # print(maxv)
     # fig.add_trace()
+    voldir = vol_l - vol_s
+    dirs = '^' if voldir >= 0 else 'v'
+    color_end = 'red' if voldir < 0 else 'blue'
     # maxVol
     fig.add_trace(
         go.Scatter(
@@ -370,7 +371,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
             text=f"{end_price}",
             textposition="middle right",
             mode="text+markers",
-            marker=dict(color='red', size=10, symbol='star'),
+            marker=dict(color=color_end, size=12, symbol='star'),
             showlegend=False,
             hoverinfo='none'
         ), 1, 1, secondary_y=False)
@@ -437,8 +438,6 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
             ay=-40
         )
     ) for i in range(len(maxv))]
-    voldir = vol_l - vol_s
-    dirs = '^' if voldir >= 0 else 'v'
     fig.update_layout(
         title=f"{dirs} {hd(voldir,sign=True)} all_period:{all_p/24}d end_price: {end_price} " +
         f"VWMA({wvwma_1}h):{hd(end_price-df[f'wvwma_'+str(wvwma_1)][-1],1,True)} "+
@@ -461,4 +460,4 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
 
 
 if __name__ == '__main__':
-    app.run_server(port=8050, debug=False, use_reloader=True)
+    app.run_server(port=8051, debug=False, use_reloader=True)
