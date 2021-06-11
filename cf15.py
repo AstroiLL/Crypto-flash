@@ -53,24 +53,32 @@ type_bars = dbc.RadioItems(
     value='Heiken', persistence=True, persistence_type='local',
 )
 period_wvwma = dbc.InputGroup(
-            [
-                dbc.InputGroupAddon("wvwma(h)", addon_type="prepend"),
-                dbc.Input(id="period_wvwma", type="number", min=2, step=1, value=120,
-                          persistence=True, persistence_type='local')
-            ])
+    [
+        dbc.InputGroupAddon("wvwma(h)", addon_type="prepend"),
+        dbc.Input(
+            id="period_wvwma", type="number", min=2, step=1, value=120,
+            persistence=True, persistence_type='local'
+            )
+    ]
+)
 all_period_input = dbc.InputGroup(
-            [
-                dbc.InputGroupAddon("period(h)", addon_type="prepend"),
-                dbc.Input(id="all_period", type="number", min=168, step=168, value=504,
-                          persistence=True, persistence_type='local')
-            ])
+    [
+        dbc.InputGroupAddon("period(h)", addon_type="prepend"),
+        dbc.Input(
+            id="all_period", type="number", min=168, step=168, value=504,
+            persistence=True, persistence_type='local'
+            )
+    ]
+)
 period_input_v = dbc.InputGroup(
-            [
-                dbc.InputGroupAddon("period V (h)", addon_type="prepend"),
-                dbc.Input(id="period_v", type="number", min=24, step=6, value=24,
-                          persistence=True, persistence_type='local')
-            ])
-
+    [
+        dbc.InputGroupAddon("period V (h)", addon_type="prepend"),
+        dbc.Input(
+            id="period_v", type="number", min=24, step=6, value=24,
+            persistence=True, persistence_type='local'
+            )
+    ]
+)
 
 crypto_label = dbc.Badge(id='crypto', color="light")
 refresh = dbc.Button([crypto_label, "Refresh"], id="Button", color="primary", outline=True, block=False)
@@ -122,18 +130,20 @@ interval_reload = dcc.Interval(
 graph = dcc.Graph(id='graph_out')
 # store = dcc.Store(id='data', storage_type='local')
 app = dash.Dash(external_stylesheets=[dbc.themes.SKETCHY])
-app.layout = html.Div([
-    locations,
-    # store,
-    navbar,
-    html.Br(),
-    slider_vol,
-    html.Br(),
-    slider_hours,
-    html.Br(),
-    interval_reload,
-    graph,
-])
+app.layout = html.Div(
+    [
+        locations,
+        # store,
+        navbar,
+        html.Br(),
+        slider_vol,
+        html.Br(),
+        slider_hours,
+        html.Br(),
+        interval_reload,
+        graph,
+    ]
+)
 
 
 # TODO repair select crypto
@@ -155,14 +165,16 @@ def connect_base(pathname, all_p):
     return crypto
 
 
-@app.callback(Output("crypto", "children"),
-              [Input("url", "pathname"),
-               Input("all_period", "value"),
-               Input("period_v", "value"),
-               Input('Button', 'n_clicks'),
-               Input('interval-reload', 'n_intervals')
-               ])
-def render_page_content(pathname, all_p, but, n):
+@app.callback(
+    Output("crypto", "children"),
+    [Input("url", "pathname"),
+     Input("all_period", "value"),
+     Input("period_v", "value"),
+     Input('Button', 'n_clicks'),
+     Input('interval-reload', 'n_intervals')
+     ]
+    )
+def render_page_content(pathname, all_p, p, but, n):
     print('Refresh ', pathname, n)
     crypto = connect_base(pathname, all_p)
     return crypto
@@ -179,7 +191,8 @@ def render_page_content(pathname, all_p, but, n):
      Input("url", "pathname"),
      Input("all_period", "value"),
      Input("period_v", "value"),
-     Input("max_vol_options", "checked")])
+     Input("max_vol_options", "checked")]
+)
 def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo):
     print('Update', pathname, n)
     if cry_1h.df.empty or n == 0:
@@ -192,7 +205,9 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     end_price = cry_1m.df['Close'][-1]
     # Брать из массива минут, группировать по часам, находить в каждом часе индекс максимума и
     # Open максимума этого часа прописывать в Open_max массива часов
-    df['Open_max'] = cry_1m.df['Open'][cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()].resample('1h').mean()
+    df['Open_max'] = cry_1m.df['Open'][cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()].resample(
+        '1h'
+        ).mean()
     df['Date_max'] = cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax().resample('1h').max()
     # TODO Выбор периодов линий на странице
     wvwma_1 = 24
@@ -217,6 +232,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
         # df['ls_color'] = df['lsl'].where(df['lsl'] >= 0, 'blue').where(df['lsl'] < 0, 'red')
         # print(df.loc[ser.index])
         return d['Volume'][d['l'] >= 0].sum() - d['Volume'][d['l'] < 0].sum()
+
     df['lslv'] = df['Open_max'].rolling(window=p).apply(v_compare, raw=False)
     df['ls_color_v'] = df['lslv'].where(df['lslv'] >= 0, 'blue').where(df['lslv'] < 0, 'red')
 
@@ -230,8 +246,10 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev_hor].groupby(['Prof_Bar']).sum()
 
     # Рисовать графики
-    fig = make_subplots(rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
-                        shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.03, column_widths=[1, 0.1])
+    fig = make_subplots(
+        rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
+        shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.03, column_widths=[1, 0.1]
+        )
     # Heiken Ashi OR Candles
     if act == 'Candle':
         df_act = df
@@ -334,7 +352,8 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     )
     fig.add_trace(
         go.Candlestick(
-            x=maxv, open=df_act['Open'][maxv], close=df_act['Close'][maxv], high=df_act['High'][maxv], low=df_act['Low'][maxv],
+            x=maxv, open=df_act['Open'][maxv], close=df_act['Close'][maxv], high=df_act['High'][maxv],
+            low=df_act['Low'][maxv],
             increasing=dict(line=dict(color='green', width=3)),
             decreasing=dict(line=dict(color='purple', width=3)),
             showlegend=False,
@@ -344,24 +363,27 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     )
     # Vert Vol
     fig.add_trace(
-        go.Bar(x=df.index, y=df['Volume'].where(df['Volume'] >= lev*0.8, 0), name='Volume',
-               marker=dict(color='grey'), showlegend=True, opacity=0.2,
-               hoverinfo='none'
-               ),
-        row=1, col=1, secondary_y=True)
+        go.Bar(
+            x=df.index, y=df['Volume'].where(df['Volume'] >= lev * 0.8, 0), name='Volume',
+            marker=dict(color='grey'), showlegend=True, opacity=0.2,
+            hoverinfo='none'
+            ),
+        row=1, col=1, secondary_y=True
+    )
     # Hor Vol
     if dfg.shape[0] > 1:
-        fig.add_trace(go.Bar(
-            x=dfg['Volume'],
-            y=dfg.index,
-            orientation='h',
-            # marker=dict(color='blue'),
-            name='VolH',
-            showlegend=False,
-            marker_color=dfg['Volume'],
-            # texttemplate='%{x}', textposition='outside',
-            # width=10
-        ), 1, 2
+        fig.add_trace(
+            go.Bar(
+                x=dfg['Volume'],
+                y=dfg.index,
+                orientation='h',
+                # marker=dict(color='blue'),
+                name='VolH',
+                showlegend=False,
+                marker_color=dfg['Volume'],
+                # texttemplate='%{x}', textposition='outside',
+                # width=10
+            ), 1, 2
         )
     # End price
     fig.add_trace(
@@ -374,7 +396,8 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
             marker=dict(color=color_end, size=12, symbol='star'),
             showlegend=False,
             hoverinfo='none'
-        ), 1, 1, secondary_y=False)
+        ), 1, 1, secondary_y=False
+    )
     # Level price
     fig.add_trace(
         go.Scatter(
@@ -386,7 +409,8 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
             name='Max Vol Price',
             showlegend=True,
             legendgroup='Max Vol Lines',
-        ), 1, 1, secondary_y=False)
+        ), 1, 1, secondary_y=False
+    )
     # Vol Flash
     fig.add_trace(
         go.Scatter(
@@ -406,7 +430,8 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
             # textposition="top right",
             # mode="text",
             showlegend=False
-        ), 1, 1, secondary_y=False)
+        ), 1, 1, secondary_y=False
+    )
     # # Line
     if mvo:
         [fig.add_shape(
@@ -439,10 +464,10 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
         )
     ) for i in range(len(maxv))]
     fig.update_layout(
-        title=f"{dirs} {hd(voldir,sign=True)} all_period:{all_p/24}d end_price: {end_price} " +
-        f"VWMA({wvwma_1}h):{hd(end_price-df[f'wvwma_'+str(wvwma_1)][-1],1,True)} "+
-        f"VWMA({wvwma_2}h):{hd(end_price-df[f'wvwma_'+str(wvwma_2)][-1],1,True)} "+
-        f"VWMA({wvwma_3}h):{hd(end_price-df[f'wvwma_'+str(wvwma_3)][-1],1,True)} ",
+        title=f"{dirs} {hd(voldir, sign=True)} all_period:{all_p / 24}d end_price: {end_price} " +
+              f"VWMA({wvwma_1}h):{hd(end_price - df[f'wvwma_' + str(wvwma_1)][-1], 1, True)} " +
+              f"VWMA({wvwma_2}h):{hd(end_price - df[f'wvwma_' + str(wvwma_2)][-1], 1, True)} " +
+              f"VWMA({wvwma_3}h):{hd(end_price - df[f'wvwma_' + str(wvwma_3)][-1], 1, True)} ",
         xaxis_title="Date",
         yaxis_title=f"{cry_1h.crypto}",
         height=650,

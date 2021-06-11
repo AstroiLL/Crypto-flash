@@ -81,8 +81,34 @@ class Crypto:
                 exit(5)
         if self.verbose: print(f"Table {self.period} has total {count_records} records")
 
-    # def connect(self, exchange=None, crypto=None, period=None, update=None):
-    #     self.open(exchange=exchange, crypto=crypto, period=period, update=update)
+    def _check_exchange(self):
+        if self.exchange == 'BITMEX':
+            exchange = ccxt.bitmex(
+                {
+                    'enableRateLimit': True,  # or .enableRateLimit = True later
+                }
+            )
+        elif self.exchange == 'BINANCE':
+            exchange = ccxt.binance(
+                {
+                    'enableRateLimit': True,  # or .enableRateLimit = True later
+                }
+            )
+        else:
+            print(f'Incorrect exchange {self.exchange} seting BITMEX')
+            exchange = ccxt.bitmex(
+                {
+                    'enableRateLimit': True,  # or .enableRateLimit = True later
+                }
+            )
+            self.exchange = 'BITMEX'
+        try:
+            if self.verbose: print(
+                f"Test_get_from_exch {self.exchange}.{self.crypto} {self.period} limit 1")
+            exchange.fetch_ohlcv(self.crypto, self.period, limit=1)
+        except:
+            print(f'Error test fetch from {self.exchange}, update disabling')
+            self.update = False
 
     def open(self, exchange=None, crypto=None, period=None, update=None):
         """Открываем базу"""
@@ -101,6 +127,7 @@ class Crypto:
         self.conn_str = f'{mysql_url}/{self.exchange}.{self.crypto}'
         if self.verbose: print(self.conn_str)
         self._check_connect()
+        self._check_exchange()
         if self.update: self.updating()
 
     def get_count_records(self):
@@ -132,7 +159,7 @@ class Crypto:
         """Последняя дата котировок в базе"""
         count_records = self.get_count_records()
         if self.verbose: print(f"Table {self.period} has total {count_records} records")
-        # TODO если пустая база возвращать 0 а не загружать
+        # TODO если пустая база возвращать 0, а не загружать
         if count_records == 0:
             print("Empty base")
             if not self.update: exit(4)
@@ -283,6 +310,7 @@ class Crypto:
                 fetch = exchange.fetch_ohlcv(self.crypto, self.period, since=since_exch, limit=lmt)
             except:
                 print(f'Error fetch from {self.exchange}')
+                self.update = False
                 exit(1)
             else:
                 df = pd.DataFrame(fetch, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
@@ -373,3 +401,9 @@ class CryptoH:
 
     def get_df(self):
         return self.df_1h
+
+
+if __name__ == '__main__':
+    cry_1h = Crypto(verbose=True)
+    cry_1m = Crypto(verbose=True)
+
