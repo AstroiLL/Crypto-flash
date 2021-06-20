@@ -13,7 +13,7 @@ from plotly.subplots import make_subplots
 # import pandas_ta as ta    
 
 from MLDiLL.crypto import Crypto
-from MLDiLL.utils import hd, HA, wvwma
+from MLDiLL.utils import hd, HA, wvwma, wvsma
 
 cry_1h = Crypto(verbose=False)
 cry_1m = Crypto(verbose=False)
@@ -214,10 +214,10 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     wvwma_2 = 48
     wvwma_3 = 168
     # Графики взвешенных объемно-взвешенных
-    df[f'wvwma_{wvwma_0}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_0)
-    df[f'wvwma_{wvwma_1}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_1)
-    df[f'wvwma_{wvwma_2}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_2)
-    df[f'wvwma_{wvwma_3}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_3)
+    df[f'wvwma_{wvwma_0}'] = wvsma(df['Open_max'], df['Volume'], length=wvwma_0)
+    df[f'wvwma_{wvwma_1}'] = wvsma(df['Open_max'], df['Volume'], length=wvwma_1)
+    df[f'wvwma_{wvwma_2}'] = wvsma(df['Open_max'], df['Volume'], length=wvwma_2)
+    df[f'wvwma_{wvwma_3}'] = wvsma(df['Open_max'], df['Volume'], length=wvwma_3)
 
     # Создать массив разниц максимумов на каждом баре и текущей цены
     df['lsl'] = df['Open_max'] - end_price
