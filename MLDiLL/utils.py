@@ -88,6 +88,12 @@ def wvwma(src, vol, length=48):
     """
     return ta.wma(src*vol, length=length)/ta.wma(vol, length=length)
 
+def wvsma(src, vol, length=48):
+    """
+    WVsma - объемно-взвешенная скользящая средняя за период
+    """
+    return ta.sma(src*vol, length=length)/ta.sma(vol, length=length)
+
 
 def hd(x, precision=2, sign=False):
     """
