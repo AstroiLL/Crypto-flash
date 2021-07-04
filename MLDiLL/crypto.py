@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import ccxt
 import pandas as pd
 from sqlalchemy import create_engine
+
 # from MLDiLL.utils import VWAP, VWAP_d, VWAP_p
 
 # from .env import mysql_url
@@ -56,7 +57,7 @@ class Crypto:
         # self.connect(exchange=exchange, crypto=crypto, period=period, update=update)
 
     def _connect(self):
-            return create_engine(self.conn_str, pool_pre_ping=True).connect()
+        return create_engine(self.conn_str, pool_pre_ping=True).connect()
 
     def _check_connect(self):
         try:
@@ -64,7 +65,7 @@ class Crypto:
         except:
             print(f'No base {self.exchange}.{self.crypto}')
             if not self.update: exit(3)
-            #conn.close()
+            # conn.close()
             self._create_base()
         else:
             conn.close()
@@ -95,7 +96,7 @@ class Crypto:
                 }
             )
         else:
-            print(f'Incorrect exchange {self.exchange} seting BITMEX')
+            print(f'Incorrect exchange "{self.exchange}", seting "BITMEX"')
             exchange = ccxt.bitmex(
                 {
                     'enableRateLimit': True,  # or .enableRateLimit = True later
@@ -104,7 +105,8 @@ class Crypto:
             self.exchange = 'BITMEX'
         try:
             if self.verbose: print(
-                f"Test_get_from_exch {self.exchange}.{self.crypto} {self.period} limit 1")
+                f"Test_get_from_exch {self.exchange}.{self.crypto} {self.period} limit 1"
+            )
             exchange.fetch_ohlcv(self.crypto, self.period, limit=1)
         except:
             print(f'Error test fetch from {self.exchange}, update disabling')
@@ -115,7 +117,7 @@ class Crypto:
         self.limit = None
         if exchange is not None: self.exchange = exchange
         if self.exchange != 'BITMEX' and self.exchange != 'BINANCE':
-            print(f'Incorrect exchange {self.exchange} setting BITMEX')
+            print(f'Incorrect exchange "{self.exchange}", setting "BITMEX"')
             self.exchange = 'BITMEX'
         if crypto is not None: self.crypto = crypto
         if period is not None: self.period = period
@@ -179,7 +181,7 @@ class Crypto:
             print(f"Table {self.period} has total {count_records} records")
             print(f"Load {self.crypto} from SQL {self.period}")
         if limit is not None: self.limit = limit
-        df = pd.DataFrame()
+        # df = pd.DataFrame()
         if self.limit is None:
             conn = self._connect()
             df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC", con=conn)
@@ -229,7 +231,7 @@ class Crypto:
             if self.verbose: print(f"Delete in {self.period} last record on {self.last_date}")
             conn.execute(f"DELETE FROM {self.period} ORDER BY Date DESC LIMIT 1")
             conn.close()
-            if self.verbose: print(f"Update {self.exchange}.{self.crypto} {self.period} count {difs+1}")
+            if self.verbose: print(f"Update {self.exchange}.{self.crypto} {self.period} count {difs + 1}")
             self._get_from_exchange(limit=difs + 1)
 
     def update_from(self, from_date=None, count=None):
@@ -269,7 +271,7 @@ class Crypto:
         for i in range(len(df_app)):
             try:
                 if self.verbose: print(i)
-                df_app.iloc[i:i+1].to_sql(self.period, con=conn, if_exists='append', index=True)
+                df_app.iloc[i:i + 1].to_sql(self.period, con=conn, if_exists='append', index=True)
             except Exception as e:
                 print(f'{e} Error write to MySQL {self.period}')
         conn.close()
@@ -279,18 +281,24 @@ class Crypto:
         """Получить котировки с биржи от даты since количеством limit"""
         # exchange = 'BITMEX'
         if self.exchange == 'BITMEX':
-            exchange = ccxt.bitmex({
-                'enableRateLimit': True,  # or .enableRateLimit = True later
-            })
+            exchange = ccxt.bitmex(
+                {
+                    'enableRateLimit': True,  # or .enableRateLimit = True later
+                }
+            )
         elif self.exchange == 'BINANCE':
-            exchange = ccxt.binance({
-                'enableRateLimit': True,  # or .enableRateLimit = True later
-            })
+            exchange = ccxt.binance(
+                {
+                    'enableRateLimit': True,  # or .enableRateLimit = True later
+                }
+            )
         else:
             print(f'Incorrect exchange {self.exchange} seting BITMEX')
-            exchange = ccxt.bitmex({
-                'enableRateLimit': True,  # or .enableRateLimit = True later
-            })
+            exchange = ccxt.bitmex(
+                {
+                    'enableRateLimit': True,  # or .enableRateLimit = True later
+                }
+            )
             self.exchange = 'BITMEX'
         # TODO syncing with updating
         if since is None:
@@ -306,7 +314,8 @@ class Crypto:
             lmt = limit if limit <= 750 else 750
             try:
                 if self.verbose: print(
-                    f"Get_from_exch {self.exchange}.{self.crypto} {self.period} since {since_exch} limit {lmt}")
+                    f"Get_from_exch {self.exchange}.{self.crypto} {self.period} since {since_exch} limit {lmt}"
+                )
                 fetch = exchange.fetch_ohlcv(self.crypto, self.period, since=since_exch, limit=lmt)
             except:
                 print(f'Error fetch from {self.exchange}')
@@ -377,7 +386,13 @@ COMMIT;
 
 
 class CryptoH:
-    def __init__(self, exchange=None, crypto=None, update=True, verbose=False):
+    """
+    cry = CryptoH().load(limit=24).max_vol()
+    df = pd.DataFrame(cry.get_df()[['Volume', 'Open_max', 'Date_max']])
+    print(df)
+
+    """
+    def __init__(self, exchange='BITMEX', crypto='BTC/USD', update=True, verbose=False):
         self.cry_1h = Crypto(verbose=verbose)
         self.cry_1h.open(exchange=exchange, crypto=crypto, period='1h', update=update)
         self.cry_1m = Crypto(verbose=verbose)
@@ -385,25 +400,22 @@ class CryptoH:
 
     def load(self, limit=None):
         self.df_1h = self.cry_1h.load(limit=limit)
-        self.df_1m = self.cry_1m.load(limit=limit*168)
+        self.df_1m = self.cry_1m.load(limit=limit * 168)
 
-    def updating(self):
-        self.df_1h = self.cry_1h.updating()
-        self.df_1m = self.cry_1m.updating()
-
-    def filling(self):
+    def max_vol(self):
         # берем из массива минут, группируем по часам, находим в каждом часе индекс максимума и
         # Open максимума этого часа прописываем в Open_max массива часов
         self.df_1h['Open_max'] = self.cry_1m.df['Open'][self.cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()
-            ].resample('1h').mean()
+        ].resample('1h').mean()
         self.df_1h['Date_max'] = self.cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax().resample('1h').max()
-        # print(self.df_1h[['Open_max', 'Date_max']][-5:])
 
     def get_df(self):
         return self.df_1h
 
 
 if __name__ == '__main__':
-    cry_1h = Crypto(verbose=True)
-    cry_1m = Crypto(verbose=True)
-
+    cry = CryptoH(verbose=False)
+    cry.load(limit=24)
+    cry.max_vol()
+    df = pd.DataFrame(cry.get_df()[['Volume', 'Open_max', 'Date_max']])
+    print(df)

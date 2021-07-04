@@ -2,8 +2,10 @@
 *.pyc
 *.egg-info
 /env
-/DiLL/.env
+/MLDiLL/.env
 *.h5
 env.py
 sma.py
 *.json
+/old/
+/old/*
