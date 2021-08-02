@@ -82,17 +82,32 @@ def vwap(df, period='1D', price='Open'):
     return df
 
 
-def wvwma(src, vol, length=48):
+def sma(src, length=48):
     """
-    WVwma - взвешенная объемно-взвешенная скользящая средняя за период
+    sma - простая скользящая средняя за период
     """
-    return ta.wma(src*vol, length=length)/ta.wma(vol, length=length)
+    return ta.sma(src, length=length)
+
+
+def wma(src, length=48):
+    """
+    wma - взвешенная скользящая средняя за период
+    """
+    return ta.wma(src, length=length)
+
 
 def wvsma(src, vol, length=48):
     """
     WVsma - объемно-взвешенная скользящая средняя за период
     """
     return ta.sma(src*vol, length=length)/ta.sma(vol, length=length)
+
+
+def wvwma(src, vol, length=48):
+    """
+    WVwma - взвешенная объемно-взвешенная скользящая средняя за период
+    """
+    return ta.wma(src*vol, length=length)/ta.wma(vol, length=length)
 
 
 def hd(x, precision=2, sign=False):

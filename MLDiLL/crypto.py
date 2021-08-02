@@ -387,18 +387,21 @@ COMMIT;
 
 class CryptoH:
     """
-    cry = CryptoH().load(limit=24).max_vol()
-    df = pd.DataFrame(cry.get_df()[['Volume', 'Open_max', 'Date_max']])
+    cry = CryptoH(limit=24)
+    df = cry.get_df()
     print(df)
 
     """
-    def __init__(self, exchange='BITMEX', crypto='BTC/USD', update=True, verbose=False):
+    def __init__(self, exchange='BITMEX', crypto='BTC/USD', limit=None, update=True, max_vol=True, verbose=False):
         self.cry_1h = Crypto(verbose=verbose)
         self.cry_1h.open(exchange=exchange, crypto=crypto, period='1h', update=update)
         self.cry_1m = Crypto(verbose=verbose)
         self.cry_1m.open(exchange=exchange, crypto=crypto, period='1m', update=update)
+        if limit is not None:
+            self.load(limit)
+            self.max_vol()
 
-    def load(self, limit=None):
+    def load(self, limit):
         self.df_1h = self.cry_1h.load(limit=limit)
         self.df_1m = self.cry_1m.load(limit=limit * 168)
 
@@ -414,8 +417,6 @@ class CryptoH:
 
 
 if __name__ == '__main__':
-    cry = CryptoH(verbose=False)
-    cry.load(limit=24)
-    cry.max_vol()
+    cry = CryptoH(limit=24)
     df = pd.DataFrame(cry.get_df()[['Volume', 'Open_max', 'Date_max']])
     print(df)

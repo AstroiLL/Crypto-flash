@@ -117,7 +117,7 @@ navbar = dbc.NavbarSimple(
         refresh,
         # dump,
     ],
-    brand="Crypto Flash 16 BitMEX",
+    brand="Crypto Flash 17 BitMEX",
     brand_href="#",
     color='dark',
     dark=True,
@@ -221,10 +221,10 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     wvwma_2 = 48
     wvwma_3 = 168
     # Графики взвешенных объемно-взвешенных
-    df[f'wvwma_{wvwma_0}'] = wvsma(df['Open_max'], df['Volume'], length=wvwma_0)
-    df[f'wvwma_{wvwma_1}'] = wvsma(df['Open_max'], df['Volume'], length=wvwma_1)
-    df[f'wvwma_{wvwma_2}'] = wvsma(df['Open_max'], df['Volume'], length=wvwma_2)
-    df[f'wvwma_{wvwma_3}'] = wvsma(df['Open_max'], df['Volume'], length=wvwma_3)
+    df[f'wvwma_{wvwma_0}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_0)
+    df[f'wvwma_{wvwma_1}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_1)
+    df[f'wvwma_{wvwma_2}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_2)
+    df[f'wvwma_{wvwma_3}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_3)
 
     # Создать массив разниц максимумов на каждом баре и текущей цены
     df['lsl'] = df['Open_max'] - end_price
@@ -246,8 +246,12 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     df = df[-hours:]
     # Фильтровать по критерию Vol >= уровень
     maxv = df[df['Volume'] >= lev].index
-    # print(len(maxv))
+    maxv2 = df[df['Volume'] >= lev*0.4].index
+    # print(len(maxv2))
     df.loc[:, 'rank'] = df['Volume'][maxv].rank()
+    df.loc[:, 'rank2'] = df['Volume'][maxv2].rank()
+    df['rank2'].fillna(0, inplace=True)
+    # print(df)
     grid = (df['Open_max'].max() - df['Open_max'].min()) / 100
     df.loc[:, 'Prof_Bar'] = df['Open_max'] // grid * grid
     dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev_hor].groupby(['Prof_Bar']).sum()
@@ -270,13 +274,12 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     # maxVol
     fig.add_trace(
         go.Scatter(
-            x=df.index, y=df['Open_max'], mode='lines+markers', name='max Volume',
+            x=df.index, y=df['Open_max'], mode='markers', name='max Volume',
             marker=dict(
-                symbol='cross',
+                symbol='circle',
+                size=df['rank2']+2,
+                # symbol='cross-dot',
                 color=df['ls_color_v'],
-            ),
-            line=dict(
-                color='grey',
             ),
             showlegend=True
         ), 1, 1, secondary_y=False,
@@ -347,6 +350,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
             showlegend=True
         ), 1, 1, secondary_y=False,
     )
+    # Обычные свечи
     fig.add_trace(
         go.Candlestick(
             x=df_act.index, open=df_act['Open'], close=df_act['Close'], high=df_act['High'], low=df_act['Low'],
@@ -357,6 +361,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
             hoverinfo='none'
         ), 1, 1, secondary_y=False,
     )
+    # Объемные свечи
     fig.add_trace(
         go.Candlestick(
             x=maxv, open=df_act['Open'][maxv], close=df_act['Close'][maxv], high=df_act['High'][maxv],
