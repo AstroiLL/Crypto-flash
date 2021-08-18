@@ -28,7 +28,7 @@ dropdown = dbc.DropdownMenu(
         dbc.DropdownMenuItem("BTC", href="/"),
         dbc.DropdownMenuItem("ETH", href="/ETH"),
         dbc.DropdownMenuItem("XRP", href="/XRP"),
-        dbc.DropdownMenuItem("LTC", href="/LTC"),
+        # dbc.DropdownMenuItem("LTC", href="/LTC"),
     ],
     nav=True,
     in_navbar=True,
@@ -85,11 +85,11 @@ refresh = dbc.Button([crypto_label, "Refresh"], id="Button", color="primary", ou
 # reload = dbc.Badge(id='reload', color="light")
 slider_vol = dcc.Slider(
     id='VolLevel',
-    min=20,
-    max=60,
+    min=39,
+    max=91,
     value=50,
-    marks={f'{i}': f'{i}%' for i in range(25, 60, 5)},
-    step=1,
+    marks={f'{i}': f'{i}%' for i in range(40, 90, 10)},
+    step=10,
     tooltip={'always_visible': True, 'placement': 'bottom'},
     persistence=True, persistence_type='local',
 )
@@ -98,7 +98,7 @@ slider_hours = dcc.Slider(
     min=5,
     max=24 * 7,
     value=48,
-    marks={**{f'{6 * i}': f'{6 * i}h' for i in range(1, 4)}, **{f'{24 * i}': f'{i}D' for i in range(1, 8)}},
+    marks={**{f'{6 * i}': f'{6 * i} ч' for i in range(1, 4)}, **{f'{24 * i}': f'{i} Д' for i in range(1, 8)}},
     step=1,
     tooltip={'always_visible': True, 'placement': 'bottom'}, persistence=True, persistence_type='local',
 )
