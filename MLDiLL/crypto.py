@@ -1,4 +1,4 @@
-# import time
+import time
 # import os
 # from dotenv import load_dotenv
 from datetime import datetime, timedelta
@@ -309,7 +309,7 @@ class Crypto:
             since_exch = exchange.parse8601(since.strftime('%Y-%m-%d %H:%M:%S'))
         if self.verbose: print('Since', exchange.iso8601(since_exch))
         while limit > 0:
-            # time.sleep(exchange.rateLimit // 300)
+            time.sleep(exchange.rateLimit // 1000)
             if self.verbose: print('Load limit', limit, self.period)
             lmt = limit if limit <= 750 else 750
             try:
@@ -417,6 +417,11 @@ class CryptoH:
 
 
 if __name__ == '__main__':
-    cry = CryptoH(limit=24)
-    df = pd.DataFrame(cry.get_df()[['Volume', 'Open_max', 'Date_max']])
+    # cry = CryptoH(limit=24)
+    # df = pd.DataFrame(cry.get_df()[['Volume', 'Open_max', 'Date_max']])
+    # print(df)
+    cry_1m = Crypto(update=False, verbose=False)
+    cry_1m.open(exchange='BITMEX', crypto='BTC/USD', period='1m')
+    df = cry_1m.load(limit=60)
+    # print('SQL')
     print(df)

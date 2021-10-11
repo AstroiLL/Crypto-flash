@@ -8,6 +8,7 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
+from flask import Flask
 from plotly.subplots import make_subplots
 # import plotly.io as pio
 # import pandas_ta as ta    
@@ -132,7 +133,10 @@ interval_reload = dcc.Interval(
 graph = dcc.Graph(id='graph_out')
 # store = dcc.Store(id='data', storage_type='local')
 # app = dash.Dash(external_stylesheets=[dbc.themes.SKETCHY])
-app = dash.Dash(external_stylesheets=[dbc.themes.SLATE])
+server = Flask(__name__)
+app = dash.Dash(__name__, server=server, external_stylesheets=[dbc.themes.SLATE])
+server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+db = SQAlchemy(server)
 app.layout = dbc.Container(
     [
         locations,
