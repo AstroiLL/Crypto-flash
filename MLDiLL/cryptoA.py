@@ -1,12 +1,13 @@
 import time
 # import os
 # from dotenv import load_dotenv
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import ccxt
 import pandas as pd
 from sqlalchemy import create_engine, MetaData, Table
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
+
 # from MLDiLL.utils import VWAP, VWAP_d, VWAP_p
 
 # from .env import mysql_url
@@ -109,8 +110,6 @@ class Exchange:
         return df_app
 
 
-
-
 class CryptoA:
     """
     Получаем котировки с криптовалютных бирж и записываем в базу SQL, чтобы легко их получать
@@ -133,99 +132,125 @@ class CryptoA:
         self.conn = None
         self.session = None
         self.new = True
+        self.count = 0
+        self.table = None
         self.metadata_obj = MetaData()
 
-    def load(self, exchange=None, crypto=None, period=None, update=None, limit=None):
+    # TODO default parameters попробовать убрать None
+    def load(self, exchange=None, crypto=None, period=None, update=None, limit=1):
         """Открываем базу и загружаем новые данные если не изменились
             параметры exchange crypto period
         """
-        self.limit = None
-        if exchange is not None:
-            if self.exchange != exchange:
-                self.new = True
-                self.exchange = exchange
-        if crypto is not None:
-            if self.crypto != crypto:
-                self.new = True
-                self.crypto = crypto
-        if period is not None:
-            if self.period != period:
-                self.new = True
-                self.period = period
+        self.limit = limit
+        if exchange is not None and self.exchange != exchange:
+            self.new = True
+            self.exchange = exchange
+            if self.exchange != 'BITMEX' and self.exchange != 'BINANCE':
+                print(f'Incorrect exchange "{self.exchange}", setting "BITMEX"')
+                self.exchange = 'BITMEX'
+        if crypto is not None and self.crypto != crypto:
+            self.new = True
+            self.crypto = crypto
+        if period is not None and self.period != period:
+            self.new = True
+            self.period = period
         if update is not None: self.update = update
-        if self.exchange != 'BITMEX' and self.exchange != 'BINANCE':
-            print(f'Incorrect exchange "{self.exchange}", setting "BITMEX"')
-            self.exchange = 'BITMEX'
+        if self.new: self.session = None
+        self._get_count_records_()
+        if not self._load_data_():
+            if not self._load_data_():
+                self._load_data_()
+
+    def _connect_(self):
         if self.verbose: print(f'==============\nInit {self.exchange}.{self.crypto} {self.period}')
         self.conn_str = f'{sql_url}/{self.exchange}.{self.crypto}'
         if self.verbose: print(self.conn_str)
-        try:
-            self.conn = self._connect_()
-            self.table = Table(self.period, self.metadata_obj, autoload_with=self.conn)
-            self.session = Session(self.conn)
-        except:
-            print(f'No base {self.exchange}.{self.crypto}')
-            if not self.update:
-                print('#2 Updates disabled. Exiting.')
-                exit(2)
-            self._create_base_()
-        # else:
-        #     self.conn.close()
-        #     self.conn = None
-        count_records = self._get_count_records_()
-        if count_records == 0:
-            print(f'#3 Empty base {self.exchange}.{self.crypto}.{self.period}')
-            if not self.update: exit(3)
-            self._update_base_()
-            count_records = self._get_count_records_()
-            if count_records == 0:
-                print(f'#4 Error filling empty base {self.exchange}.{self.crypto}.{self.period}')
-                exit(4)
-        if self.verbose: print(f"Table {self.period} has total {count_records} records")
-        self._load_data_()
-
-    def _connect_(self):
-        return create_engine(self.conn_str, pool_pre_ping=True, echo=self.verbose).connect()
+        c = 0
+        while c < 3:
+            try:
+                self.conn = create_engine(self.conn_str, pool_pre_ping=True, echo=self.verbose).connect()
+                self.table = Table(self.period, self.metadata_obj, autoload_with=self.conn)
+                self.session = Session(self.conn)
+                if self.verbose: print(f"Connected to {self.exchange}.{self.crypto} {self.period}")
+                return
+            except:
+                self.session = None
+                print(f'No base {self.exchange}.{self.crypto}')
+                if not self.update:
+                    print('#2 Updates disabled. Exiting.')
+                    exit(2)
+                # self._create_base_()
+                print(f'#5 Error {c=}: Read base {self.exchange}.{self.crypto}.{self.period}')
+            c += 1
+        exit(5)
+        # self._get_count_records_()
+        # if self.count == 0:
+        #     print(f'#3 Empty base {self.exchange}.{self.crypto}.{self.period}')
+        #     if not self.update: exit(3)
+        #     self._update_base_()
+        #     self._get_count_records_()
+        #     if self.count == 0:
+        #         print(f'#4 Error filling empty base {self.exchange}.{self.crypto}.{self.period}')
+        #         exit(4)
 
     def _get_count_records_(self):
         """Количество котировок в базе"""
-        if self.verbose:
-            count_records = self._get_count_records_()
-            print(f"Table {self.period} has total {count_records} records")
-            print(f"Load {self.crypto} from SQL {self.period}")
-        count = self.session.query(self.table).count()
-        if self.verbose: print(f"Записей: {count}")
-        return count
+        if self.session is None: self._connect_()
+        c = 0
+        while c < 3:
+            try:
+                self.count = int(self.session.query(self.table).count())
+                if self.verbose: print(f"Table {self.period} has total {self.count} records")
+                return
+            except:
+                self.count = 0
+                self.session = None
+                self._connect_()
+            c += 1
+        print(f'#5 Error: Read base {self.exchange}.{self.crypto}.{self.period}')
+        exit(5)
 
     def _load_data_(self):
         """Загрузить из базы limit котировок"""
-        if self.new:
-            pass
-        else:
-            pass
+        if self.session is None: self._connect_()
+        # if self.new:
+        #     lmt = self.limit
+        # else:
+        # last_date = self.session.query(self.table).first()
         if self.limit is None:
-            record = self.session.query(self.table).all()
-            df = pd.DataFrame(record, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
-            s = df.select_dtypes(include='object').columns
-            df[s] = df[s].astype("float")
-            if self.verbose: print(df.dtypes)
-            self.limit = df.shape[0]
+            try:
+                record = self.session.query(self.table).all()
+                df = pd.DataFrame.from_records(record, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
+                s = df.select_dtypes(include='object').columns
+                df[s] = df[s].astype("float")
+                # if self.verbose: print(df.dtypes)
+                self.limit = df.shape[0]
+            except:
+                self.session = None
+                return False
         else:
-            record = self.session.query(self.table).limit(self.limit).all()
-            # print(record)
-            df = pd.DataFrame(record, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
-            s = df.select_dtypes(include='object').columns
-            df[s] = df[s].astype("float")
-            if self.verbose: print(df.dtypes)
-            self.limit = min(df.shape[0], self.limit)
-        self.last_date = df.at[0, 'Date']
-        if self.verbose: print("Last date from mySQL", self.last_date)
+            try:
+                record = self.session.query(self.table).offset(self.count - self.limit).limit(self.limit).all()
+                # print(record)
+                df = pd.DataFrame.from_records(record, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
+                s = df.select_dtypes(include='object').columns
+                df[s] = df[s].astype("float")
+                # if self.verbose: print(df)
+                self.limit = min(df.shape[0], self.limit)
+            except:
+                self.session = None
+                return False
+        # last_date = self.session.query(self.table).offset(self.count - 1).first()[0]
         df.sort_values('Date', ascending=True, inplace=True)
         df.set_index('Date', drop=True, inplace=True)
         df.index += timedelta(hours=tz)
+        self.last_date = df.index[-1]
+        if self.verbose:
+            print(f"Last date1 from {self.period} from mySQL", self.last_date)
+            # print(f"Last date2 from {self.period} from mySQL", last_date)
         if self.verbose: print(f'Loaded {self.limit} bars {self.period}')
-        self.df = df
-        return df
+        self.df = df.copy()
+        return True
 
 
 if __name__ == '__main__':
@@ -233,7 +258,13 @@ if __name__ == '__main__':
     # df = cry.get(limit=60)
     # print('Exchange')
     # print(df)
-    cry_1m = CryptoA(period='1m', verbose=True)
-    df = cry_1m.load(limit=6)
-    # print('SQL')
-    print(df)
+    # cry_1m = CryptoA(period='1m', verbose=False)
+    cry_1h = CryptoA(period='1h', verbose=True)
+    # cry_1m.load(limit=6)
+    # print(cry_1m.df)
+    cry_1h.load(limit=10)
+    # print(cry_1h.df)
+    # cry_1m.load(limit=10)
+    # print(cry_1m.df)
+    # cry_1h.load(limit=6)
+    # print(cry_1h.df)

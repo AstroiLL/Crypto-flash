@@ -1,23 +1,23 @@
-import pandas as pd
 # from pandas import DataFrame
 # import numpy as np
 # from datetime import datetime as dt
 import dash
+import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-import dash_bootstrap_components as dbc
+import pandas as pd
 import plotly.graph_objects as go
-from dash.dependencies import Input, Output, State
-from flask import Flask
+from dash.dependencies import Input, Output
 from plotly.subplots import make_subplots
+
+from MLDiLL.cryptoA import CryptoA
+from MLDiLL.utils import hd, HA, wvwma
+
 # import plotly.io as pio
-# import pandas_ta as ta    
+# import pandas_ta as ta
 
-from MLDiLL.crypto import Crypto
-from MLDiLL.utils import hd, HA, wvwma, wvsma
-
-cry_1h = Crypto(verbose=False)
-cry_1m = Crypto(verbose=False)
+cry_1h = CryptoA(verbose=False)
+cry_1m = CryptoA(verbose=False)
 # df_exch = cry_1h.get_list_exch()
 
 vol_lev_hor = 0.3
@@ -59,7 +59,7 @@ period_wvwma = dbc.InputGroup(
         dbc.Input(
             id="period_wvwma", type="number", min=2, step=1, value=120,
             persistence=True, persistence_type='local'
-            )
+        )
     ]
 )
 all_period_input = dbc.InputGroup(
@@ -68,7 +68,7 @@ all_period_input = dbc.InputGroup(
         dbc.Input(
             id="all_period", type="number", min=168, step=168, value=504,
             persistence=True, persistence_type='local'
-            )
+        )
     ]
 )
 period_input_v = dbc.InputGroup(
@@ -77,7 +77,7 @@ period_input_v = dbc.InputGroup(
         dbc.Input(
             id="period_v", type="number", min=24, step=24, value=168,
             persistence=True, persistence_type='local'
-            )
+        )
     ]
 )
 
@@ -118,7 +118,7 @@ navbar = dbc.NavbarSimple(
         refresh,
         # dump,
     ],
-    brand="Crypto Flash 17 BitMEX",
+    brand="Crypto Flash 18 SQLAlchemy BitMEX",
     brand_href="#",
     color='dark',
     dark=True,
@@ -133,10 +133,7 @@ interval_reload = dcc.Interval(
 graph = dcc.Graph(id='graph_out')
 # store = dcc.Store(id='data', storage_type='local')
 # app = dash.Dash(external_stylesheets=[dbc.themes.SKETCHY])
-server = Flask(__name__)
-app = dash.Dash(__name__, server=server, external_stylesheets=[dbc.themes.SLATE])
-server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-db = SQAlchemy(server)
+app = dash.Dash(external_stylesheets=[dbc.themes.SLATE])
 app.layout = dbc.Container(
     [
         locations,
@@ -166,13 +163,11 @@ def connect_base(pathname, all_p):
         crypto = 'XRP/USD'
     elif pathname == "/LTC":
         crypto = 'LTC/USD'
-    cry_1h.open(exchange='BITMEX', crypto=crypto, period='1h', update=True)
-    cry_1h.load(limit=all_p)
-    cry_1h.repair_table()
+    cry_1h.load(exchange='BITMEX', crypto=crypto, period='1h', limit=all_p)
+    # cry_1h.repair_table()
     # TODO Порядок действий?
-    cry_1m.open(exchange='BITMEX', crypto=crypto, period='1m', update=True)
-    cry_1m.load(limit=all_p * 60)
-    cry_1m.repair_table()
+    cry_1m.load(exchange='BITMEX', crypto=crypto, period='1m', limit=all_p * 60)
+    # cry_1m.repair_table()
     return crypto
 
 
@@ -184,7 +179,7 @@ def connect_base(pathname, all_p):
      Input('Button', 'n_clicks'),
      Input('interval-reload', 'n_intervals')
      ]
-    )
+)
 def render_page_content(pathname, all_p, p, but, n):
     print('Refresh ', pathname, n)
     crypto = connect_base(pathname, all_p)
@@ -218,7 +213,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     # Open максимума этого часа прописывать в Open_max массива часов
     df['Open_max'] = cry_1m.df['Open'][cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()].resample(
         '1h'
-        ).mean()
+    ).mean()
     df['Date_max'] = cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax().resample('1h').max()
     # TODO Выбор периодов линий на странице
     wvwma_1 = 24
@@ -251,7 +246,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     # Фильтровать по критерию Vol >= уровень
     maxv = df[df['Volume'] >= lev].index
     # Больше число - меньше точек
-    maxv2 = df[df['Volume'] >= lev*0.3].index
+    maxv2 = df[df['Volume'] >= lev * 0.3].index
     # print(len(maxv2))
     df.loc[:, 'rank'] = df['Volume'][maxv].rank()
     df.loc[:, 'rank2'] = df['Volume'][maxv2].rank()
@@ -265,7 +260,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     fig = make_subplots(
         rows=1, cols=2, specs=[[{"secondary_y": True}, {"secondary_y": False}]], shared_xaxes=True,
         shared_yaxes=True, vertical_spacing=0.001, horizontal_spacing=0.03, column_widths=[1, 0.1]
-        )
+    )
     # Heiken Ashi OR Candles
     if act == 'Candle':
         df_act = df
@@ -280,8 +275,8 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     fig.add_trace(
         go.Scatter(
             x=df.index, y=df['Open_max'], mode='markers', name='max Volume',
-            hoverinfo='text',
-            hovertext=df['Date_max'][maxv],
+            # hoverinfo='text',
+            # hovertext=df['Date_max'][maxv],
             # text=df['Date_max'][maxv],
             # textposition="top right",
             marker=dict(
@@ -394,7 +389,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
             x=df.index, y=df['Volume'].where(df['Volume'] >= lev * 0.8, 0), name='Volume',
             marker=dict(color='grey'), showlegend=True, opacity=0.2,
             # hoverinfo='none'
-            ),
+        ),
         row=1, col=1, secondary_y=True
     )
     # Hor Vol
@@ -481,7 +476,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
             y=df['Open_max'][maxv][i],
             xref="x",
             yref="y",
-            text=f"{hd(df['Volume'][maxv][i],0)}<br>{df['Date_max'][maxv][i].strftime('%d,%H:%M')}",
+            text=f"{hd(df['Volume'][maxv][i], 0)}<br>{df['Date_max'][maxv][i].strftime('%d,%H:%M')}",
             # hoverinfo='text',
             # hovertext=f"{df['Open_max'][maxv][i]}",
             name='Max Vol Annot',
@@ -519,4 +514,4 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
 
 
 if __name__ == '__main__':
-    app.run_server(port=8051, debug=False, use_reloader=True)
+    app.run_server(port=8052, debug=False, use_reloader=True)
