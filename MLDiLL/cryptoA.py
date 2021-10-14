@@ -141,7 +141,10 @@ class CryptoA:
         """Открываем базу и загружаем новые данные если не изменились
             параметры exchange crypto period
         """
-        self.limit = limit
+        if limit == 'ALL' or limit is None:
+            self.limit = None
+        else:
+            self.limit = limit
         if exchange is not None and self.exchange != exchange:
             self.new = True
             self.exchange = exchange
@@ -217,29 +220,22 @@ class CryptoA:
         #     lmt = self.limit
         # else:
         # last_date = self.session.query(self.table).first()
-        if self.limit is None:
-            try:
+        try:
+            if self.limit is None:
                 record = self.session.query(self.table).all()
-                df = pd.DataFrame.from_records(record, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
-                s = df.select_dtypes(include='object').columns
-                df[s] = df[s].astype("float")
-                # if self.verbose: print(df.dtypes)
-                self.limit = df.shape[0]
-            except:
-                self.session = None
-                return False
-        else:
-            try:
+            else:
                 record = self.session.query(self.table).offset(self.count - self.limit).limit(self.limit).all()
-                # print(record)
-                df = pd.DataFrame.from_records(record, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
-                s = df.select_dtypes(include='object').columns
-                df[s] = df[s].astype("float")
-                # if self.verbose: print(df)
+            df = pd.DataFrame.from_records(record, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
+            s = df.select_dtypes(include='object').columns
+            df[s] = df[s].astype("float")
+            # if self.verbose: print(df.dtypes)
+            if self.limit is None:
+                self.limit = df.shape[0]
+            else:
                 self.limit = min(df.shape[0], self.limit)
-            except:
-                self.session = None
-                return False
+        except:
+            self.session = None
+            return False
         # last_date = self.session.query(self.table).offset(self.count - 1).first()[0]
         df.sort_values('Date', ascending=True, inplace=True)
         df.set_index('Date', drop=True, inplace=True)
@@ -249,22 +245,11 @@ class CryptoA:
             print(f"Last date1 from {self.period} from mySQL", self.last_date)
             # print(f"Last date2 from {self.period} from mySQL", last_date)
         if self.verbose: print(f'Loaded {self.limit} bars {self.period}')
-        self.df = df.copy()
+        self.df = df
         return True
 
 
 if __name__ == '__main__':
-    # cry = Exchange()
-    # df = cry.get(limit=60)
-    # print('Exchange')
-    # print(df)
-    # cry_1m = CryptoA(period='1m', verbose=False)
     cry_1h = CryptoA(period='1h', verbose=True)
-    # cry_1m.load(limit=6)
-    # print(cry_1m.df)
-    cry_1h.load(limit=10)
-    # print(cry_1h.df)
-    # cry_1m.load(limit=10)
-    # print(cry_1m.df)
-    # cry_1h.load(limit=6)
-    # print(cry_1h.df)
+    cry_1h.load(limit=None)
+    cry_1h.df.to_hdf('./BTC-USD-h1.h5', 'h1')
