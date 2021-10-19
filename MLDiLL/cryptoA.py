@@ -251,5 +251,5 @@ class CryptoA:
 
 if __name__ == '__main__':
     cry_1h = CryptoA(period='1h', verbose=True)
-    cry_1h.load(limit=None)
+    cry_1h.load(limit=6)
     cry_1h.df.to_hdf('./BTC-USD-h1.h5', 'h1')
