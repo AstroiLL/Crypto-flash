@@ -276,8 +276,8 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     fig.add_trace(
         go.Scatter(
             x=df.index, y=df['Open_max'], mode='markers', name='max Volume',
-            hoverinfo='text',
-            hovertext=df['Date_max'][maxv],
+            # hoverinfo='text',
+            # hovertext=df['Date_max'][maxv],
             # text=df['Date_max'][maxv],
             # textposition="top right",
             marker=dict(
