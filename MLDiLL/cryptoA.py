@@ -61,7 +61,7 @@ class Exchange:
         # print(self.exchange_conn.id, self.exchange_conn.markets, self.exchange_conn.markets.keys())
         try:
             if self.verbose: print(
-                f"Test_get_from_exch {self.exchange}.{self.crypto}.{self.period} limit 1"
+                f"#64 Test_get_from_exch {self.exchange}.{self.crypto}.{self.period} limit 1"
             )
             self.exchange_conn.fetch_ohlcv(self.crypto, self.period, limit=1)
         except:
@@ -82,15 +82,15 @@ class Exchange:
         else:
             # Вычисляем время начала загрузки данных из входного времени
             since_exch = self.exchange_conn.parse8601(since.strftime('%Y-%m-%d %H:%M:%S'))
-        if self.verbose: print('Since', self.exchange_conn.iso8601(since_exch))
+        if self.verbose: print('#85 Since', self.exchange_conn.iso8601(since_exch))
         df_app = None
         while limit > 0:
             time.sleep(self.exchange_conn.rateLimit // 1000)
-            if self.verbose: print('Load limit ', limit, self.period)
+            if self.verbose: print('#89 Load limit ', limit, self.period)
             lmt = limit if limit <= 750 else 750
             try:
                 if self.verbose: print(
-                    f"Get_from_exch {self.exchange}.{self.crypto}.{self.period} since {self.exchange_conn.iso8601(since_exch)} limit {lmt}"
+                    f"#93 Get_from_exch {self.exchange}.{self.crypto}.{self.period} since {self.exchange_conn.iso8601(since_exch)} limit {lmt}"
                 )
                 fetch = self.exchange_conn.fetch_ohlcv(self.crypto, self.period, since=since_exch, limit=lmt)
             except:
@@ -167,14 +167,14 @@ class CryptoA:
     def _connect_(self):
         if self.verbose: print(f'==============\nInit {self.exchange}.{self.crypto} {self.period}')
         self.conn_str = f'{sql_url}/{self.exchange}.{self.crypto}'
-        if self.verbose: print(self.conn_str)
+        if self.verbose: print("#170", self.conn_str)
         c = 0
         while c < 3:
             try:
                 self.conn = create_engine(self.conn_str, pool_pre_ping=True, echo=self.verbose).connect()
                 self.table = Table(self.period, self.metadata_obj, autoload_with=self.conn)
                 self.session = Session(self.conn)
-                if self.verbose: print(f"Connected to {self.exchange}.{self.crypto} {self.period}")
+                if self.verbose: print(f"#177 Connected to {self.exchange}.{self.crypto} {self.period}")
                 return
             except:
                 self.session = None
@@ -203,9 +203,10 @@ class CryptoA:
         while c < 3:
             try:
                 self.count = int(self.session.query(self.table).count())
-                if self.verbose: print(f"Table {self.period} has total {self.count} records")
+                if self.verbose: print(f"#206 Table {self.period} has total {self.count} records")
                 return
             except:
+                if self.verbose: print('except: session.query.count')
                 self.count = 0
                 self.session = None
                 self._connect_()
@@ -235,6 +236,7 @@ class CryptoA:
                 self.limit = min(df.shape[0], self.limit)
         except:
             self.session = None
+            if self.verbose: print('except: session.query.all')
             return False
         # last_date = self.session.query(self.table).offset(self.count - 1).first()[0]
         df.sort_values('Date', ascending=True, inplace=True)
@@ -242,10 +244,10 @@ class CryptoA:
         df.index += timedelta(hours=tz)
         self.last_date = df.index[-1]
         if self.verbose:
-            print(f"Last date1 from {self.period} from mySQL", self.last_date)
+            print(f"#247 Last date from {self.period} from mySQL", self.last_date)
             # print(f"Last date2 from {self.period} from mySQL", last_date)
-        if self.verbose: print(f'Loaded {self.limit} bars {self.period}')
-        self.df = df
+        if self.verbose: print(f'#249 Loaded {self.limit} bars {self.period}')
+        self.df = df.copy()
         return True
 
 
