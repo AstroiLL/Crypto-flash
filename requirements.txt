@@ -11,3 +11,4 @@ setuptools
 pandas_ta
 pytables
 dash_bootstrap_components
+enquiries
