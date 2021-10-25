@@ -405,6 +405,10 @@ class CryptoH:
         self.df_1h = self.cry_1h.load(limit=limit)
         self.df_1m = self.cry_1m.load(limit=limit * 168)
 
+    def repair_table(self):
+        self.cry_1h.repair_table()
+        self.cry_1m.repair_table()
+
     def max_vol(self):
         # берем из массива минут, группируем по часам, находим в каждом часе индекс максимума и
         # Open максимума этого часа прописываем в Open_max массива часов
@@ -417,11 +421,17 @@ class CryptoH:
 
 
 if __name__ == '__main__':
-    # cry = CryptoH(limit=24)
-    # df = pd.DataFrame(cry.get_df()[['Volume', 'Open_max', 'Date_max']])
-    # print(df)
-    cry_1m = Crypto(update=False, verbose=False)
-    cry_1m.open(exchange='BITMEX', crypto='BTC/USD', period='1m')
-    df = cry_1m.load(limit=60)
-    # print('SQL')
+    import enquiries
+
+    options = ['BTC/USD', 'ETH/USD', 'XRP/USD']
+    choice = enquiries.choose('Что обновлять?: ', options)
+    print(choice)
+    cry = CryptoH(crypto=choice, limit=24)
+    cry.repair_table()
+    df = pd.DataFrame(cry.get_df()[['Volume', 'Open_max', 'Date_max']])
     print(df)
+    # cry_1m = Crypto(update=False, verbose=False)
+    # cry_1m.open(exchange='BITMEX', crypto='BTC/USD', period='1m')
+    # df = cry_1m.load(limit=60)
+    # print('SQL')
+    # print(df)

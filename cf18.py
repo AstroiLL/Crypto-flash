@@ -53,18 +53,9 @@ type_bars = dbc.RadioItems(
     options=[{'label': i, 'value': i} for i in ['Candle', 'Heiken']],
     value='Heiken', persistence=True, persistence_type='local',
 )
-period_wvwma = dbc.InputGroup(
-    [
-        dbc.InputGroupAddon("Черная линия(h)", addon_type="prepend"),
-        dbc.Input(
-            id="period_wvwma", type="number", min=2, step=1, value=120,
-            persistence=True, persistence_type='local'
-        )
-    ]
-)
 all_period_input = dbc.InputGroup(
     [
-        dbc.InputGroupAddon("Диапазон проверки(h)", addon_type="prepend"),
+        dbc.InputGroupAddon("Весь диапазон(h)", addon_type="prepend"),
         dbc.Input(
             id="all_period", type="number", min=168, step=168, value=504,
             persistence=True, persistence_type='local'
@@ -76,6 +67,15 @@ period_input_v = dbc.InputGroup(
         dbc.InputGroupAddon("Диапазон проверки по объему(h)", addon_type="prepend"),
         dbc.Input(
             id="period_v", type="number", min=24, step=24, value=168,
+            persistence=True, persistence_type='local'
+        )
+    ]
+)
+period_wvwma = dbc.InputGroup(
+    [
+        dbc.InputGroupAddon("Черная линия(h)", addon_type="prepend"),
+        dbc.Input(
+            id="period_wvwma", type="number", min=2, step=1, value=120,
             persistence=True, persistence_type='local'
         )
     ]
@@ -107,9 +107,9 @@ dump = dbc.Badge(' ', color="light")
 navbar = dbc.NavbarSimple(
     children=[
         # reload,
-        period_wvwma,
         all_period_input,
         period_input_v,
+        period_wvwma,
         max_vol_options,
         # dump,
         type_bars,
