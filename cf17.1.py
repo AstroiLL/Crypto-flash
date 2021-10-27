@@ -3,20 +3,20 @@
 # from datetime import datetime as dt
 import dash
 import dash_bootstrap_components as dbc
-from dash import dcc, html
 import pandas as pd
 import plotly.graph_objects as go
+from dash import dcc, html
 from dash.dependencies import Input, Output
 from plotly.subplots import make_subplots
 
-from MLDiLL.cryptoA import CryptoA
+from MLDiLL.crypto import Crypto
 from MLDiLL.utils import hd, HA, wvwma
 
 # import plotly.io as pio
 # import pandas_ta as ta
 
-cry_1h = CryptoA(verbose=False)
-cry_1m = CryptoA(verbose=False)
+cry_1h = Crypto(verbose=False)
+cry_1m = Crypto(verbose=False)
 # df_exch = cry_1h.get_list_exch()
 
 vol_lev_hor = 0.3
@@ -135,7 +135,7 @@ navbar = dbc.NavbarSimple(
             ], width=12
         )
     ],
-    brand="Crypto Flash 18 SQLAlchemy BitMEX",
+    brand="Crypto Flash 17.1 BitMEX",
     brand_href="#",
     # color='dark',
     # dark=True,
@@ -177,11 +177,13 @@ def connect_base(pathname, all_p):
         crypto = 'XRP/USD'
     elif pathname == "/LTC":
         crypto = 'LTC/USD'
-    cry_1h.load(exchange='BITMEX', crypto=crypto, period='1h', limit=all_p)
-    # cry_1h.repair_table()
+    cry_1h.open(exchange='BITMEX', crypto=crypto, period='1h', update=True)
+    cry_1h.load(limit=all_p)
+    cry_1h.repair_table()
     # TODO Порядок действий?
-    cry_1m.load(exchange='BITMEX', crypto=crypto, period='1m', limit=all_p * 60)
-    # cry_1m.repair_table()
+    cry_1m.open(exchange='BITMEX', crypto=crypto, period='1m', update=True)
+    cry_1m.load(limit=all_p * 60)
+    cry_1m.repair_table()
     return crypto
 
 
@@ -230,6 +232,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     ).mean()
     df['Date_max'] = cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax().resample('1h').max()
     # TODO Выбор периодов линий на странице
+    wvwma_0 = int(wvwma_0)
     wvwma_1 = 24
     wvwma_2 = 48
     wvwma_3 = 168
@@ -512,8 +515,8 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
         xaxis_title="Date",
         yaxis_title=f"{cry_1h.crypto}",
         # height=650,
-        height=900,
-        # width=1024,
+        height=1200,
+        # width=1400,
         xaxis_rangeslider_visible=False,
         # legend_orientation="h",
         legend=dict(x=0, y=1, orientation='h'),
@@ -528,4 +531,4 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
 
 
 if __name__ == '__main__':
-    app.run_server(port=8052, debug=False, use_reloader=True)
+    app.run_server(port=8051, debug=False, use_reloader=True)

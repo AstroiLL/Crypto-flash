@@ -1,14 +1,15 @@
 joblib
 matplotlib
 pandas
-ccxt
 mysqlclient
 sqlalchemy
 dash
 plotly
 mldill
 setuptools
-pandas_ta
 pytables
+
+pandas_ta
+ccxt
 dash_bootstrap_components
 enquiries
