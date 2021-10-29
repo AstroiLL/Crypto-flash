@@ -2,10 +2,10 @@
 # import numpy as np
 # from datetime import datetime as dt
 import dash
+from dash import dcc, html
 import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.graph_objects as go
-from dash import dcc, html
 from dash.dependencies import Input, Output
 from plotly.subplots import make_subplots
 
@@ -106,43 +106,37 @@ slider_hours = dcc.Slider(
     tooltip={'always_visible': True, 'placement': 'bottom'}, persistence=True, persistence_type='local',
 )
 dump = dbc.Badge(' ', color="light")
-navbar = dbc.NavbarSimple(
-    children=[
-        # reload,
+navbar = dbc.Navbar(
+    dbc.Container(
         dbc.Col(
             [
                 dbc.Row(
                     [
+                        dbc.Col(dbc.NavbarBrand("Crypto Flash 17.1 BitMEX"), width={'order': 'first'}),
                         dbc.Col(
                             [
                                 dbc.Row(all_period_input),
                                 dbc.Row(period_input_v),
                                 dbc.Row(period_wvwma),
-                            ], width=9
+                            ], width='auto'
                         ),
-                        # dbc.Col(dump),
                         dbc.Col(max_vol_options, width=1),
-                        # dbc.Col(dump),
                         dbc.Col(type_bars, width=1),
                         dbc.Col(dropdown, width=1),
-                        # dump,
                         dbc.Col(refresh, width={'order': 'last'}),
-                        # dump,
-                    ], justify="around"
+                    ], justify="between",
                 ),
-                dbc.Row(slider_vol),
-                dbc.Row(slider_hours),
-            ], width=12
-        )
-    ],
-    brand="Crypto Flash 17.1 BitMEX",
-    brand_href="#",
+                dbc.Row(slider_vol, justify="around"),
+                dbc.Row(slider_hours, justify="around"),
+            ], width='auto',
+        ), fluid=True,
+    ),
+    # brand="Crypto Flash 17.1 BitMEX",
+    # brand_href="#",
     # color='dark',
     # dark=True,
     # fixed="top",
     sticky="top",
-    # fluid=True,
-    # links_left=True,
 )
 interval_reload = dcc.Interval(
     id='interval-reload',
