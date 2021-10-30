@@ -10,3 +10,4 @@
 Версия 12 ![Версия 12](Crypto-flash-12.png)
 Версия 14 ![Версия 14](Crypto-flash-14.png)
 Версия 16 ![Версия 16](Crypto-flash-16.png)
+Версия 17.1 ![Версия 17](Crypto-flash-17.1.png)
