@@ -88,53 +88,77 @@ period_input_v = dbc.InputGroup(
 crypto_label = dbc.Badge(id='crypto', color="light")
 refresh = dbc.Button([crypto_label, "Refresh"], id="Button", color="primary", outline=True)
 # reload = dbc.Badge(id='reload', color="light")
-slider_vol = dcc.Slider(
-    id='VolLevel',
-    min=30,
-    max=91,
-    value=50,
-    marks={f'{i}': f'{i}%' for i in range(30, 90, 10)},
-    step=5,
-    tooltip={'always_visible': True, 'placement': 'bottom'},
-    persistence=True, persistence_type='local',
+slider_vol = html.Div(
+    [
+        dbc.Label("Vol Level", html_for="VolLevel", align='start'),
+        dcc.Slider(
+            id='VolLevel',
+            min=30,
+            max=90,
+            value=50,
+            marks={f'{i}': f'{i}%' for i in range(30, 91, 10)},
+            step=5,
+            tooltip={'always_visible': True, 'placement': 'bottom'},
+            persistence=True, persistence_type='local',
+        ),
+    ]
 )
-slider_hours = dcc.Slider(
-    id='Hours',
-    min=5,
-    max=24 * 7,
-    value=48,
-    marks={**{f'{6 * i}': f'{6 * i} ч' for i in range(1, 4)}, **{f'{24 * i}': f'{i} Д' for i in range(1, 8)}},
-    step=1,
-    tooltip={'always_visible': True, 'placement': 'bottom'}, persistence=True, persistence_type='local',
+slider_hours = html.Div(
+    [
+        dbc.Label("Диапазон", html_for="Hours", align='start'),
+        dcc.Slider(
+            id='Hours',
+            min=5,
+            max=24*7+3,
+            value=48,
+            marks={**{f'{6 * i}': f'{6 * i} ч' for i in range(1, 4)}, **{f'{24 * i}': f'{i} Д' for i in range(1, 8)}},
+            step=6,
+            tooltip={'always_visible': True, 'placement': 'bottom'}, persistence=True, persistence_type='local',
+        )
+    ]
 )
 dump = dbc.Badge(' ', color="light")
 navbar = dbc.Navbar(
     dbc.Container(
-        dbc.Col(
-            [
-                dbc.Row(
-                    [
-                        dbc.Col(dbc.NavbarBrand("Crypto Flash 18 SQLAlchemy BitMEX"), width={'order': 'first'}),
-                        dbc.Col(
-                            [
-                                dbc.Row(all_period_input),
-                                dbc.Row(period_input_v),
-                                dbc.Row(period_wvwma),
-                            ], width='auto'
-                        ),
-                        dbc.Col(max_vol_options, width=1),
-                        dbc.Col(type_bars, width=1),
-                        dbc.Col(dropdown, width=1),
-                        dbc.Col(refresh, width={'order': 'last'}),
-                    ], justify="between",
-                ),
-                dbc.Row(slider_vol, justify="around"),
-                dbc.Row(slider_hours, justify="around"),
-            ], width='auto',
-        ), fluid=True,
-    ),
-    sticky="top",
+        [
+            dbc.Col(
+                [
+                    dbc.Row(
+                        [
+                            dbc.Col(dbc.NavbarBrand("CryptoFlash 18 SQLAlchemy"), width={'size': 2, 'order': 'first'}),
+                            dbc.Col(
+                                [
+                                    dbc.Row(all_period_input),
+                                    dbc.Row(period_input_v),
+                                    dbc.Row(period_wvwma),
+                                ], width='auto'
+                            ),
+                            dbc.Col(
+                                [
+                                    dbc.Row(max_vol_options),
+                                    dbc.Row(type_bars)
+                                ], width=2
+                            ),
+                            dbc.Col(
+                                [
+                                    dbc.Row(dropdown, align='left'),
+                                    dbc.Row(refresh),
+                                ], width=2, align='right'
+                            )
+                        ]
+                    )
+                ], width=6
+            ),
+            dbc.Col(
+                [
+                    dbc.Row(slider_vol, justify="around"),
+                    dbc.Row(slider_hours, justify="around"),
+                ], width=6
+            )
+        ], fluid=True
+    ), sticky="top",
 )
+
 interval_reload = dcc.Interval(
     id='interval-reload',
     interval=60000,  # in milliseconds
