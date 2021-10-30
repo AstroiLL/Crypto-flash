@@ -11,5 +11,5 @@ pytables
 
 pandas_ta
 ccxt
-dash_bootstrap_components
+dash_bootstrap_components>=1.0.0
 enquiries
