@@ -83,8 +83,9 @@ period_input_v = dbc.InputGroup(
     ]
 )
 
-crypto_label = dbc.Badge(id='crypto', color="primary")
-refresh = dbc.Button([crypto_label, "Refresh"], id="Button", color="primary", outline=True)
+crypto_label = dbc.Badge(id='crypto')
+refresh = dbc.Button(crypto_label, id="Button", color="primary", outline=True)
+# refresh = dbc.Button([dbc.Row(crypto_label), dbc.Row(html.P("Refresh"))], id="Button", color="primary", outline=True)
 # reload = dbc.Badge(id='reload', color="light")
 slider_vol = html.Div(
     [
