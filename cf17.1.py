@@ -83,7 +83,7 @@ period_input_v = dbc.InputGroup(
     ]
 )
 
-crypto_label = dbc.Badge(id='crypto', color="light")
+crypto_label = dbc.Badge(id='crypto', color="primary")
 refresh = dbc.Button([crypto_label, "Refresh"], id="Button", color="primary", outline=True)
 # reload = dbc.Badge(id='reload', color="light")
 slider_vol = html.Div(
@@ -528,7 +528,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
         xaxis_title="Date",
         yaxis_title=f"{cry_1h.crypto}",
         # height=650,
-        height=1200,
+        height=800,
         # width=1400,
         xaxis_rangeslider_visible=False,
         # legend_orientation="h",
