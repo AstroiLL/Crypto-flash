@@ -83,10 +83,14 @@ period_input_v = dbc.InputGroup(
     ]
 )
 
-crypto_label = dbc.Badge(id='crypto')
-refresh = dbc.Button(crypto_label, id="Button", color="primary", outline=True)
-# refresh = dbc.Button([dbc.Row(crypto_label), dbc.Row(html.P("Refresh"))], id="Button", color="primary", outline=True)
-# reload = dbc.Badge(id='reload', color="light")
+refresh = html.Div(
+    [
+        dbc.Button('Refresh', id="Button", color="primary", outline=True),
+        html.Br(),
+        html.Br(),
+        dcc.Loading(html.Div(dbc.Badge(id='crypto')))
+    ]
+)
 slider_vol = html.Div(
     [
         dbc.Label("Vol Level", html_for="VolLevel", align='start'),
@@ -142,7 +146,7 @@ navbar = dbc.Navbar(
                                 [
                                     dbc.Row(dropdown, align='left'),
                                     dbc.Row(refresh),
-                                ], width=2, align='right'
+                                ], width=2
                             )
                         ]
                     )
@@ -211,8 +215,8 @@ def connect_base(pathname, all_p):
      ]
 )
 def render_page_content(pathname, all_p, p, but, n):
-    print('Refresh ', pathname, n)
     crypto = connect_base(pathname, all_p)
+    print('Refresh ', pathname, n, crypto)
     return crypto
 
 

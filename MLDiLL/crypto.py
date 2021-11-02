@@ -270,7 +270,8 @@ class Crypto:
         if self.verbose: print(f"Write_to_sql {self.exchange}.{self.crypto} {self.period} count {len(df_app)}")
         for i in range(len(df_app)):
             try:
-                if self.verbose: print(i)
+                if self.verbose:
+                    print('Insert', i, 'rows')
                 df_app.iloc[i:i + 1].to_sql(self.period, con=conn, if_exists='append', index=True)
             except Exception as e:
                 print(f'{e} Error write to MySQL {self.period}')
