@@ -1,5 +1,6 @@
 import time
-import asyncio
+# import os
+# from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
 import ccxt
@@ -23,7 +24,7 @@ M5 = M1 * 5
 dict_period = {'1m': M1, '1h': H1, '1d': D1}
 tz = 0
 
-# Асинхронный код
+# Синхронный код
 class Crypto:
     """
     Получаем котировки с криптовалютных бирж и записываем в базу mySQL, чтобы легко их получать

@@ -128,7 +128,7 @@ navbar = dbc.Navbar(
                 [
                     dbc.Row(
                         [
-                            dbc.Col(dbc.NavbarBrand("CryptoFlash 17.1"), width={'size': 2, 'order': 'first'}),
+                            dbc.Col(dbc.NavbarBrand("CryptoFlash 17.2"), width={'size': 2, 'order': 'first'}),
                             dbc.Col(
                                 [
                                     dbc.Row(all_period_input),
@@ -149,7 +149,8 @@ navbar = dbc.Navbar(
                                 ], width=2
                             )
                         ]
-                    )
+                    ),
+                    dbc.Row(html.Div(id='title_out'))
                 ], width=6
             ),
             dbc.Col(
@@ -187,21 +188,21 @@ app.layout = dbc.Container(
 
 
 # TODO repair select crypto
-def connect_base(pathname, all_p):
+def connect_base(pathname, all_p, repair=True):
     crypto = 'BTC/USD'
     if pathname == "/ETH":
         crypto = 'ETH/USD'
     elif pathname == "/XRP":
         crypto = 'XRP/USD'
-    elif pathname == "/LTC":
-        crypto = 'LTC/USD'
+    # elif pathname == "/LTC":
+    #     crypto = 'LTC/USD'
+    # TODO Порядок действий?
     cry_1h.open(exchange='BITMEX', crypto=crypto, period='1h', update=True)
     cry_1h.load(limit=all_p)
-    cry_1h.repair_table()
-    # TODO Порядок действий?
+    if repair: cry_1h.repair_table()
     cry_1m.open(exchange='BITMEX', crypto=crypto, period='1m', update=True)
     cry_1m.load(limit=all_p * 60)
-    cry_1m.repair_table()
+    if repair: cry_1m.repair_table()
     return crypto
 
 
@@ -221,7 +222,7 @@ def render_page_content(pathname, all_p, p, but, n):
 
 
 @app.callback(
-    Output('graph_out', 'figure'),
+    [Output('graph_out', 'figure'), Output('title_out', 'children')],
     [Input('period_wvwma', 'value'),
      Input('Hours', 'value'),
      Input('VolLevel', 'value'),
@@ -237,7 +238,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     print('Update', pathname, n)
     if cry_1h.df.empty or n == 0:
         print('Empty df ', pathname, n)
-        connect_base(pathname, all_p)
+        connect_base(pathname, all_p, repair=False)
     df = cry_1h.df
     # Найти уровень Vol в % от максимального за весь выбраный диапазон
     lev = vol_level * df['Volume'].max() * 0.01
@@ -529,7 +530,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
         f"VWMA({wvwma_1}h):{hd(end_price - df[f'wvwma_' + str(wvwma_1)][-1], 1, True)} " +\
         f"VWMA({wvwma_2}h):{hd(end_price - df[f'wvwma_' + str(wvwma_2)][-1], 1, True)} " +\
         f"VWMA({wvwma_3}h):{hd(end_price - df[f'wvwma_' + str(wvwma_3)][-1], 1, True)} "
-    fig.update_layout(title=title,
+    fig.update_layout(
         xaxis_title="Date",
         yaxis_title=f"{cry_1h.crypto}",
         # height=650,
@@ -545,7 +546,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     # pio.write_image(fig=fig, file=f'btc{intervals}.jpg', format='jpg')
     # pio.write_json(fig=fig, file=f'btc{intervals}.json', pretty=True)
     # print(but, intervals)
-    return fig
+    return fig, title
 
 
 if __name__ == '__main__':
