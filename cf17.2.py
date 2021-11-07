@@ -171,8 +171,8 @@ interval_reload = dcc.Interval(
 
 graph = dcc.Graph(id='graph_out')
 # store = dcc.Store(id='data', storage_type='local')
-# app = dash.Dash(external_stylesheets=[dbc.themes.DARKLY])
-app = dash.Dash(external_stylesheets=[dbc.themes.SKETCHY])
+app = dash.Dash(external_stylesheets=[dbc.themes.FLATLY])
+# app = dash.Dash(external_stylesheets=[dbc.themes.SKETCHY])
 # app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 # app = dash.Dash(external_stylesheets=[dbc.themes.SLATE])
 app.layout = dbc.Container(
