@@ -169,7 +169,10 @@ interval_reload = dcc.Interval(
     n_intervals=0
 )
 
-graph = dcc.Graph(id='graph_out')
+# graph = dcc.Graph(id='graph_out')
+# graph = dcc.Loading(html.Div(id='graph'),)
+graph = html.Div(id='graph')
+# dcc.Loading(html.Div(dbc.Badge(id='crypto')))
 # store = dcc.Store(id='data', storage_type='local')
 app = dash.Dash(external_stylesheets=[dbc.themes.FLATLY])
 # app = dash.Dash(external_stylesheets=[dbc.themes.SKETCHY])
@@ -222,7 +225,7 @@ def render_page_content(pathname, all_p, p, but, n):
 
 
 @app.callback(
-    [Output('graph_out', 'figure'), Output('title_out', 'children')],
+    [Output('graph', 'children'), Output('title_out', 'children')],
     [Input('period_wvwma', 'value'),
      Input('Hours', 'value'),
      Input('VolLevel', 'value'),
@@ -244,6 +247,8 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     lev = vol_level * df['Volume'].max() * 0.01
     # Последняя цена
     end_price = cry_1m.df['Close'][-1]
+    end_vol = cry_1m.df['Volume'][-1]
+    pre_end_vol = cry_1m.df['Volume'][-2]
     # Брать из массива минут, группировать по часам, находить в каждом часе индекс максимума и
     # Open максимума этого часа прописывать в Open_max массива часов
     df['Open_max'] = cry_1m.df['Open'][cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()].resample(
@@ -444,6 +449,16 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
                 # width=10
             ), 1, 2
         )
+    # Indicator
+    fig.add_trace(
+        go.Indicator(
+            mode="number+delta",
+            value=end_vol,
+            number={'prefix': "Vol:"},
+            delta={'position': "top", 'reference': pre_end_vol},
+            domain={'x': [0, 1], 'y': [0, 1]}
+        )
+    )
     # End price
     fig.add_trace(
         go.Scatter(
@@ -551,7 +566,8 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     # pio.write_image(fig=fig, file=f'btc{intervals}.jpg', format='jpg')
     # pio.write_json(fig=fig, file=f'btc{intervals}.json', pretty=True)
     # print(but, intervals)
-    return fig, title
+    figure = [dcc.Graph(figure=fig)]
+    return figure, title
 
 
 if __name__ == '__main__':
