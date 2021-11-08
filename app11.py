@@ -35,7 +35,7 @@ df['gravity'] = pd.cut(df['RPLANET'], rp_bins, labels=rp_labels)
 df.loc[:, 'status'] = np.where(
     (df['temp'] == 'optimal') &
     (df['gravity'] == 'optimal'),
-    'promising', None
+    'promising', ''
 )
 df.loc[:, 'status'] = np.where(
     (df['temp'] == 'optimal') &
