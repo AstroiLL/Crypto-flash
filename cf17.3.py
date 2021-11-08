@@ -247,8 +247,8 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     lev = vol_level * df['Volume'].max() * 0.01
     # Последняя цена
     end_price = cry_1m.df['Close'][-1]
-    end_vol = cry_1m.df['Volume'][-1]
-    pre_end_vol = cry_1m.df['Volume'][-2]
+    end_vol = cry_1h.df['Volume'][-1]
+    pre_end_vol = cry_1h.df['Volume'][-2]
     # Брать из массива минут, группировать по часам, находить в каждом часе индекс максимума и
     # Open максимума этого часа прописывать в Open_max массива часов
     df['Open_max'] = cry_1m.df['Open'][cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()].resample(
