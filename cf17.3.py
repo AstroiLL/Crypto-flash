@@ -128,7 +128,7 @@ navbar = dbc.Navbar(
                 [
                     dbc.Row(
                         [
-                            dbc.Col(dbc.NavbarBrand("CFlash 17.2"), width={'size': 2, 'order': 'first'}),
+                            dbc.Col(dbc.NavbarBrand("CFlash 17.3"), width={'size': 2, 'order': 'first'}),
                             dbc.Col(
                                 [
                                     dbc.Row(all_period_input),
