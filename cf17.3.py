@@ -241,7 +241,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     print('Update', pathname, n)
     if cry_1h.df.empty or n == 0:
         print('Empty df ', pathname, n)
-        connect_base(pathname, all_p, repair=False)
+        connect_base(pathname, all_p, repair=False)`
     df = cry_1h.df
     # Найти уровень Vol в % от максимального за весь выбраный диапазон
     lev = vol_level * df['Volume'].max() * 0.01

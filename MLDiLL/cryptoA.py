@@ -237,6 +237,7 @@ class CryptoA:
         except:
             self.session = None
             if self.verbose: print('except: session.query.all')
+
             return False
         # last_date = self.session.query(self.table).offset(self.count - 1).first()[0]
         df.sort_values('Date', ascending=True, inplace=True)

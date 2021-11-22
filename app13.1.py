@@ -68,6 +68,7 @@ CHARTS_TEMPLATE = go.layout.Template(
         )
     )
 )
+COLOR_STATUS_VALUES1 = {'extreme': 'lightgray', 'challenging': '#1F85DE', 'promising': '#F90F04'}
 COLOR_STATUS_VALUES = ['lightgray', '#1F85DE', '#F90F04']
 
 # Filters
@@ -203,13 +204,16 @@ def update_dist_temp_chart(n, radius_range, star_size):
     html1 = [html.Div('Planet temp ~ dist from the star', className='header_plots'),
              dcc.Graph(figure=fig1)]
     fig2 = go.Figure()
+    # print(chart_data['status'])
+    # print(chart_data['status'].rank())
     fig2.add_trace(
         go.Scatter(x=chart_data['RA'], y=chart_data['DEC'], mode='markers',
                    marker=dict(
                        size=chart_data['RPLANET'],
-                       color=chart_data['status'],
+                       # color='blue',
+                       color=chart_data['status'].map(COLOR_STATUS_VALUES1),
+                       # color_discrete_sequence=COLOR_STATUS_VALUES,
                    ),
-            color_discrete_sequence=COLOR_STATUS_VALUES
         )
     )
     fig2.update_layout(template=CHARTS_TEMPLATE)
