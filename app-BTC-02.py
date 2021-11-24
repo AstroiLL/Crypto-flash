@@ -11,7 +11,7 @@ from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma
 
 """ READ DATA """
-PERIOD = '1h'
+PERIOD = '1m'
 LIMIT = 240
 WVW = 24
 cry = CryptoA(period=PERIOD, verbose=False)

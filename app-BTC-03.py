@@ -11,7 +11,7 @@ from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma
 
 """ READ DATA """
-PERIOD = '1h'
+PERIOD = '1m'
 LIMIT = 240
 WVW = 24
 cry = CryptoA(period=PERIOD, verbose=False)
@@ -41,11 +41,13 @@ CHARTS_TEMPLATE = go.layout.Template(
     )
 )
 # COLOR_STATUS_VALUES1 = {'extreme': 'lightgray', 'challenging': '#1F85DE', 'promising': '#F90F04'}
-vol_level_selector = dcc.rangeSlider(
+vol_level_selector = dcc.RangeSlider(
     id='vol-level-slider',
     min=0,
     max=max(cry.df['Volume']),
-    value=[0, 1000],
+    value=[0, 1000000],
+    # allowCross=False,
+    pushable=1000000,
     tooltip={'always_visible': True, 'placement': 'bottom'},
     persistence=True, persistence_type='local',
 )
@@ -53,7 +55,7 @@ refresh = html.Div(
     [
         dbc.Row([
             dbc.Col(dbc.Button('Refresh', id="refresh", color="primary", outline=True), width=1),
-            dbc.Col(dcc.Loading(html.Div(id='out-btc')), width=1),
+            dbc.Col(dcc.Loading(html.Div(id='out-btc'))),
             dbc.Col(html.Div(id='out-dump'), width=0),
         ],
             justify="start",
@@ -121,12 +123,12 @@ def update_chart(n, range_vol_level, nn):
     vol_level0 = range_vol_level[0]
     vol_level1 = range_vol_level[1]
     # Фильтровать по критерию Vol >= уровень
-    df['max_vol0'] = df['Volume'].where(df['Volume'] < vol_level0, 13).where(df['Volume'] >= vol_level0, 5)
-    df['max_vol1'] = df['Volume'].where(df['Volume'] < vol_level1, 17).where(df['Volume'] >= vol_level1, 13)
+    df['max_vol'] = 5
+    df['max_vol'] = df['max_vol'].where(df['Volume'] < vol_level0, 13).where(df['Volume'] < vol_level1, 21)
     df['max_vol_color'] = 'gray'
     df['max_vol_color'] = df['Open'].where(df['Open'] >= df['Close'], 'blue').where(df['Open'] < df['Close'], 'red')
-    out_btc = f"Max Vol: {df['Volume'].max()} Vol0: {hd(vol_level0)} {round((vol_level0 / df['Volume'].max()) * 100)} %"+
-    f"Vol0: {hd(vol_level1)} {round((vol_level1 / df['Volume'].max()) * 100)} %"
+    out_btc = f"Max Vol: {hd(df['Volume'].max())} Vol0: {hd(vol_level0)} {round((vol_level0 / df['Volume'].max()) * 100)} %" \
+              f" Vol1: {hd(vol_level1)} {round((vol_level1 / df['Volume'].max()) * 100)} %"
     # print(df)
     df['wvwma'] = wvwma(df['Open'], df['Volume'], length=WVW)
     fig = go.Figure()
@@ -155,6 +157,33 @@ def update_chart(n, range_vol_level, nn):
                 color='black',
             ),
             showlegend=True
+        )
+    )
+    # Indicator
+    end_vol = df['Volume'][-1]
+    pre_end_vol = df['Volume'][-2]
+    fig.add_trace(
+        go.Indicator(
+            mode="number+delta",
+            value=end_vol,
+            number={'prefix': "Vol:"},
+            delta={'position': "top", 'reference': pre_end_vol},
+            domain={'x': [0, 0], 'y': [0, 0]}
+        )
+    )
+    # End price
+    end_price = df['Close'][-1]
+    fig.add_trace(
+        go.Scatter(
+            x=[df.index[-1]],
+            y=[end_price],
+            text=f" {end_price}",
+            name='EndPrice',
+            textposition="middle right",
+            mode="text+markers",
+            marker=dict(color='black', size=12, symbol='star'),
+            showlegend=True,
+            hovertemplate=f"{end_price}"
         )
     )
 
