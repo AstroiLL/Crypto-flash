@@ -11,8 +11,9 @@ from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma
 
 """ READ DATA """
-PERIOD = '1m'
-LIMIT = 120
+PERIOD = '1h'
+LIMIT = 240
+WVW = 24
 cry = CryptoA(period=PERIOD, verbose=False)
 cry.load(limit=LIMIT)
 # df = cry.df
@@ -22,6 +23,7 @@ cry.load(limit=LIMIT)
 # names = ['small', 'similar', 'bigger']
 # df['StarSize'] = pd.cut(df['RSTAR'], bins, labels=names)
 
+# LAYOUT
 
 # Global design set
 CHARTS_TEMPLATE = go.layout.Template(
@@ -39,13 +41,11 @@ CHARTS_TEMPLATE = go.layout.Template(
     )
 )
 # COLOR_STATUS_VALUES1 = {'extreme': 'lightgray', 'challenging': '#1F85DE', 'promising': '#F90F04'}
-vol_level_selector = dcc.Slider(
+vol_level_selector = dcc.rangeSlider(
     id='vol-level-slider',
     min=0,
     max=max(cry.df['Volume']),
-    # marks={5: '5', 10: '10', 20: '20'},
-    # step=1,
-    value=0,
+    value=[0, 1000],
     tooltip={'always_visible': True, 'placement': 'bottom'},
     persistence=True, persistence_type='local',
 )
@@ -62,7 +62,7 @@ refresh = html.Div(
 )
 interval_reload = dcc.Interval(
     id='interval-reload',
-    interval=30000,  # in milliseconds
+    interval=60000,  # in milliseconds
     n_intervals=0
 )
 
@@ -70,13 +70,11 @@ app = dash.Dash(
     __name__, external_stylesheets=[dbc.themes.FLATLY]
     )
 
-""" LAYOUT """
-
 app.layout = html.Div(
     [
         interval_reload,
         dbc.Row(
-            html.H1('BTC Splash #01'),
+            html.H1('BTC Splash #03'),
             style={'margin-bottom': 40}
         ),
         dbc.Row(
@@ -116,20 +114,27 @@ def update_df(n, nn):
      Input(component_id='vol-level-slider', component_property='value'),
      Input('interval-reload', 'n_intervals')]
 )
-def update_chart(n, vol_level, nn):
+def update_chart(n, range_vol_level, nn):
     if cry.df.empty:
         cry.load(limit=LIMIT)
     df = cry.df
+    vol_level0 = range_vol_level[0]
+    vol_level1 = range_vol_level[1]
     # Фильтровать по критерию Vol >= уровень
+    df['max_vol0'] = df['Volume'].where(df['Volume'] < vol_level0, 13).where(df['Volume'] >= vol_level0, 5)
+    df['max_vol1'] = df['Volume'].where(df['Volume'] < vol_level1, 17).where(df['Volume'] >= vol_level1, 13)
     df['max_vol_color'] = 'gray'
-    df['max_vol'] = df['Volume'].where(df['Volume'] < vol_level, 13).where(df['Volume'] >= vol_level, 5)
-    # df['max_vol_color'] = df['Volume'].where(df['Volume'] < vol_level, 'blue').where(df['Volume'] >= vol_level, 'red')
     df['max_vol_color'] = df['Open'].where(df['Open'] >= df['Close'], 'blue').where(df['Open'] < df['Close'], 'red')
-    out_btc = f"{hd(vol_level)} {round((vol_level / df['Volume'].max()) * 100)} %"
-    fig1 = go.Figure()
-    fig1.add_trace(
+    out_btc = f"Max Vol: {df['Volume'].max()} Vol0: {hd(vol_level0)} {round((vol_level0 / df['Volume'].max()) * 100)} %"+
+    f"Vol0: {hd(vol_level1)} {round((vol_level1 / df['Volume'].max()) * 100)} %"
+    # print(df)
+    df['wvwma'] = wvwma(df['Open'], df['Volume'], length=WVW)
+    fig = go.Figure()
+    fig.add_trace(
         go.Scatter(
-            x=df.index, y=df['Open'], mode='lines+markers',
+            x=df.index, y=df['Open'],
+            name='BTC',
+            mode='lines+markers',
             marker=dict(
                 size=df['max_vol'],
                 color=df['max_vol_color'],
@@ -140,9 +145,22 @@ def update_chart(n, vol_level, nn):
             ),
         )
     )
-    fig1.update_layout(template=CHARTS_TEMPLATE)
+    # VWMA()
+    fig.add_trace(
+        go.Scatter(
+            x=df.index, y=df['wvwma'], mode='lines', name='WVWMA',
+            # hoverinfo='none',
+            line=dict(
+                # size=4,
+                color='black',
+            ),
+            showlegend=True
+        )
+    )
+
+    fig.update_layout(template=CHARTS_TEMPLATE)
     html1 = [html.Div('BTC/USD ' + PERIOD, className='header_plots'),
-             dcc.Graph(figure=fig1)]
+             dcc.Graph(figure=fig)]
 
     return html1, out_btc
 

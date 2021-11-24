@@ -11,8 +11,9 @@ from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma
 
 """ READ DATA """
-PERIOD = '1m'
-LIMIT = 120
+PERIOD = '1h'
+LIMIT = 240
+WVW = 24
 cry = CryptoA(period=PERIOD, verbose=False)
 cry.load(limit=LIMIT)
 # df = cry.df
@@ -62,7 +63,7 @@ refresh = html.Div(
 )
 interval_reload = dcc.Interval(
     id='interval-reload',
-    interval=30000,  # in milliseconds
+    interval=60000,  # in milliseconds
     n_intervals=0
 )
 
@@ -76,7 +77,7 @@ app.layout = html.Div(
     [
         interval_reload,
         dbc.Row(
-            html.H1('BTC Splash #01'),
+            html.H1('BTC Splash #02'),
             style={'margin-bottom': 40}
         ),
         dbc.Row(
@@ -126,10 +127,14 @@ def update_chart(n, vol_level, nn):
     # df['max_vol_color'] = df['Volume'].where(df['Volume'] < vol_level, 'blue').where(df['Volume'] >= vol_level, 'red')
     df['max_vol_color'] = df['Open'].where(df['Open'] >= df['Close'], 'blue').where(df['Open'] < df['Close'], 'red')
     out_btc = f"{hd(vol_level)} {round((vol_level / df['Volume'].max()) * 100)} %"
-    fig1 = go.Figure()
-    fig1.add_trace(
+    # print(df)
+    df['wvwma'] = wvwma(df['Open'], df['Volume'], length=WVW)
+    fig = go.Figure()
+    fig.add_trace(
         go.Scatter(
-            x=df.index, y=df['Open'], mode='lines+markers',
+            x=df.index, y=df['Open'],
+            name='BTC',
+            mode='lines+markers',
             marker=dict(
                 size=df['max_vol'],
                 color=df['max_vol_color'],
@@ -140,9 +145,22 @@ def update_chart(n, vol_level, nn):
             ),
         )
     )
-    fig1.update_layout(template=CHARTS_TEMPLATE)
+    # VWMA()
+    fig.add_trace(
+        go.Scatter(
+            x=df.index, y=df['wvwma'], mode='lines', name='WVWMA',
+            # hoverinfo='none',
+            line=dict(
+                # size=4,
+                color='black',
+            ),
+            showlegend=True
+        )
+    )
+
+    fig.update_layout(template=CHARTS_TEMPLATE)
     html1 = [html.Div('BTC/USD ' + PERIOD, className='header_plots'),
-             dcc.Graph(figure=fig1)]
+             dcc.Graph(figure=fig)]
 
     return html1, out_btc
 
