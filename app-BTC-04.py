@@ -10,10 +10,16 @@ from dash.dependencies import Input, Output, State
 from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma
 
-""" READ DATA """
+#TODO список линий и SMA WVWMA
+#TODO сохранение параметров
+#TODO лента объемов вокруг SMA шириной в зависимости от объема
+
+# READ DATA
+
 PERIOD = '1m'
 LIMIT = 240
 WVW = 24
+VERSION = 'BTC Splash #04'
 cry = CryptoA(period=PERIOD, verbose=False)
 cry.load(limit=LIMIT)
 # df = cry.df
@@ -88,7 +94,7 @@ app.layout = html.Div(
     [
         interval_reload,
         dbc.Row(
-            html.H1('BTC Splash #03'),
+            html.H1(VESION),
             style={'margin-bottom': 40}
         ),
         dbc.Row(
