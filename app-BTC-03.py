@@ -12,8 +12,8 @@ from MLDiLL.utils import hd, wvwma
 
 """ READ DATA """
 PERIOD = '1m'
-LIMIT = 240
-WVW = 24
+LIMIT = 480
+WVW = 60
 cry = CryptoA(period=PERIOD, verbose=False)
 cry.load(limit=LIMIT)
 # df = cry.df

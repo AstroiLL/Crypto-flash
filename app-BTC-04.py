@@ -58,7 +58,18 @@ CHARTS_TEMPLATE = go.layout.Template(
 
     )
 )
-# COLOR_STATUS_VALUES1 = {'extreme': 'lightgray', 'challenging': '#1F85DE', 'promising': '#F90F04'}
+options = []
+for k in [24, 60, 120]:
+    options.append({'label': k, 'value': k})
+
+wvwma_selector = dcc.Dropdown(
+    id='wvwma-selector',
+    options=options,
+    value=[24, 60, 120],
+    multi=True,
+    persistence=True, persistence_type='local',
+)
+
 vol_level_selector = dcc.RangeSlider(
     id='vol-level-slider',
     min=0,
@@ -94,7 +105,11 @@ app.layout = html.Div(
     [
         interval_reload,
         dbc.Row(
-            html.H1(VESION),
+            html.H1(VERSION),
+            style={'margin-bottom': 40}
+        ),
+        dbc.Row(
+            html.Div(wvwma_selector),
             style={'margin-bottom': 40}
         ),
         dbc.Row(
@@ -132,9 +147,10 @@ def update_df(n, nn):
      Output(component_id='out-btc', component_property='children')],
     [Input(component_id='refresh', component_property='n_clicks'),
      Input(component_id='vol-level-slider', component_property='value'),
-     Input('interval-reload', 'n_intervals')]
+     Input('interval-reload', 'n_intervals'),
+     Input(component_id='wvwma-selector', component_property='value')]
 )
-def update_chart(n, range_vol_level, nn):
+def update_chart(n, range_vol_level, nn, wvwma_select):
     if cry.df.empty:
         cry.load(limit=LIMIT)
     df = cry.df
@@ -148,7 +164,8 @@ def update_chart(n, range_vol_level, nn):
     out_btc = f"Max Vol: {hd(df['Volume'].max())} Vol0: {hd(vol_level0)} {round((vol_level0 / df['Volume'].max()) * 100)} %" \
               f" Vol1: {hd(vol_level1)} {round((vol_level1 / df['Volume'].max()) * 100)} %"
     # print(df)
-    df['wvwma'] = wvwma(df['Open'], df['Volume'], length=WVW)
+    for wvw in wvwma_select:
+        df[f'wvwma_{wvw}'] = wvwma(df['Open'], df['Volume'], length=wvw)
     fig = go.Figure()
     fig.add_trace(
         go.Scatter(
@@ -166,17 +183,18 @@ def update_chart(n, range_vol_level, nn):
         )
     )
     # VWMA()
-    fig.add_trace(
-        go.Scatter(
-            x=df.index, y=df['wvwma'], mode='lines', name='WVWMA',
-            # hoverinfo='none',
-            line=dict(
-                # size=4,
-                color='black',
-            ),
-            showlegend=True
+    for wvw in wvwma_select:
+        fig.add_trace(
+            go.Scatter(
+                x=df.index, y=df[f'wvwma_{wvw}'], mode='lines', name=f'WVWMA_{wvw}',
+                # hoverinfo='none',
+                # line=dict(
+                    # size=4,
+                    # color='black',
+                # ),
+                showlegend=True
+            )
         )
-    )
     # Indicator
     end_vol = df['Volume'][-1]
     pre_end_vol = df['Volume'][-2]
