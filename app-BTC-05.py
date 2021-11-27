@@ -59,13 +59,14 @@ CHARTS_TEMPLATE = go.layout.Template(
     )
 )
 options = []
-for k in [30, 60, 120]:
+val = [30, 60, 120]
+for k in val:
     options.append({'label': k, 'value': k})
 
 wvwma_selector = dcc.Dropdown(
     id='wvwma-selector',
     options=options,
-    value=[30, 60, 120],
+    value=val,
     multi=True,
     persistence=True, persistence_type='local',
 )
@@ -80,16 +81,12 @@ vol_level_selector = dcc.RangeSlider(
     tooltip={'always_visible': True, 'placement': 'bottom'},
     persistence=True, persistence_type='local',
 )
-refresh = html.Div(
+refresh = html.Row(
     [
-        dbc.Row([
-            dbc.Col(dbc.Button('Refresh', id="refresh", color="primary", outline=True), width=1),
-            dbc.Col(dcc.Loading(html.Div(id='out-btc'))),
-            dbc.Col(html.Div(id='out-dump'), width=0),
-        ],
-            justify="start",
-        )
-    ]
+        dbc.Col(dbc.Button('Refresh', id="refresh", color="primary", outline=True), width=1),
+        dbc.Col(dcc.Loading(html.Div(id='out-btc'))),
+        dbc.Col(html.Div(id='out-dump'), width=0),
+    ], justify="start",
 )
 interval_reload = dcc.Interval(
     id='interval-reload',
