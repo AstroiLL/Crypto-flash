@@ -19,7 +19,7 @@ from MLDiLL.utils import hd, wvwma
 PERIOD = '1m'
 LIMIT = 240
 WVW = 24
-VERSION = 'BTC Splash #04'
+VERSION = 'BTC Splash #05'
 cry = CryptoA(period=PERIOD, verbose=False)
 cry.load(limit=LIMIT)
 # df = cry.df
