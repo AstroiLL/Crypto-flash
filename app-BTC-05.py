@@ -8,7 +8,7 @@ from dash.dependencies import Input, Output
 from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma, sma
 
-# TODO список линий и SMA WVWMA
+
 # TODO сохранение параметров
 # TODO лента объемов вокруг SMA шириной в зависимости от объема
 
