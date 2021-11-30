@@ -13,10 +13,11 @@ from MLDiLL.utils import hd, wvwma
 #TODO список линий и SMA WVWMA
 #TODO сохранение параметров
 #TODO лента объемов вокруг SMA шириной в зависимости от объема
+#TODO масштаб баров 1m 5m 10m 15m 30m 1h 2h 4h 12h 1D 1w
 
 # READ DATA
 
-PERIOD = '1m'
+PERIOD = '1h'
 LIMIT = 240
 WVW = 24
 VERSION = 'BTC Splash #04'

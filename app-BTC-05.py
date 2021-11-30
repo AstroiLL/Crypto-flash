@@ -1,18 +1,16 @@
 # Plotly Dash #13
 import dash
 import dash_bootstrap_components as dbc
-import plotly.express as px
 import plotly.graph_objects as go
-from dash import dash_table
 from dash import dcc, html
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 
 from MLDiLL.cryptoA import CryptoA
-from MLDiLL.utils import hd, wvwma
+from MLDiLL.utils import hd, wvwma, sma
 
-#TODO список линий и SMA WVWMA
-#TODO сохранение параметров
-#TODO лента объемов вокруг SMA шириной в зависимости от объема
+# TODO список линий и SMA WVWMA
+# TODO сохранение параметров
+# TODO лента объемов вокруг SMA шириной в зависимости от объема
 
 # READ DATA
 
@@ -58,17 +56,29 @@ CHARTS_TEMPLATE = go.layout.Template(
 
     )
 )
-options = []
-val = [30, 60, 120]
-for k in val:
-    options.append({'label': k, 'value': k})
 
-wvwma_selector = dcc.Dropdown(
-    id='wvwma-selector',
-    options=options,
-    value=val,
-    multi=True,
-    persistence=True, persistence_type='local',
+options = [{'label': i, 'value': i} for i in [15, 30, 60, 120]]
+wvwma_selector = html.Div(
+    [
+        dbc.Label("WVWMA"),
+        dcc.Dropdown(
+            id='wvwma-selector',
+            options=options,
+            value=[],
+            multi=True,
+            persistence=True, persistence_type='local',
+        )]
+)
+sma_selector = html.Div(
+    [
+        dbc.Label("SMA"),
+        dcc.Dropdown(
+            id='sma-selector',
+            options=options,
+            value=[],
+            multi=True,
+            persistence=True, persistence_type='local',
+        )]
 )
 
 vol_level_selector = dcc.RangeSlider(
@@ -81,7 +91,7 @@ vol_level_selector = dcc.RangeSlider(
     tooltip={'always_visible': True, 'placement': 'bottom'},
     persistence=True, persistence_type='local',
 )
-refresh = html.Row(
+refresh = dbc.Row(
     [
         dbc.Col(dbc.Button('Refresh', id="refresh", color="primary", outline=True), width=1),
         dbc.Col(dcc.Loading(html.Div(id='out-btc'))),
@@ -96,7 +106,7 @@ interval_reload = dcc.Interval(
 
 app = dash.Dash(
     __name__, external_stylesheets=[dbc.themes.FLATLY]
-    )
+)
 
 app.layout = html.Div(
     [
@@ -106,7 +116,10 @@ app.layout = html.Div(
             style={'margin-bottom': 40}
         ),
         dbc.Row(
-            html.Div(wvwma_selector),
+            [
+                dbc.Col(wvwma_selector),
+                dbc.Col(sma_selector),
+            ],
             style={'margin-bottom': 40}
         ),
         dbc.Row(
@@ -145,9 +158,10 @@ def update_df(n, nn):
     [Input(component_id='refresh', component_property='n_clicks'),
      Input(component_id='vol-level-slider', component_property='value'),
      Input('interval-reload', 'n_intervals'),
-     Input(component_id='wvwma-selector', component_property='value')]
+     Input(component_id='wvwma-selector', component_property='value'),
+     Input(component_id='sma-selector', component_property='value')]
 )
-def update_chart(n, range_vol_level, nn, wvwma_select):
+def update_chart(n, range_vol_level, nn, wvwma_select, sma_select):
     if cry.df.empty:
         cry.load(limit=LIMIT)
     df = cry.df
@@ -163,6 +177,8 @@ def update_chart(n, range_vol_level, nn, wvwma_select):
     # print(df)
     for wvw in wvwma_select:
         df[f'wvwma_{wvw}'] = wvwma(df['Open'], df['Volume'], length=wvw)
+    for s in sma_select:
+        df[f'sma_{s}'] = sma(df['Open'],  length=s)
     fig = go.Figure()
     fig.add_trace(
         go.Scatter(
@@ -179,16 +195,29 @@ def update_chart(n, range_vol_level, nn, wvwma_select):
             ),
         )
     )
-    # VWMA()
+    # WVWMA()
     for wvw in wvwma_select:
         fig.add_trace(
             go.Scatter(
                 x=df.index, y=df[f'wvwma_{wvw}'], mode='lines', name=f'WVWMA_{wvw}',
                 # hoverinfo='none',
                 # line=dict(
-                    # size=4,
-                    # color='black',
+                # size=4,
+                # color='black',
                 # ),
+                showlegend=True
+            )
+        )
+    # SMA()
+    for s in sma_select:
+        fig.add_trace(
+            go.Scatter(
+                x=df.index, y=df[f'sma_{s}'], mode='markers', name=f'SMA_{s}',
+                # hoverinfo='none',
+                marker=dict(
+                # width=2,
+                # color='black',
+                ),
                 showlegend=True
             )
         )
