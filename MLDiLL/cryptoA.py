@@ -135,6 +135,8 @@ class CryptoA:
         self.count = 0
         self.table = None
         self.metadata_obj = MetaData()
+        self.maxV = 0
+
 
     # TODO default parameters попробовать убрать None
     def load(self, exchange=None, crypto=None, period=None, update=None, limit=1):
@@ -249,6 +251,7 @@ class CryptoA:
             # print(f"Last date2 from {self.period} from mySQL", last_date)
         if self.verbose: print(f'#249 Loaded {self.limit} bars {self.period}')
         self.df = df.copy()
+        self.maxV = df['Volume'].max()
         return True
 
 

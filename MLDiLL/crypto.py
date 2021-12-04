@@ -53,6 +53,7 @@ class Crypto:
         self.connect = self.open
         self.update_crypto = self.updating
         self.load_crypto = self.load
+        self.maxV = 0
         # self.connect(exchange=exchange, crypto=crypto, period=period, update=update)
 
     def _connect(self):
@@ -198,6 +199,7 @@ class Crypto:
         df.index += timedelta(hours=tz)
         if self.verbose: print(f'Loaded {self.limit} bars {self.period}')
         self.df = df
+        self.maxV = df['Volume'].max()
         return df
 
     def updating(self):
