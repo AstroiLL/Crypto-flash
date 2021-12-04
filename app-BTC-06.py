@@ -8,7 +8,7 @@ from dash.dependencies import Input, Output
 from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma, sma
 
-# TODO линии по списку
+# TODO линии по списку с сохранением и фильтрацией
 # TODO сохранение параметров
 # TODO лента объемов вокруг SMA шириной в зависимости от объема
 
@@ -170,8 +170,8 @@ def update_chart(n, range_vol_level, nn, wvwma_select, sma_select):
     df['max_vol'] = 5
     df['max_vol'] = df['max_vol'].where(df['Volume'] < vol_level0, 13).where(df['Volume'] < vol_level1, 21)
     big_max_vol = df[df['max_vol'] == 21][['max_vol', 'Open']]
-    count_big_max_vol = big_max_vol['max_vol'].count()
-    print(big_max_vol['Open'].values)
+    # count_big_max_vol = big_max_vol['max_vol'].count()
+    # print(big_max_vol['Open'].values)
     df['max_vol_color'] = 'gray'
     df['max_vol_color'] = df['Open'].where(df['Open'] >= df['Close'], 'blue').where(df['Open'] < df['Close'], 'red')
     out_btc = f"Max Vol: {hd(maxV)} Vol0: {hd(vol_level0)} {round((vol_level0 / maxV) * 100)} %" \
