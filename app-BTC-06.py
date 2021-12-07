@@ -164,6 +164,7 @@ def update_chart(n, range_vol_level, nn, wvwma_select, sma_select):
         cry.load(limit=LIMIT)
     df = cry.df
     maxV = cry.maxV
+    range_open = {'min': df['Open'].min(), 'max': df['Open'].max()}
     vol_level0 = range_vol_level[0]
     vol_level1 = range_vol_level[1]
     # Фильтровать по критерию Vol >= уровень
@@ -253,7 +254,14 @@ def update_chart(n, range_vol_level, nn, wvwma_select, sma_select):
     )
     # H lines
     for i in big_max_vol['Open']:
-        fig.add_hline(y=i)
+        fig.add_hline(y=i, line_dash="dot",
+              annotation_text=i,
+              annotation_position="top right")
+    # fig.add_hline(
+    #     y=40000, line_dash="dash", exclude_empty_subplots=False,
+    #     annotation_text='Test1',
+    #     annotation_position="top right"
+    #     )
 
     fig.update_layout(template=CHARTS_TEMPLATE)
     html1 = [html.Div('BTC/USD ' + PERIOD, className='header_plots'),
