@@ -51,7 +51,8 @@ CHARTS_TEMPLATE = go.layout.Template(
         # legend=dict(x=0, y=1, orientation='h'),
         hovermode="x unified",
         # hoverlabel_align='right',
-        # margin={"r": 0, "t": 1, "l": 0, "b": 0}
+        # margin={"r": 0, "t": 1, "l": 0, "b": 0},
+        transition_duration=500
 
     )
 )
