@@ -85,11 +85,11 @@ vol_level_selector = dcc.RangeSlider(
     id='vol-level-slider',
     min=0,
     max=cry.maxV,
-    value=[0, 1000000],
+    value=[cry.maxV*0.5, cry.maxV*0.75],
     # allowCross=False,
-    pushable=1000000,
+    # pushable=1000000,
     tooltip={'always_visible': True, 'placement': 'bottom'},
-    persistence=True, persistence_type='local',
+    # persistence=True, persistence_type='local',
 )
 refresh = dbc.Row(
     [
@@ -272,4 +272,4 @@ def update_chart(n, range_vol_level, nn, wvwma_select, sma_select):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(port=8052, debug=True)
