@@ -9,4 +9,4 @@ sma.py
 *.json
 /old/
 /old/*
-/cache-directory/
+/cache-directory/*

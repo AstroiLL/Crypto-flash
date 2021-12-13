@@ -89,7 +89,7 @@ vol_level_selector = dcc.RangeSlider(
     # allowCross=False,
     # pushable=1000000,
     tooltip={'always_visible': True, 'placement': 'bottom'},
-    # persistence=True, persistence_type='local',
+    persistence=True, persistence_type='local',
 )
 refresh = dbc.Row(
     [
@@ -141,14 +141,19 @@ app.layout = html.Div(
 
 
 @app.callback(
-    Output(component_id='out-dump', component_property='children'),
-    [Input(component_id='refresh', component_property='n_clicks'),
+    [Output('out-dump', 'children'),
+     Output('vol-level-slider', 'max'),
+     # Output('vol-level-slider', 'value'),
+     ],
+    [Input('refresh', 'n_clicks'),
      # Input(component_id='vol-level-slider', component_property='value'),
-     Input('interval-reload', 'n_intervals')]
+     Input('interval-reload', 'n_intervals'),
+    ]
 )
 def update_df(n, nn):
     cry.load(limit=LIMIT)
-    return ' '
+    return ' ', cry.maxV
+        # , [cry.maxV*0.5, cry.maxV*0.75]
 
 
 @app.callback(
