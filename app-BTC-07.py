@@ -85,36 +85,50 @@ vol_level_selector = dcc.RangeSlider(
     id='vol-level-slider',
     min=0,
     max=cry.maxV,
-    value=[cry.maxV*0.5, cry.maxV*0.75],
+    value=[cry.maxV * 0.5, cry.maxV * 0.75],
     # allowCross=False,
     # pushable=1000000,
     tooltip={'always_visible': True, 'placement': 'bottom'},
     persistence=True, persistence_type='local',
 )
-options = html.Div(
+
+price_line = html.Div(
     [
-        # dbc.Label("Toggle a bunch"),
-        dbc.Checklist(
-            options=[
-                {"label": "Option 1", "value": 1},
-                {"label": "Option 2", "value": 2},
-            ],
-            value=[],
-            id="switches-input",
-            switch=True,
-            inline=True,
+        dbc.Switch(
+            id="price-line",
+            label="Цена",
+            value=True,
+            persistence=True, persistence_type='local',
         ),
     ]
 )
 
-refresh = dbc.Row(
+price_sma = html.Div(
     [
-        dbc.Col(dbc.Button('Refresh', id="refresh", color="primary", outline=True), width=1),
-        dbc.Col(dcc.Loading(html.Div(id='out-btc'))),
-        dbc.Col(html.Div(id='out-dump'), width=0),
-        dbc.Col(options, width=0),
-    ], justify="start",
+        dbc.Switch(
+            id="price-sma",
+            label="SMA цены",
+            value=True,
+            persistence=True, persistence_type='local',
+        ),
+    ]
 )
+
+price_max_vol = html.Div(
+    [
+        dbc.Switch(
+            id="price-max-vol",
+            label="Max Volume",
+            value=True,
+            persistence=True, persistence_type='local',
+        ),
+    ]
+)
+
+sma_period = dbc.Input(
+    id='sma-period', type="number", step=1, value=2, min=1, max=30, persistence=True, persistence_type='local'
+)
+
 interval_reload = dcc.Interval(
     id='interval-reload',
     interval=60000,  # in milliseconds
@@ -140,7 +154,15 @@ app.layout = html.Div(
             style={'margin-bottom': 40}
         ),
         dbc.Row(
-            html.Div(refresh),
+            [
+                dbc.Col(dbc.Button('Refresh', id="refresh", color="primary", outline=True), width=1),
+                dbc.Col(dcc.Loading(html.Div(id='out-btc'))),
+                dbc.Col(html.Div(id='out-dump'), width=0),
+                dbc.Col(price_line, width=0),
+                dbc.Col(sma_period, width=0),
+                dbc.Col(price_sma, width=0),
+                dbc.Col(price_max_vol, width=0),
+            ],
             style={'margin-bottom': 40}
         ),
         dbc.Row(
@@ -160,17 +182,15 @@ app.layout = html.Div(
 @app.callback(
     [Output('out-dump', 'children'),
      Output('vol-level-slider', 'max'),
-     # Output('vol-level-slider', 'value'),
      ],
     [Input('refresh', 'n_clicks'),
-     # Input('vol-level-slider', 'value'),
      Input('interval-reload', 'n_intervals'),
-    ]
+     ]
 )
 def update_df(n, nn):
     cry.load(limit=LIMIT)
     return ' ', cry.maxV
-        # , [cry.maxV*0.5, cry.maxV*0.75]
+    # , [cry.maxV*0.5, cry.maxV*0.75]
 
 
 @app.callback(
@@ -180,9 +200,14 @@ def update_df(n, nn):
      Input('vol-level-slider', 'value'),
      Input('interval-reload', 'n_intervals'),
      Input('wvwma-selector', 'value'),
-     Input('sma-selector', 'value')]
+     Input('sma-selector', 'value'),
+     Input('price-line', 'value'),
+     Input('sma-period', 'value'),
+     Input('price-sma', 'value'),
+     Input('price-max-vol', 'value'),
+     ]
 )
-def update_chart(n, range_vol_level, nn, wvwma_select, sma_select):
+def update_chart(n, range_vol_level, nn, wvwma_select, sma_select, price_line, sma_period, price_sma, price_max_vol):
     if cry.df.empty:
         cry.load(limit=LIMIT)
     df = cry.df
@@ -191,7 +216,7 @@ def update_chart(n, range_vol_level, nn, wvwma_select, sma_select):
     vol_level0 = range_vol_level[0]
     vol_level1 = range_vol_level[1]
     # Фильтровать по критерию Vol >= уровень
-    df['max_vol'] = 3
+    df['max_vol'] = 0
     df['max_vol'] = df['max_vol'].where(df['Volume'] < vol_level0, 13).where(df['Volume'] < vol_level1, 21)
     big_max_vol = df[df['max_vol'] == 21][['max_vol', 'Open']]
     # count_big_max_vol = big_max_vol['max_vol'].count()
@@ -200,33 +225,46 @@ def update_chart(n, range_vol_level, nn, wvwma_select, sma_select):
     df['max_vol_color'] = df['Open'].where(df['Open'] >= df['Close'], 'blue').where(df['Open'] < df['Close'], 'red')
     out_btc = f"Max Vol: {hd(maxV)} Vol0: {hd(vol_level0)} {round((vol_level0 / maxV) * 100)} %" \
               f" Vol1: {hd(vol_level1)} {round((vol_level1 / maxV) * 100)} %"
-    # print(df)
+    Max_Vol = df['max_vol'] >= 13
+    dfv = df[Max_Vol]
     for wvw in wvwma_select:
         df[f'wvwma_{wvw}'] = wvwma(df['Open'], df['Volume'], length=wvw)
     for s in sma_select:
         df[f'sma_{s}'] = sma(df['Open'], length=s)
+    # Price SMA
+    df['sma'] = sma(df['Open'], length=sma_period)
     fig = go.Figure()
     # Price line
-    fig.add_trace(
-        go.Scatter(
-            x=df.index, y=df['Open'],
-            name='BTC',
-            mode='lines+markers',
-            marker=dict(
-                size=df['max_vol'],
-                color=df['max_vol_color'],
-            ),
-            line=dict(
-                # size=1,
-                color='grey',
-            ),
+    if price_line:
+        fig.add_trace(
+            go.Scatter(
+                x=df.index, y=df['Open'],
+                name='Price',
+                mode='lines',
+                line=dict(
+                    # size=1,
+                    color='grey',
+                ),
+            )
         )
-    )
+    # Max Vol
+    if price_max_vol:
+        fig.add_trace(
+            go.Scatter(
+                x=dfv.index, y=dfv['Open'],
+                name='Max Vol',
+                mode='markers',
+                marker=dict(
+                    size=dfv['max_vol'],
+                    color=dfv['max_vol_color'],
+                ),
+            )
+        )
     # WVWMA()
     for wvw in wvwma_select:
         fig.add_trace(
             go.Scatter(
-                x=df.index, y=df[f'wvwma_{wvw}'], mode='lines', name=f'WVWMA_{wvw}',
+                x=df.index, y=df[f'wvwma_{wvw}'], mode='lines', name=f'WVWMA({wvw})',
                 # hoverinfo='none',
                 # line=dict(
                 # size=4,
@@ -235,11 +273,24 @@ def update_chart(n, range_vol_level, nn, wvwma_select, sma_select):
                 showlegend=True
             )
         )
-    # SMA()
+    # Price SMA
+    if price_sma:
+        fig.add_trace(
+            go.Scatter(
+                x=df.index, y=df['sma'], mode='lines', name=f'Price SMA',
+                # hoverinfo='none',
+                line=dict(
+                    width=1,
+                    color='black',
+                ),
+                showlegend=True
+            )
+        )
+    # SMA_X
     for s in sma_select:
         fig.add_trace(
             go.Scatter(
-                x=df.index, y=df[f'sma_{s}'], mode='markers', name=f'SMA_{s}',
+                x=df.index, y=df[f'sma_{s}'], mode='markers', name=f'SMA({s})',
                 # hoverinfo='none',
                 marker=dict(
                     # width=2,
@@ -257,7 +308,8 @@ def update_chart(n, range_vol_level, nn, wvwma_select, sma_select):
             value=end_vol,
             number={'prefix': "Vol:"},
             delta={'position': "top", 'reference': pre_end_vol},
-            domain={'x': [0, 0], 'y': [0, 0]}
+            domain={'x': [0, 0], 'y': [0, 0]},
+            # showlegend=True,
         )
     )
     # End price
@@ -277,9 +329,11 @@ def update_chart(n, range_vol_level, nn, wvwma_select, sma_select):
     )
     # H lines
     for i in big_max_vol['Open']:
-        fig.add_hline(y=i, line_dash="dot",
-              annotation_text=i,
-              annotation_position="top right")
+        fig.add_hline(
+            y=i, line_dash="dot",
+            annotation_text=i,
+            annotation_position="top right"
+        )
     # fig.add_hline(
     #     y=40000, line_dash="dash", exclude_empty_subplots=False,
     #     annotation_text='Test1',
