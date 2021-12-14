@@ -17,7 +17,7 @@ from MLDiLL.utils import hd, wvwma, sma
 PERIOD = '1m'
 LIMIT = 800
 WVW = 24
-VERSION = 'BTC Splash #06'
+VERSION = 'BTC Splash #07'
 cry = CryptoA(period=PERIOD, verbose=False)
 cry.load(limit=LIMIT)
 
@@ -91,11 +91,28 @@ vol_level_selector = dcc.RangeSlider(
     tooltip={'always_visible': True, 'placement': 'bottom'},
     persistence=True, persistence_type='local',
 )
+options = html.Div(
+    [
+        # dbc.Label("Toggle a bunch"),
+        dbc.Checklist(
+            options=[
+                {"label": "Option 1", "value": 1},
+                {"label": "Option 2", "value": 2},
+            ],
+            value=[],
+            id="switches-input",
+            switch=True,
+            inline=True,
+        ),
+    ]
+)
+
 refresh = dbc.Row(
     [
         dbc.Col(dbc.Button('Refresh', id="refresh", color="primary", outline=True), width=1),
         dbc.Col(dcc.Loading(html.Div(id='out-btc'))),
         dbc.Col(html.Div(id='out-dump'), width=0),
+        dbc.Col(options, width=0),
     ], justify="start",
 )
 interval_reload = dcc.Interval(
