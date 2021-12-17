@@ -77,7 +77,7 @@ sma_selector = html.Div(
             options=options,
             value=[],
             multi=True,
-            # persistence=True, persistence_type='local',
+            persistence=True, persistence_type='local',
         )]
 )
 
@@ -85,7 +85,7 @@ vol_level_selector = dcc.RangeSlider(
     id='vol-level-slider',
     min=0,
     max=cry.maxV,
-    value=[cry.maxV * 0.25, cry.maxV * 0.5],
+    value=[cry.maxV * 0.25, cry.maxV * 0.e55],
     # allowCross=False,
     # pushable=1000000,
     tooltip={'always_visible': True, 'placement': 'bottom'},
