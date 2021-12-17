@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from dash import dcc, html
 from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
+import pandas as pd
 
 from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma, sma
@@ -18,14 +19,7 @@ from MLDiLL.utils import hd, wvwma, sma
 PERIOD = '1m'
 LIMIT = 800
 WVW = 24
-VERSION = 'BTC Splash #08'
-cry = CryptoA(period=PERIOD, verbose=False)
-cry.load(limit=LIMIT)
-
-# create category
-# bins = [0, 0.8, 1.2, 100]
-# names = ['small', 'similar', 'bigger']
-# df['StarSize'] = pd.cut(df['RSTAR'], bins, labels=names)
+VERSION = 'BTC Splash #09'
 
 # LAYOUT
 
@@ -43,7 +37,7 @@ CHARTS_TEMPLATE = go.layout.Template(
             y=1.1
         ),
         xaxis_title="Date",
-        yaxis_title=f"{cry.crypto}",
+        yaxis_title="BTC/USD",
         # height=650,
         height=700,
         # width=1400,
@@ -142,6 +136,7 @@ app = dash.Dash(
 
 app.layout = html.Div(
     [
+        dcc.Store(id='df', storage_type='local'),
         interval_reload,
         dbc.Row(
             html.H1(VERSION),
@@ -181,17 +176,20 @@ app.layout = html.Div(
 
 @app.callback(
     Output('refresh', 'children'),
+    Output('df', 'data'),
     Input('refresh', 'n_clicks'),
     Input('interval-reload', 'n_intervals'),
 )
 def update_df(n, nn):
+    cry = CryptoA(period=PERIOD, verbose=False)
     cry.load(limit=LIMIT)
-    return 'Refresh'
+    return 'Refresh', cry.df.to_json()
 
 
 @app.callback(
     Output('btc-chart', 'children'),
     Output('out-btc', 'children'),
+    Input('df', 'data'),
     Input('refresh', 'n_clicks'),
     Input('vol-level-slider', 'value'),
     Input('interval-reload', 'n_intervals'),
@@ -202,11 +200,11 @@ def update_df(n, nn):
     Input('price-sma', 'value'),
     Input('price-max-vol', 'value'),
 )
-def update_chart(n, range_vol_level, nn, wvwma_select, sma_select, price_line, sma_period, price_sma, price_max_vol):
-    if cry.df.empty:
+def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_line, sma_period, price_sma, price_max_vol):
+    df = pd.read_json(data)
+    if df.empty:
         raise PreventUpdate
-    df = cry.df
-    maxV = cry.maxV
+    maxV = df['Volume'].max()
     # range_open = {'min': df['Open'].min(), 'max': df['Open'].max()}
     vol_level0 = (range_vol_level[0]*maxV)/100
     vol_level1 = (range_vol_level[1]*maxV)/100
