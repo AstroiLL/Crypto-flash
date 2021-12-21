@@ -10,9 +10,7 @@ import pandas as pd
 from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma, sma
 
-# TODO линии по списку с сохранением и фильтрацией
-# TODO сохранение параметров
-# TODO лента объемов вокруг SMA шириной в зависимости от объема
+# TODO линии EMA на объеме и вычисление всплесков объемов по её превышению
 
 # READ DATA
 
@@ -183,7 +181,8 @@ app.layout = html.Div(
 def update_df(n, nn):
     cry = CryptoA(period=PERIOD, verbose=False)
     cry.load(limit=LIMIT)
-    return 'Refresh', cry.df.to_json()
+    df = cry.df[['Open', 'Close', 'Volume']]
+    return 'Refresh', df.to_json()
 
 
 @app.callback(
