@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from dash import dcc, html
 from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
+from plotly.subplots import make_subplots
 
 from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma, sma
@@ -36,34 +37,7 @@ CHARTS_TEMPLATE = go.layout.Template(
         xaxis_title="Date",
         yaxis_title="BTC/USD",
         # height=650,
-        height=500,
-        # width=1400,
-        xaxis_rangeslider_visible=False,
-        # legend_orientation="h",
-        # legend=dict(x=0, y=1, orientation='h'),
-        hovermode="x unified",
-        # hoverlabel_align='right',
-        # margin={"r": 0, "t": 1, "l": 0, "b": 0},
-        transition_duration=500
-
-    )
-)
-CHARTS_TEMPLATE_V = go.layout.Template(
-    layout=dict(
-        font=dict(
-            family='Roboto',
-            size=10
-        ),
-        legend=dict(
-            orientation='h',
-            title_text='',
-            x=0,
-            y=1.1
-        ),
-        xaxis_title="Date",
-        yaxis_title="Volume",
-        # height=650,
-        height=500,
+        height=800,
         # width=1400,
         xaxis_rangeslider_visible=False,
         # legend_orientation="h",
@@ -145,12 +119,12 @@ price_max_vol = html.Div(
 )
 
 sma_period_price = dbc.Input(
-    id='sma-period-price', placeholder='price', type="number", step=1, min=1, max=30, persistence=True,
+    id='sma-period-price', placeholder='period price', type="number", step=1, min=1, max=30, persistence=True,
     persistence_type='local'
 )
 
 sma_period_vol = dbc.Input(
-    id='sma-period-vol', placeholder='vol', type="number", step=1, min=1, max=30, persistence=True,
+    id='sma-period-vol', placeholder='period vol', type="number", step=1, min=1, max=30, persistence=True,
     persistence_type='local'
 )
 
@@ -249,7 +223,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
     # Фильтровать по критерию Vol >= уровень
     df['max_vol'] = 0
     df['max_vol'] = df['max_vol'].where(df['Volume'] < vol_level0, 13).where(df['Volume'] < vol_level1, 21)
-    big_max_vol = df[df['max_vol'] == 21][['max_vol', 'Open']]
+    big_max_vol = df[df['max_vol'] == 21][['Volume', 'max_vol', 'Open']]
     # count_big_max_vol = big_max_vol['max_vol'].count()
     # print(big_max_vol['Open'].values)
     df['max_vol_color'] = 'gray'
@@ -264,7 +238,16 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
         df[f'sma_{s}'] = sma(df['Open'], length=s)
     # Price SMA
     df['sma'] = sma(df['Open'], length=sma_period_price)
-    fig = go.Figure()
+    # Volume SMA
+    df['sma_v'] = sma(df['Volume'], length=int(sma_period_vol))
+    fig = make_subplots(
+        rows=2, cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.03,
+        # specs=[[{"type": "scatter"}],
+        #        [{"type": "scatter"}]
+        #        ]
+    )
     # Price line
     if price_line:
         fig.add_trace(
@@ -276,7 +259,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
                     # size=1,
                     color='grey',
                 ),
-            )
+            ), row=1, col=1
         )
     # Max Vol
     if price_max_vol:
@@ -289,7 +272,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
                     size=dfv['max_vol'],
                     color=dfv['max_vol_color'],
                 ),
-            )
+            ), row=1, col=1
         )
     # WVWMA()
     for wvw in wvwma_select:
@@ -302,7 +285,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
                 # color='black',
                 # ),
                 showlegend=True
-            )
+            ), row=1, col=1
         )
     # Price SMA
     if price_sma:
@@ -315,7 +298,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
                     color='black',
                 ),
                 showlegend=True
-            )
+            ), row=1, col=1
         )
     # SMA_X
     for s in sma_select:
@@ -328,21 +311,21 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
                     # color='black',
                 ),
                 showlegend=True
-            )
+            ), row=1, col=1
         )
     # Indicator
-    end_vol = df['Volume'][-1]
-    pre_end_vol = df['Volume'][-2]
-    fig.add_trace(
-        go.Indicator(
-            mode="number+delta",
-            value=end_vol,
-            number={'prefix': "Vol:"},
-            delta={'position': "top", 'reference': pre_end_vol},
-            domain={'x': [0, 0], 'y': [0, 0]},
-            # showlegend=True,
-        )
-    )
+    # end_vol = df['Volume'][-1]
+    # pre_end_vol = df['Volume'][-2]
+    # fig.add_trace(
+    #     go.Indicator(
+    #         mode="number+delta",
+    #         value=end_vol,
+    #         number={'prefix': "Vol:"},
+    #         delta={'position': "top", 'reference': pre_end_vol},
+    #         domain={'x': [0, 0], 'y': [0, 0]},
+    #         # showlegend=True,
+    #     ), row=1, col=1
+    # )
     # End price
     end_price = df['Close'][-1]
     fig.add_trace(
@@ -356,28 +339,56 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
             marker=dict(color='black', size=12, symbol='star'),
             showlegend=True,
             hovertemplate=f"{end_price}"
-        )
+        ), row=1, col=1
     )
     # H lines
     for i in big_max_vol['Open']:
         fig.add_hline(
             y=i, line_dash="dot",
             annotation_text=i,
-            annotation_position="top right"
+            annotation_position="top right",
+            row=1, col=1
         )
-    # fig.add_hline(
-    #     y=40000, line_dash="dash", exclude_empty_subplots=False,
-    #     annotation_text='Test1',
-    #     annotation_position="top right"
-    #     )
+    # Vert Vol
+    fig.add_trace(
+        go.Bar(
+            x=df.index, y=df['Volume'], name='Volume',
+            marker=dict(color='grey'), showlegend=True, opacity=0.5,
+            # hoverinfo='none'
+        ), row=2, col=1
+    )
+    # Vol SMA
+    if price_sma:
+        fig.add_trace(
+            go.Scatter(
+                x=df.index, y=df['sma_v'], mode='lines', name=f'Vol SMA',
+                # hoverinfo='none',
+                line=dict(
+                    width=1,
+                    color='black',
+                ),
+                showlegend=True
+            ), row=2, col=1
+        )
+    # H lines Vol
+    fig.add_hline(
+        y=vol_level0, line_dash="dash",
+        annotation_text=vol_level0,
+        annotation_position="top right",
+        row=2, col=1
+    )
+    fig.add_hline(
+        y=vol_level1, line_dash="longdash",
+        annotation_text=vol_level1,
+        annotation_position="top right",
+        row=2, col=1
+    )
 
     fig.update_layout(template=CHARTS_TEMPLATE)
-    fig_v = go.Figure()
-    fig_v.update_layout(template=CHARTS_TEMPLATE_V)
+
     html1 = [
         html.Div('BTC/USD ' + PERIOD, className='header_plots'),
         dcc.Graph(figure=fig),
-        dcc.Graph(figure=fig_v)
     ]
 
     return html1, out_btc
