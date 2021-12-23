@@ -123,9 +123,14 @@ sma_period_price = dbc.Input(
     persistence_type='local'
 )
 
-sma_period_vol = dbc.Input(
-    id='sma-period-vol', placeholder='period vol', type="number", step=1, min=1, max=30, persistence=True,
-    persistence_type='local'
+sma_period_vol = html.Div(
+    [
+
+        dbc.Input(
+            id='sma-period-vol', placeholder='period vol', type="number", step=1, min=1, max=30, persistence=True,
+            persistence_type='local'
+        )
+    ]
 )
 
 interval_reload = dcc.Interval(
@@ -161,7 +166,9 @@ app.layout = html.Div(
             [
                 dbc.Col(dcc.Loading(dbc.Button('Refresh', id="refresh", color="primary", outline=True)), width=1),
                 dbc.Col(price_line, width=0),
+                'SMA Vol:',
                 dbc.Col(sma_period_vol, width=0),
+                'SMA Price:',
                 dbc.Col(sma_period_price, width=0),
                 dbc.Col(price_sma, width=0),
                 dbc.Col(price_max_vol, width=0),
@@ -239,7 +246,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
     # Price SMA
     df['sma'] = sma(df['Open'], length=sma_period_price)
     # Volume SMA
-    df['sma_v'] = sma(df['Volume'], length=int(sma_period_vol))
+    df['sma_v'] = sma(df['Volume'], length=sma_period_vol)
     fig = make_subplots(
         rows=2, cols=1,
         shared_xaxes=True,
