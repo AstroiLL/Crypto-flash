@@ -11,6 +11,7 @@ from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma, sma
 
 # TODO линии EMA на объеме и вычисление всплесков объемов по её превышению
+# TODO выбор общего объема баров для анализа
 
 # READ DATA
 
