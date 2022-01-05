@@ -107,6 +107,7 @@ def wvwma(src, vol, length=48):
     """
     WVwma - взвешенная объемно-взвешенная скользящая средняя за период
     """
+    # print(src,vol,length)
     return ta.wma(src*vol, length=length)/ta.wma(vol, length=length)
 
 
