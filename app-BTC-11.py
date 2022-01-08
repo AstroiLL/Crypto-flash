@@ -408,4 +408,4 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
 
 
 if __name__ == '__main__':
-    app.run_server(port=8053, debug=True)
+    app.run_server(port=8052, debug=True)
