@@ -3,12 +3,18 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.graph_objects as go
 from dash import dcc, html
+from dash.long_callback import DiskcacheLongCallbackManager
 from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
 from plotly.subplots import make_subplots
 
 from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma, sma
+
+# Diskcache
+import diskcache
+cache = diskcache.Cache("./cache")
+long_callback_manager = DiskcacheLongCallbackManager(cache)
 
 # TODO добавить график цены вокруг WVWMA
 # READ DATA
@@ -192,12 +198,13 @@ app.layout = html.Div(
 """ CALLBACK """
 
 
-@app.callback(
+@app.long_callback(
     Output('refresh', 'children'),
     Output('df', 'data'),
     Input('all-period', 'value'),
     Input('refresh', 'n_clicks'),
     Input('interval-reload', 'n_intervals'),
+    manager=long_callback_manager,
 )
 def update_df(limit, n, nn):
     cry = CryptoA(period=PERIOD, verbose=False)
