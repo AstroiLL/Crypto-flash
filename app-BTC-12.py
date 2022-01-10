@@ -10,9 +10,7 @@ from plotly.subplots import make_subplots
 from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma, sma
 
-# TODO линии EMA на объеме и вычисление всплесков объемов по её превышению
-# TODO выбор общего объема баров для анализа
-
+# TODO добавить график цены вокруг WVWMA
 # READ DATA
 
 PERIOD = '1m'
