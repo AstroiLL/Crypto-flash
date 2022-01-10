@@ -17,6 +17,7 @@ cache = diskcache.Cache("./cache")
 long_callback_manager = DiskcacheLongCallbackManager(cache)
 
 # TODO добавить график цены вокруг WVWMA
+# TODO long_callback
 # READ DATA
 
 PERIOD = '1m'
@@ -39,15 +40,17 @@ CHARTS_TEMPLATE = go.layout.Template(
             x=0,
             y=1.1
         ),
-        xaxis_title="Date",
-        yaxis_title="BTC/USD",
+        # xaxis_title="Date",
+        # yaxis_title="BTC/USD",
         # height=650,
         height=800,
         # width=1400,
-        xaxis_rangeslider_visible=False,
+        xaxis_rangeslider_visible=True,
+        xaxis_showspikes=True,
+        # yaxis_showspikes=True,
         # legend_orientation="h",
         # legend=dict(x=0, y=1, orientation='h'),
-        hovermode="x unified",
+        # hovermode="x unified",
         # hoverlabel_align='right',
         # margin={"r": 0, "t": 1, "l": 0, "b": 0},
         transition_duration=500
@@ -58,7 +61,7 @@ CHARTS_TEMPLATE = go.layout.Template(
 options = [{'label': i, 'value': i} for i in [15, 30, 60, 120, 240]]
 wvwma_selector = html.Div(
     [
-        dbc.Label("WVWMA"),
+        # "WVWMA",
         dcc.Dropdown(
             id='wvwma-selector',
             options=options,
@@ -69,14 +72,14 @@ wvwma_selector = html.Div(
 )
 sma_selector = html.Div(
     [
-        dbc.Label("SMA"),
+        # "SMA",
         dcc.Dropdown(
             id='sma-selector',
             options=options,
             value=[],
             multi=True,
             persistence=True, persistence_type='local',
-        )]
+        )], hidden=True
 )
 
 vol_level_selector = dcc.RangeSlider(
@@ -157,8 +160,7 @@ app.layout = html.Div(
         interval_reload,
         dbc.Row(
             [
-                dbc.Col(html.H1(VERSION)),
-                dbc.Col(all_period),
+                dbc.Col(html.H3(VERSION)),
                 dbc.Col(html.Div(id='out-btc')),
 
             ],
@@ -166,8 +168,12 @@ app.layout = html.Div(
         ),
         dbc.Row(
             [
+                'Period:',
+                dbc.Col(all_period),
+                "WVWMA:",
                 dbc.Col(wvwma_selector),
-                dbc.Col(sma_selector),
+                # "WVWMA",
+                dbc.Col(sma_selector, width=0),
             ],
             style={'margin-bottom': 10}
         ),
@@ -250,21 +256,20 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
               f" Vol1: {hd(vol_level1)} {round((vol_level1 / maxV) * 100)} %"
     Max_Vol = df['max_vol'] >= 13
     dfv = df[Max_Vol]
-    for wvw in wvwma_select:
-        df[f'wvwma_{wvw}'] = wvwma(df['Open'], df['Volume'], length=wvw)
-    for s in sma_select:
-        df[f'sma_{s}'] = sma(df['Open'], length=s)
     # Price SMA
     df['sma'] = sma(df['Open'], length=sma_period_price)
     # Volume SMA
     df['sma_v'] = sma(df['Volume'], length=sma_period_vol)
+    for wvw in wvwma_select:
+        df[f'wvwma_{wvw}'] = wvwma(df['Open'], df['Volume'], length=wvw)
+        df[f'sma_{wvw}'] = sma(df['Open'], length=wvw)
+        df[f'w_s_{wvw}'] = df[f'wvwma_{wvw}'] - df[f'sma_{wvw}']
+        df[f'o_w_{wvw}'] = df['sma'] - df[f'wvwma_{wvw}']
+    # Make Figures
     fig = make_subplots(
-        rows=2, cols=1,
+        rows=3, cols=1,
         shared_xaxes=True,
         vertical_spacing=0.03,
-        # specs=[[{"type": "scatter"}],
-        #        [{"type": "scatter"}]
-        #        ]
     )
     # Price line
     if price_line:
@@ -292,19 +297,6 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
                 ),
             ), row=1, col=1
         )
-    # WVWMA()
-    for wvw in wvwma_select:
-        fig.add_trace(
-            go.Scatter(
-                x=df.index, y=df[f'wvwma_{wvw}'], mode='lines', name=f'WVWMA({wvw})',
-                # hoverinfo='none',
-                # line=dict(
-                # size=4,
-                # color='black',
-                # ),
-                showlegend=True
-            ), row=1, col=1
-        )
     # Price SMA
     if price_sma:
         fig.add_trace(
@@ -318,11 +310,24 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
                 showlegend=True
             ), row=1, col=1
         )
-    # SMA_X
-    for s in sma_select:
+    # WVWMA, SMA, DIFF
+    for wvw in wvwma_select:
+        # WVWMA_X
         fig.add_trace(
             go.Scatter(
-                x=df.index, y=df[f'sma_{s}'], mode='markers', name=f'SMA({s})',
+                x=df.index, y=df[f'wvwma_{wvw}'], mode='lines', name=f'WVWMA({wvw})',
+                # hoverinfo='none',
+                # line=dict(
+                # size=4,
+                # color='black',
+                # ),
+                showlegend=True
+            ), row=1, col=1
+        )
+    # SMA_X
+        fig.add_trace(
+            go.Scatter(
+                x=df.index, y=df[f'sma_{wvw}'], mode='markers', name=f'SMA({wvw})',
                 # hoverinfo='none',
                 marker=dict(
                     # width=2,
@@ -331,20 +336,26 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
                 showlegend=True
             ), row=1, col=1
         )
-    # Indicator
-    # end_vol = df['Volume'][-1]
-    # pre_end_vol = df['Volume'][-2]
-    # fig.add_trace(
-    #     go.Indicator(
-    #         mode="number+delta",
-    #         value=end_vol,
-    #         number={'prefix': "Vol:"},
-    #         delta={'position': "top", 'reference': pre_end_vol},
-    #         domain={'x': [0, 0], 'y': [0, 0]},
-    #         # showlegend=True,
-    #     ), row=1, col=1
-    # )
-    # End price
+    # WVWMA-SMA
+        fig.add_trace(
+            go.Scatter(
+                x=df.index, y=df[f'w_s_{wvw}'], mode='lines', name=f'WVWMA-SMA({wvw})',
+                line=dict(
+                    # size=1,
+                    color='lime',
+                ),
+            ), row=2, col=1
+        )
+    # WVWMA-Open
+        fig.add_trace(
+            go.Scatter(
+                x=df.index, y=df[f'o_w_{wvw}'], mode='lines', name=f'Open-WVWMA({wvw})',
+                line=dict(
+                    # size=1,
+                    color='grey',
+                ),
+            ), row=2, col=1
+        )
     end_price = df['Close'][-1]
     fig.add_trace(
         go.Scatter(
@@ -359,6 +370,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
             hovertemplate=f"{end_price}"
         ), row=1, col=1
     )
+
     # H lines
     for i in big_max_vol['Open']:
         fig.add_hline(
@@ -373,7 +385,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
             x=df.index, y=df['Volume'], name='Volume',
             marker=dict(color='grey'), showlegend=True, opacity=0.5,
             # hoverinfo='none'
-        ), row=2, col=1
+        ), row=3, col=1
     )
     # Vol SMA
     if price_sma:
@@ -386,20 +398,20 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
                     color='black',
                 ),
                 showlegend=True
-            ), row=2, col=1
+            ), row=3, col=1
         )
     # H lines Vol
     fig.add_hline(
         y=vol_level0, line_dash="dash",
         annotation_text=vol_level0,
         annotation_position="top right",
-        row=2, col=1
+        row=3, col=1
     )
     fig.add_hline(
         y=vol_level1, line_dash="longdash",
         annotation_text=vol_level1,
         annotation_position="top right",
-        row=2, col=1
+        row=3, col=1
     )
 
     fig.update_layout(template=CHARTS_TEMPLATE)
@@ -413,4 +425,4 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
 
 
 if __name__ == '__main__':
-    app.run_server(port=8053, debug=True)
+    app.run_server(port=8052, debug=True)
