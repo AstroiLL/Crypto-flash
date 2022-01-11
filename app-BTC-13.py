@@ -1,3 +1,4 @@
+import plotly
 import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
@@ -13,18 +14,20 @@ from MLDiLL.utils import hd, wvwma, sma
 
 # Diskcache
 import diskcache
+
 cache = diskcache.Cache("./cache")
 long_callback_manager = DiskcacheLongCallbackManager(cache)
 
 # TODO VOL-MAX на графике SMA
-# TODO
+# TODO линия позиции
 # READ DATA
 
 PERIOD = '1m'
 # LIMIT = 800
 WVW = 24
-VERSION = 'BTC Splash #12'
-
+VER_P = plotly.__version__
+VER_D = dash.__version__
+VERSION = f'BTC Splash #13, Plotly V{VER_P}, Dash V{VER_D}'
 # LAYOUT
 
 # Global design set
@@ -38,14 +41,12 @@ CHARTS_TEMPLATE = go.layout.Template(
             orientation='h',
             title_text='',
             x=0,
-            y=1.1
+            y=1
         ),
-        # xaxis_title="Date",
-        # yaxis_title="BTC/USD",
         # height=650,
         height=800,
         # width=1400,
-        xaxis_rangeslider_visible=True,
+        # xaxis_rangeslider_visible=True,
         xaxis_showspikes=True,
         # yaxis_showspikes=True,
         # legend_orientation="h",
@@ -70,16 +71,22 @@ wvwma_selector = html.Div(
             persistence=True, persistence_type='local',
         )]
 )
-sma_selector = html.Div(
+position = html.Div(
     [
-        # "SMA",
-        dcc.Dropdown(
-            id='sma-selector',
-            options=options,
-            value=[],
-            multi=True,
+        dbc.Input(
+            id='position', placeholder='position price', type="number", min=0, persistence=True,
+            persistence_type='local'
+        )], hidden=False
+)
+pos = html.Div(
+    [
+        dbc.Switch(
+            id="pos",
+            label="Позиция",
+            value=False,
             persistence=True, persistence_type='local',
-        )], hidden=True
+        ),
+    ]
 )
 
 vol_level_selector = dcc.RangeSlider(
@@ -172,8 +179,9 @@ app.layout = html.Div(
                 dbc.Col(all_period),
                 "WVWMA:",
                 dbc.Col(wvwma_selector),
-                # "WVWMA",
-                dbc.Col(sma_selector, width=0),
+                'Pos:',
+                dbc.Col(position),
+                dbc.Col(pos),
             ],
             style={'margin-bottom': 10}
         ),
@@ -227,14 +235,15 @@ def update_df(limit, n, nn):
     Input('vol-level-slider', 'value'),
     Input('interval-reload', 'n_intervals'),
     Input('wvwma-selector', 'value'),
-    Input('sma-selector', 'value'),
+    Input('position', 'value'),
+    Input('pos', 'value'),
     Input('price-line', 'value'),
     Input('sma-period-price', 'value'),
     Input('sma-period-vol', 'value'),
     Input('price-sma', 'value'),
     Input('price-max-vol', 'value'),
 )
-def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_line, sma_period_price, sma_period_vol,
+def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, price_line, sma_period_price, sma_period_vol,
                  price_sma,
                  price_max_vol):
     df = pd.read_json(data)
@@ -269,7 +278,10 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
     fig = make_subplots(
         rows=3, cols=1,
         shared_xaxes=True,
-        vertical_spacing=0.03,
+        row_width=[0.21, 0.33, 0.46],
+        start_cell='top-left',
+        # vertical_spacing=0.03,
+        # print_grid=True,
     )
     # Price line
     if price_line:
@@ -324,7 +336,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
                 showlegend=True
             ), row=1, col=1
         )
-    # SMA_X
+        # SMA_X
         fig.add_trace(
             go.Scatter(
                 x=df.index, y=df[f'sma_{wvw}'], mode='markers', name=f'SMA({wvw})',
@@ -336,7 +348,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
                 showlegend=True
             ), row=1, col=1
         )
-    # WVWMA-SMA
+        # WVWMA-SMA
         fig.add_trace(
             go.Scatter(
                 x=df.index, y=df[f'w_s_{wvw}'], mode='lines', name=f'WVWMA(SMA)',
@@ -346,7 +358,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
                 ),
             ), row=2, col=1
         )
-    # WVWMA-Open
+        # WVWMA-Open
         if price_sma:
             fig.add_trace(
                 go.Scatter(
@@ -356,7 +368,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
                         color='grey',
                     ),
                 ), row=2, col=1
-        )
+            )
     fig.add_hline(
         y=0, line_dash="dot",
         annotation_text='SMA',
@@ -384,6 +396,15 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
             y=i, line_dash="dot",
             annotation_text=i,
             annotation_position="top right",
+            row=1, col=1
+        )
+    # Position
+    if pos:
+        fig.add_hline(
+            y=position, line_dash="longdash",
+            annotation_text=f'Позиция {position}',
+            annotation_position="top right",
+            # color='blue',
             row=1, col=1
         )
     # Vert Vol
@@ -422,6 +443,22 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, sma_select, price_l
     )
 
     fig.update_layout(template=CHARTS_TEMPLATE)
+    fig.update_yaxes(
+        title='Price',
+        row=1, col=1
+    )
+    fig.update_yaxes(
+        title='SMA',
+        row=2, col=1
+    )
+    fig.update_yaxes(
+        title='Volume',
+        row=3, col=1
+    )
+    fig.update_xaxes(
+        title='Date',
+        row=3, col=1
+    )
 
     html1 = [
         html.Div('BTC/USD ' + PERIOD, className='header_plots'),
