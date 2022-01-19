@@ -571,4 +571,4 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
 
 
 if __name__ == '__main__':
-    app.run_server(port=8051, debug=False, use_reloader=True)
+    app.run_server(port=8053, debug=False, use_reloader=True)

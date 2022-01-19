@@ -75,7 +75,7 @@ position = html.Div(
     [
         dbc.Input(
             id='position', placeholder='position price', type="number", min=0, persistence=True,
-            persistence_type='local'
+            persistence_type='local', debounce=True
         )], hidden=False
 )
 pos = html.Div(
