@@ -26,5 +26,17 @@ for dirs, folder, files in os.walk(path):
             # print(df.head(10))
             df['time'] = pd.to_datetime(df['time'], unit='ms', infer_datetime_format=True)
             df.set_index('time', drop=True, inplace=True)
-            print(df.head(10))
-            print(df['vol'].resample('1min').sum().head(30))
+            # print(df.head(10))
+            r = df.resample('1min')
+            dfr = r.agg({'close': "mean", 'vol': "sum", 'dir': 'mean'})
+            dfr['exch'] = folder1
+            dfr['coin'] = folder2
+            print(dfr[['close', 'vol', 'dir']])
+
+            dfl = df[df['liq'] == 1]
+            r = dfl.resample('1min')
+            dflr = r.agg({'close': "mean", 'vol': "sum", 'dir': 'mean'})
+            dflr.dropna(inplace=True)
+            dflr['exch'] = folder1
+            dflr['coin'] = folder2
+            print(dflr[['close', 'vol', 'dir']])
