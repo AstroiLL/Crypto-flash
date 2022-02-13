@@ -63,7 +63,10 @@ class Exchange:
             if self.verbose: print(
                 f"#64 Test_get_from_exch {self.exchange}.{self.crypto}.{self.period} limit 1"
             )
-            self.exchange_conn.fetch_ohlcv(self.crypto, self.period, limit=1)
+            if self.exchange == 'BITMEX' and self.crypto == 'BTC/USD':
+                self.exchange_conn.fetch_ohlcv(self.crypto+':BTC', self.period, limit=1)
+            else:
+                self.exchange_conn.fetch_ohlcv(self.crypto, self.period, limit=1)
         except:
             print(f'#1 Error connect exchange {self.exchange}')
             self.availability = False
@@ -92,7 +95,10 @@ class Exchange:
                 if self.verbose: print(
                     f"#93 Get_from_exch {self.exchange}.{self.crypto}.{self.period} since {self.exchange_conn.iso8601(since_exch)} limit {lmt}"
                 )
-                fetch = self.exchange_conn.fetch_ohlcv(self.crypto, self.period, since=since_exch, limit=lmt)
+                if self.exchange == 'BITMEX' and self.crypto == 'BTC/USD':
+                    fetch = self.exchange_conn.fetch_ohlcv(self.crypto+':BTC', self.period, since=since_exch, limit=lmt)
+                else:
+                    fetch = self.exchange_conn.fetch_ohlcv(self.crypto, self.period, since=since_exch, limit=lmt)
             except:
                 print(f'#2 Error fetch from {self.exchange}')
                 self.availability = False
@@ -258,4 +264,5 @@ class CryptoA:
 if __name__ == '__main__':
     cry_1h = CryptoA(period='1h', verbose=True)
     cry_1h.load(limit=6)
-    cry_1h.df.to_hdf('./BTC-USD-h1.h5', 'h1')
+    # cry_1h.df.to_hdf('./BTC-USD-h1.h5', 'h1')
+    print(cry_1h.df)

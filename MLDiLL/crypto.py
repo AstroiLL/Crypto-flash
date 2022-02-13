@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 import ccxt
 import pandas as pd
+import requests
 from sqlalchemy import create_engine
 
 # from MLDiLL.utils import VWAP, VWAP_d, VWAP_p
@@ -429,11 +430,12 @@ class CryptoH:
 
 
 if __name__ == '__main__':
-    import enquiries
+    # import enquiries
 
-    options = ['BTC/USD', 'ETH/USD', 'XRP/USD']
-    choice = enquiries.choose('Что обновлять?: ', options)
-    print(choice)
+    # options = ['BTC/USD', 'ETH/USD', 'XRP/USD']
+    # choice = enquiries.choose('Что обновлять?: ', options)
+    # print(choice)
+    choice = 'BTC/USD'
     cry = CryptoH(crypto=choice, limit=24)
     cry.repair_table()
     df = pd.DataFrame(cry.get_df()[['Volume', 'Open_max', 'Date_max']])
