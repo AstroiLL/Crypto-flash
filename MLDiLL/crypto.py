@@ -107,7 +107,10 @@ class Crypto:
             if self.verbose: print(
                 f"Test_get_from_exch {self.exchange}.{self.crypto} {self.period} limit 1"
             )
-            exchange.fetch_ohlcv(self.crypto, self.period, limit=1)
+            if self.exchange == 'BITMEX' and self.crypto == 'BTC/USD':
+                exchange.fetch_ohlcv(self.crypto+':BTC', self.period, limit=1)
+            else:
+                exchange.fetch_ohlcv(self.crypto, self.period, limit=1)
         except:
             print(f'Error test fetch from {self.exchange}, update disabling')
             self.update = False
@@ -318,7 +321,10 @@ class Crypto:
                 if self.verbose: print(
                     f"Get_from_exch {self.exchange}.{self.crypto} {self.period} since {since_exch} limit {lmt}"
                 )
-                fetch = exchange.fetch_ohlcv(self.crypto, self.period, since=since_exch, limit=lmt)
+                if self.exchange == 'BITMEX' and self.crypto == 'BTC/USD':
+                    fetch = exchange.fetch_ohlcv(self.crypto+':BTC', self.period, since=since_exch, limit=lmt)
+                else:
+                    fetch = exchange.fetch_ohlcv(self.crypto, self.period, since=since_exch, limit=lmt)
             except:
                 print(f'Error fetch from {self.exchange}')
                 self.update = False
