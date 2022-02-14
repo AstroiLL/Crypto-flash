@@ -31,6 +31,7 @@ for dirs, folder, files in os.walk(path):
             dfr = r.agg({'close': "mean", 'vol': "sum", 'dir': 'mean'})
             dfr['exch'] = folder1
             dfr['coin'] = folder2
+            print('Vol')
             print(dfr[['close', 'vol', 'dir']])
 
             dfl = df[df['liq'] == 1]
@@ -39,4 +40,5 @@ for dirs, folder, files in os.walk(path):
             dflr.dropna(inplace=True)
             dflr['exch'] = folder1
             dflr['coin'] = folder2
+            print('Vol LIQ')
             print(dflr[['close', 'vol', 'dir']])
