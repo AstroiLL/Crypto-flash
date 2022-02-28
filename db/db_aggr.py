@@ -3,9 +3,6 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-engine = create_engine("sqlite+pysqlite:///aggr01.db", echo=False, future=True)
-Session = sessionmaker(bind=engine)
-session = Session()
 Base = declarative_base()
 
 
@@ -24,11 +21,8 @@ class Exch(Base):
         return f"Exch(id={self.id!r}, name={self.name!r}, pair={self.pair!r})"
 
 
-# print(Exch.__table__)
-
-
 class BTC(Base):
-    __tablename__ = 'btcusd'
+    __tablename__ = 'btc'
 
     time = Column(TIMESTAMP, nullable=False, primary_key=True)
     exch = Column(Integer, ForeignKey('exch.id'), nullable=False, index=True)
@@ -41,17 +35,26 @@ class BTC(Base):
         return f"BTC(time={self.time!r}, exch={self.exch!r}, close={self.close!r}, vol={self.vol!r}, dir={self.dir!r}, liq={self.liq!r})"
 
 
-# print(BTC.__table__)
+class Db_sqlite():
+    def __init__(self, name: str):
+        self.engine = create_engine(f"sqlite+pysqlite:///{name}", echo=False, future=True)
+        Base.metadata.create_all(self.engine)
 
-Base.metadata.create_all(engine)
+    def open(self):
+        Session = sessionmaker(bind=self.engine)
+        return Session()
 
-# print(Base.metadata)
 
-session.add(Exch("Binance", "btcusdt"))
-print(session.query(Exch).all())
-session.add(Exch("Bitmex", "xbtusd"))
-print(session.query(Exch).all())
-session.commit()
+if __name__ == '__main__':
+
+    # print(Base.metadata)
+    db = Db_sqlite('aggr01.db')
+    session = db.open()
+    session.add(Exch("Binance", "btcusdt"))
+    print(session.query(Exch).all())
+    session.add(Exch("Bitmex", "xbtusd"))
+    print(session.query(Exch).all())
+    session.commit()
 
 """
 from sqlalchemy import select
