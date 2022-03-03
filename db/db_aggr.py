@@ -46,8 +46,6 @@ class Db_sqlite():
 
 
 if __name__ == '__main__':
-
-    # print(Base.metadata)
     db = Db_sqlite('aggr01.db')
     session = db.open()
     session.add(Exch("Binance", "btcusdt"))
@@ -55,6 +53,8 @@ if __name__ == '__main__':
     session.add(Exch("Bitmex", "xbtusd"))
     print(session.query(Exch).all())
     session.commit()
+    print('Table name:', Exch.__table__)
+    print(select(Exch))
 
 """
 from sqlalchemy import select
