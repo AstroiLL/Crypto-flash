@@ -376,6 +376,8 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, pric
         row=2, col=1
     )
     end_price = df['Close'][-1]
+    end_vol = df['Volume'][-1]
+    print(end_price, hd(end_vol))
     fig.add_trace(
         go.Scatter(
             x=[df.index[-1]],

@@ -22,7 +22,7 @@ ses.commit()
 for row in ses.query(Exch).filter_by(id=21).all():
     print(row)
 okex21 = ses.query(Exch).filter_by(id=21).first()
-okex21.pair = 'ZZZ'
+okex21.pair = 'YYY'
 print(ses.dirty)
 ses.commit()
 for row in ses.query(Exch).filter_by(id=21).all():
