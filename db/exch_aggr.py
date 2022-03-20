@@ -25,7 +25,6 @@ class BTC(Base):
     __tablename__ = 'btc'
 
     time = Column(TIMESTAMP, nullable=False, primary_key=True)
-    exch = Column(Integer, ForeignKey('exch.id'), nullable=False, index=True)
     close = Column(Float)
     vol = Column(Float)
     dir = Column(Integer)
@@ -35,9 +34,16 @@ class BTC(Base):
         return f"BTC(time={self.time!r}, exch={self.exch!r}, close={self.close!r}, vol={self.vol!r}, dir={self.dir!r}, liq={self.liq!r})"
 
 
-class Db_sqlite():
-    def __init__(self, name: str):
-        self.engine = create_engine(f"sqlite+pysqlite:///{name}", echo=False, future=True)
+class Db():
+    def __init__(self, sql_base='sqlite', name_base='exch.db'):
+        if sql_base == 'sqlite':
+            connect_base = f'sqlite+pysqlite:///{name_base}'
+        elif sql_base == 'mysql':
+            connect_base = f'mysql://bitok:bitok@10.10.10.200:3307/{name_base}'
+        else:
+            connect_base = f'sqlite+pysqlite:///{name_base}'
+
+        self.engine = create_engine(connect_base, echo=False, future=True)
         Base.metadata.create_all(self.engine)
 
     def open(self):
@@ -46,7 +52,7 @@ class Db_sqlite():
 
 
 if __name__ == '__main__':
-    db = Db_sqlite('aggr01.db')
+    db = Db('sqlite', 'exch.db')
     session = db.open()
     session.add(Exch("Binance", "btcusdt"))
     print(session.query(Exch).all())
