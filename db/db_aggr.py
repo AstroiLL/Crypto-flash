@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, TIMESTAMP, Float
 from sqlalchemy import ForeignKey
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import declarative_base, sessionmaker
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -30,12 +31,27 @@ class BTC(Base):
     dir = Column(Integer)
     liq = Column(Integer)
 
+    def __init__(self, time, close, vol, d, liq):
+        print(time)
+        self.time = time
+        self.close = close
+        self.vol = vol
+        self.dir = d
+        self.liq = liq
+
+    # def __init__(self, df):
+    #     self.time = df.time
+    #     self.close = df.close
+    #     self.vol = df.vol
+    #     self.dir = int(df.dir)
+    #     self.liq = int(df.liq)
+
     def __repr__(self):
-        return f"BTC(time={self.time!r}, exch={self.exch!r}, close={self.close!r}, vol={self.vol!r}, dir={self.dir!r}, liq={self.liq!r})"
+        return f"BTC(time={self.time!r}, close={self.close!r}, vol={self.vol!r}, dir={self.dir!r}, liq={self.liq!r})"
 
 
 class Db():
-    def __init__(self, sql_base='sqlite', name_base='exch.db'):
+    def __init__(self, sql_base='sqlite', name_base='btc.db'):
         if sql_base == 'sqlite':
             connect_base = f'sqlite+pysqlite:///{name_base}'
         elif sql_base == 'mysql':
@@ -52,7 +68,7 @@ class Db():
 
 
 if __name__ == '__main__':
-    db = Db('sqlite', 'exch.db')
+    db = Db('sqlite', 'test.db')
     session = db.open()
     session.add(Exch("Binance", "btcusdt"))
     print(session.query(Exch).all())
@@ -61,6 +77,16 @@ if __name__ == '__main__':
     session.commit()
     print('Table name:', Exch.__table__)
     print(select(Exch))
+
+    btc1 = BTC(datetime.utcfromtimestamp(1648735464660/1000), 46350, 134, 1, None)
+    session.add(btc1)
+    print(session.query(BTC).all())
+    btc2 = BTC(datetime.utcfromtimestamp(1648736090835/1000), 46510, 324, 1, None)
+    session.add(btc2)
+    print(session.query(BTC).all())
+    session.commit()
+    print('Table name:', BTC.__table__)
+    print(select(BTC))
 
 """
 from sqlalchemy import select
