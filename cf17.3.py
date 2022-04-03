@@ -112,7 +112,7 @@ slider_hours = html.Div(
         dcc.Slider(
             id='Hours',
             min=5,
-            max=24*7+3,
+            max=24 * 7 + 3,
             value=48,
             marks={**{f'{6 * i}': f'{6 * i} ч' for i in range(1, 4)}, **{f'{24 * i}': f'{i} Д' for i in range(1, 8)}},
             step=6,
@@ -543,15 +543,15 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
             ay=-40
         )
     ) for i in range(len(maxv))]
-    title = f"{dirs} {hd(voldir, sign=True)} all_period:{all_p / 24}d end_price: {end_price} " +\
-        f"VWMA({wvwma_1}h):{hd(end_price - df[f'wvwma_' + str(wvwma_1)][-1], 1, True)} " +\
-        f"VWMA({wvwma_2}h):{hd(end_price - df[f'wvwma_' + str(wvwma_2)][-1], 1, True)} " +\
-        f"VWMA({wvwma_3}h):{hd(end_price - df[f'wvwma_' + str(wvwma_3)][-1], 1, True)} "
+    title = f"{dirs} {hd(voldir, sign=True)} all_period:{all_p / 24}d end_price: {end_price} " + \
+            f"VWMA({wvwma_1}h):{hd(end_price - df[f'wvwma_' + str(wvwma_1)][-1], 1, True)} " + \
+            f"VWMA({wvwma_2}h):{hd(end_price - df[f'wvwma_' + str(wvwma_2)][-1], 1, True)} " + \
+            f"VWMA({wvwma_3}h):{hd(end_price - df[f'wvwma_' + str(wvwma_3)][-1], 1, True)} "
     fig.update_layout(
         font=dict(
             family='Roboto',
             size=10
-            ),
+        ),
         xaxis_title="Date",
         yaxis_title=f"{cry_1h.crypto}",
         # height=650,

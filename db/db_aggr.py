@@ -1,8 +1,9 @@
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Float
-from sqlalchemy import ForeignKey
+# from sqlalchemy import ForeignKey
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
+import pandas as pd
 
 Base = declarative_base()
 
@@ -31,20 +32,28 @@ class BTC(Base):
     dir = Column(Integer)
     liq = Column(Integer)
 
-    def __init__(self, time, close, vol, d, liq):
-        print(time)
-        self.time = time
-        self.close = close
-        self.vol = vol
-        self.dir = d
-        self.liq = liq
+    # def __init__(self, time, close, vol, d, liq):
+    #     # print(time)
+    #     self.time = time
+    #     self.close = close
+    #     self.vol = vol
+    #     self.dir = d
+    #     self.liq = liq
 
-    # def __init__(self, df):
-    #     self.time = df.time
-    #     self.close = df.close
-    #     self.vol = df.vol
-    #     self.dir = int(df.dir)
-    #     self.liq = int(df.liq)
+    def __init__(self, df):
+        self.time = df.time
+        self.close = df.close
+        self.vol = df.vol
+        self.dir = int(df.dir)
+        self.liq = int(df.liq)
+
+    def get(self):
+        time = self.time
+        close = self.close
+        vol = self.vol
+        df = pd.DataFrame({'time': self.time, 'close': self.close, 'vol': self.vol})
+        # print(df)
+        return df
 
     def __repr__(self):
         return f"BTC(time={self.time!r}, close={self.close!r}, vol={self.vol!r}, dir={self.dir!r}, liq={self.liq!r})"
@@ -65,6 +74,7 @@ class Db():
     def open(self):
         Session = sessionmaker(bind=self.engine)
         return Session()
+
 
 
 if __name__ == '__main__':
