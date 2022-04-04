@@ -28,9 +28,9 @@ for dirs, folder, files in os.walk(path):
             df['time'] = pd.to_datetime(df['time'], unit='ms', infer_datetime_format=True)
             # df.set_index('time', drop=True, inplace=True)
             # print(df)
-            df0 = df.sort_values(by=['vol'], ascending=False).iloc[0:5, :]
+            df0 = df.sort_values(by=['vol'], ascending=False).iloc[0:3, :]
             print(df0)
-            for i in range(0, 5):
+            for i in range(0, 3):
                 # btc0 = BTC(df0.time, df0.close, df0.vol, df0.dir, df0.liq)
                 btc0 = BTC(df0.iloc[i, :])
                 print(btc0)

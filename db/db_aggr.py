@@ -47,13 +47,13 @@ class BTC(Base):
         self.dir = int(df.dir)
         self.liq = int(df.liq)
 
-    def get(self):
-        time = self.time
-        close = self.close
-        vol = self.vol
-        df = pd.DataFrame({'time': self.time, 'close': self.close, 'vol': self.vol})
-        # print(df)
-        return df
+    # def get(self):
+    #     time = self.time
+    #     close = self.close
+    #     vol = self.vol
+    #     df = pd.DataFrame({'time': self.time, 'close': self.close, 'vol': self.vol})
+    #     # print(df)
+    #     return df
 
     def __repr__(self):
         return f"BTC(time={self.time!r}, close={self.close!r}, vol={self.vol!r}, dir={self.dir!r}, liq={self.liq!r})"
@@ -70,10 +70,14 @@ class Db():
 
         self.engine = create_engine(connect_base, echo=False, future=True)
         Base.metadata.create_all(self.engine)
+        self.session = sessionmaker(bind=self.engine)()
 
     def open(self):
-        Session = sessionmaker(bind=self.engine)
-        return Session()
+        # Session = sessionmaker(bind=self.engine)
+        return self.session
+
+    # def close(self, sess):
+    #     sess.close()
 
 
 
@@ -175,6 +179,8 @@ print(
         where(address_alias_2.email_address == 'patrick@gmail.com')
 )
 
+
+#########################
 # INSER UPDATE DELETE
 squidward = User(name="squidward", fullname="Squidward Tentacles")
 krabs = User(name="ehkrabs", fullname="Eugene H. Krabs")

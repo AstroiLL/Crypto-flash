@@ -12,6 +12,7 @@ from plotly.subplots import make_subplots
 from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma, sma
 from db.db_aggr import Db, BTC
+from sqlalchemy import select
 
 # Diskcache
 import diskcache
@@ -32,7 +33,6 @@ VERSION = f'BTC Splash #14, Plotly V{VER_P}, Dash V{VER_D}'
 
 # Открытие базы всплесков объемов
 db = Db('sqlite', './db/bin_f_usdt.db')
-session = db.open()
 
 # LAYOUT
 
@@ -256,12 +256,25 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, pric
     if df.empty:
         raise PreventUpdate
     # Получаем из db всплески объемов
-    # btc0 = BTC.get()
+    session = db.open()
+    stmt = select(BTC)
+    # print(stmt)
+    # print(pd.read_sql(stmt, con=session.bind))
+    # btc_df = pd.read_sql(
+    # print(session.query(stmt))
+        # , session.bind)
+    btc0 = []
+    for btc in session.scalars(stmt):
+        # print(btc.time, btc.close, btc.vol)
+        btc0.append({'time': btc.time, 'close': btc.close, 'vol': btc.vol})
     # print(btc0)
+    btc_df = pd.DataFrame(btc0)
+    # print(btc_df)
     # session.add(btc0)
     # session.commit()
     # btc_v = pd.DataFrame(session.query(BTC).all())
     # print(btc_v)
+    session.close()
 
     maxV = df['Volume'].max()
     # range_open = {'min': df['Open'].min(), 'max': df['Open'].max()}
@@ -320,6 +333,19 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, pric
                 marker=dict(
                     size=dfv['max_vol'],
                     color=dfv['max_vol_color'],
+                ),
+            ), row=1, col=1
+        )
+    # Max Vol from aggr
+    if price_max_vol:
+        fig.add_trace(
+            go.Scatter(
+                x=btc_df.time, y=btc_df.close,
+                name='Max Vol aggr',
+                mode='markers',
+                marker=dict(
+                    size=8,
+                    color='black',
                 ),
             ), row=1, col=1
         )
