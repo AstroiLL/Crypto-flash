@@ -269,6 +269,9 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, pric
         btc0.append({'time': btc.time, 'close': btc.close, 'vol': btc.vol})
     # print(btc0)
     btc_df = pd.DataFrame(btc0)
+    btc_df = btc_df[btc_df['time'] >= df.index[0]]
+    btc_df = btc_df.sort_values(by=['vol'], ascending=False).iloc[0:7, :]
+    # btc_df = btc_df[btc_df]
     # print(btc_df)
     # session.add(btc0)
     # session.commit()
@@ -343,6 +346,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, pric
                 x=btc_df.time, y=btc_df.close,
                 name='Max Vol aggr',
                 mode='markers',
+                text=btc_df.vol,
                 marker=dict(
                     size=8,
                     color='black',
