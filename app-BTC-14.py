@@ -32,7 +32,7 @@ VER_D = dash.__version__
 VERSION = f'BTC Splash #14, Plotly V{VER_P}, Dash V{VER_D}'
 
 # Открытие базы всплесков объемов
-db = Db('sqlite', './db/bin_f_usdt.db')
+db = Db('sqlite', './db/btc_all.db')
 
 # LAYOUT
 
@@ -266,20 +266,19 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, pric
     btc0 = []
     for btc in session.scalars(stmt):
         # print(btc.time, btc.close, btc.vol)
-        btc0.append({'time': btc.time, 'close': btc.close, 'vol': btc.vol})
+        btc0.append({'time': btc.time, 'close': btc.close, 'vol': btc.vol, 'd': btc.dir})
     # print(btc0)
     btc_df = pd.DataFrame(btc0)
-    btc_df = btc_df[btc_df['time'] >= df.index[0]]
-    btc_df = btc_df.sort_values(by=['vol'], ascending=False).iloc[0:7, :]
-    # btc_df = btc_df[btc_df]
+    # btc_df.set_index('time', inplace=True)
+    btc_df = btc_df[btc_df.time >= df.index[0]]
+    btc_df = btc_df.sort_values(by=['vol'], ascending=False).iloc[0:5, :]
+    btc_df = btc_df.sort_values(by=['time'], ascending=True)
+    btc_df.col = btc_df.d.where(btc_df.d == 0, 'green').where(btc_df.d == 1, 'orange')
     # print(btc_df)
-    # session.add(btc0)
-    # session.commit()
-    # btc_v = pd.DataFrame(session.query(BTC).all())
-    # print(btc_v)
     session.close()
 
     maxV = df['Volume'].max()
+    print(maxV)
     # range_open = {'min': df['Open'].min(), 'max': df['Open'].max()}
     vol_level0 = (range_vol_level[0] * maxV) / 100
     vol_level1 = (range_vol_level[1] * maxV) / 100
@@ -349,7 +348,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, pric
                 text=btc_df.vol,
                 marker=dict(
                     size=8,
-                    color='black',
+                    color=btc_df.col,
                 ),
             ), row=1, col=1
         )

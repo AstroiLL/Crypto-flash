@@ -1,24 +1,25 @@
 import os
-
 import pandas as pd
-
 from db_aggr import Db, BTC
+from datetime import datetime
 
-path = '/home/astroill/Data/aggr-server/test'
-db = Db('sqlite', 'bin_f_usdt.db')
+path = '/home/astroill/Data/aggr-server/data-copy'
+start_date = '2022-04-17'
+now_date = datetime.now().strftime("%Y-%m-%d")
+print("Сегодня:", now_date)
+db = Db('sqlite', 'btc_all.db')
 session = db.open()
+columns = ['exch', 'pairs', 'date', 'time_max', 'close', 'vol']
+df_maxs = pd.DataFrame([], columns=columns)
 
 for dirs, folder, files in os.walk(path):
     for file in files:
-        _, ext = os.path.splitext(file)
-        if ext == '.gz':
+        fname, ext = os.path.splitext(file)
+        date = fname[:10]
+        if ext == '.gz' and date >= start_date:
             dir1, folder2 = os.path.split(dirs)
             _, folder1 = os.path.split(dir1)
             fullname = os.path.join(dirs, file)
-            # print()
-            # print(fullname)
-            # print(folder1, folder2)
-
             df = pd.read_csv(
                 fullname, sep=' ', names=['time', 'close', 'vol', 'dir', 'liq'],
                 parse_dates=['time'], infer_datetime_format=False, dtype={'dir': 'Int32', 'liq': 'Int32'}
@@ -40,7 +41,7 @@ for dirs, folder, files in os.walk(path):
                 btc0 = BTC(df0.iloc[i, :])
                 # if session.query(BTC.time).filter_by(time=btc0.time).scalar() is None:
                 if not session.query(BTC).filter(BTC.time == btc0.time).all():
-                    print('btc0', btc0)
+                    # print('btc0', btc0)
                     session.add(btc0)
 session.commit()
 # print(session.query(BTC).all())
