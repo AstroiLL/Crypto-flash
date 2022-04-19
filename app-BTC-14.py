@@ -32,7 +32,7 @@ VER_D = dash.__version__
 VERSION = f'BTC Splash #14, Plotly V{VER_P}, Dash V{VER_D}'
 
 # Открытие базы всплесков объемов
-db = Db('sqlite', './db/btc_all.db')
+db = Db('sqlite', '/home/astroill/Data/CF/btc_all.db')
 
 # LAYOUT
 
@@ -273,7 +273,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, pric
     btc_df = btc_df[btc_df.time >= df.index[0]]
     btc_df = btc_df.sort_values(by=['vol'], ascending=False).iloc[0:5, :]
     btc_df = btc_df.sort_values(by=['time'], ascending=True)
-    btc_df.col = btc_df.d.where(btc_df.d == 0, 'green').where(btc_df.d == 1, 'orange')
+    btc_df['col'] = btc_df.d.where(btc_df.d == 0, 'green').where(btc_df.d == 1, 'orange')
     # print(btc_df)
     session.close()
 

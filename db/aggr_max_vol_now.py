@@ -7,12 +7,13 @@ path = '/home/astroill/Data/aggr-server/data-copy'
 start_date = '2022-04-17'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
-db = Db('sqlite', 'btc_all.db')
+db = Db('sqlite', '/home/astroill/Data/CF/btc_all.db')
 session = db.open()
 columns = ['exch', 'pairs', 'date', 'time_max', 'close', 'vol']
 df_maxs = pd.DataFrame([], columns=columns)
 
 for dirs, folder, files in os.walk(path):
+    print(dirs)
     for file in files:
         fname, ext = os.path.splitext(file)
         date = fname[:10]
@@ -32,7 +33,7 @@ for dirs, folder, files in os.walk(path):
             imax = df['vol'].argmax()
             tmax = df.time[imax]
             cmax = df.close[imax]
-            print(folder1, folder2, tmax, cmax, vmax)
+            # print(folder1, folder2, tmax, cmax, vmax)
             df0 = df.sort_values(by=['vol'], ascending=False).iloc[0:5, :]
             # print('df0', df0)
             session.flush()
@@ -41,7 +42,7 @@ for dirs, folder, files in os.walk(path):
                 btc0 = BTC(df0.iloc[i, :])
                 # if session.query(BTC.time).filter_by(time=btc0.time).scalar() is None:
                 if not session.query(BTC).filter(BTC.time == btc0.time).all():
-                    # print('btc0', btc0)
+                    print('btc0', btc0)
                     session.add(btc0)
 session.commit()
 # print(session.query(BTC).all())

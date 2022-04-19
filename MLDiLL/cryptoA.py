@@ -12,8 +12,6 @@ from sqlalchemy.orm import Session
 
 # from .env import mysql_url
 sql_url = "mysql://bitok:bitok@10.10.10.200:3307"
-# mysql_url = 'mysql://user:pass@127.0.0.1:3307'
-# mysql_url = os.environ['MYSQL_URL']
 
 # Константы
 D1 = 86400000  # ms
@@ -262,7 +260,14 @@ class CryptoA:
 
 
 if __name__ == '__main__':
-    cry_1h = CryptoA(period='1h', verbose=True)
-    cry_1h.load(limit=6)
+    # cry_1h = CryptoA(period='1h', verbose=True)
+    # cry_1h.load(limit=6)
     # cry_1h.df.to_hdf('./BTC-USD-h1.h5', 'h1')
-    print(cry_1h.df)
+    # print(cry_1h.df)
+    cry_1m = CryptoA(period='1m', verbose=False)
+    cry_1m.load(limit=43200)
+    df = cry_1m.df.reset_index()[['Date', 'Open']]
+    df.columns = ['ds', 'y']
+    df.to_hdf('~/Data/CF/BTCUSD.h5', 'm1_1M')
+    # df1 = pd.read_hdf('~/Data/CF/BTCUSD.h5', 'm1')
+    # print(df1)

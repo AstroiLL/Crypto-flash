@@ -5,7 +5,7 @@ import pandas as pd
 from db_aggr import Db, BTC
 
 path = '/home/astroill/Data/aggr-server/test'
-db = Db('sqlite', 'bin_f_usdt.db')
+db = Db('sqlite', '/home/astroill/Data/CF/bin_f_usdt.db')
 session = db.open()
 
 for dirs, folder, files in os.walk(path):
