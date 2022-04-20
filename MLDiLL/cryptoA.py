@@ -265,9 +265,9 @@ if __name__ == '__main__':
     # cry_1h.df.to_hdf('./BTC-USD-h1.h5', 'h1')
     # print(cry_1h.df)
     cry_1m = CryptoA(period='1m', verbose=False)
-    cry_1m.load(limit=43200)
-    df = cry_1m.df.reset_index()[['Date', 'Open']]
-    df.columns = ['ds', 'y']
-    df.to_hdf('~/Data/CF/BTCUSD.h5', 'm1_1M')
+    cry_1m.load(limit=43200*3)
+    df = cry_1m.df.reset_index()[['Date', 'Open', 'Volume']]
+    df.columns = ['ds', 'y', 'v']
+    df.to_hdf('~/Data/CF/BTCUSD.h5', 'm1_3M_v')
     # df1 = pd.read_hdf('~/Data/CF/BTCUSD.h5', 'm1')
     # print(df1)
