@@ -269,5 +269,3 @@ if __name__ == '__main__':
     df = cry_1m.df.reset_index()[['Date', 'Open', 'Volume']]
     df.columns = ['ds', 'y', 'v']
     df.to_hdf('~/Data/CF/BTCUSD.h5', 'm1_3M_v')
-    # df1 = pd.read_hdf('~/Data/CF/BTCUSD.h5', 'm1')
-    # print(df1)
