@@ -5,12 +5,12 @@ from sqlalchemy import select
 
 if __name__ == '__main__':
     cry_1m = CryptoA(period='1m', verbose=False)
-    cry_1m.load(limit=43200*6)
+    cry_1m.load(limit=43200*3)
     # cry_1m.load(limit=1440)
     df = cry_1m.df.reset_index()[['Date', 'Open']]
     df.columns = ['ds', 'y']
     # Открытие базы всплесков объемов
-    db = Db('sqlite', '/home/astroill/Data/CF/btc_all.db')
+    db = Db('sqlite', '/home/astroill/Data/CF/btc_all_max.db')
     session = db.open()
     stmt = select(BTC)
     btc0 = []
@@ -21,4 +21,4 @@ if __name__ == '__main__':
     df.fillna(0, inplace=True)
     ddf = df[df['v'] != 0]
     print(ddf)
-    df.to_hdf('/home/astroill/Data/CF/BTC.h5', 'm1_6M_v')
+    df.to_hdf('/home/astroill/Data/CF/BTC.h5', 'm1_3M_v')

@@ -4,10 +4,10 @@ from db_aggr import Db, BTC
 from datetime import datetime
 
 path = '/home/astroill/Data/aggr-server/data-copy'
-start_date = '2022-04-24'
+start_date = '2022-02-09'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
-db = Db('sqlite', '/home/astroill/Data/CF/btc_all.db')
+db = Db('sqlite', '/home/astroill/Data/CF/btc_all_max.db')
 session = db.open()
 columns = ['exch', 'pairs', 'date', 'time_max', 'close', 'vol']
 df_maxs = pd.DataFrame([], columns=columns)
@@ -28,21 +28,19 @@ for dirs, folder, files in os.walk(path):
             df.fillna(0, inplace=True)
             df = df[['time', 'close', 'vol', 'dir', 'liq']]
             df['time'] = pd.to_datetime(df['time'], unit='ms', infer_datetime_format=True)
-            # df.set_index('time', drop=True, inplace=True)
-            vmax = df['vol'].max()
-            imax = df['vol'].argmax()
-            tmax = df.time[imax]
-            cmax = df.close[imax]
-            # print(folder1, folder2, tmax, cmax, vmax)
-            df0 = df.sort_values(by=['vol'], ascending=False).iloc[0:5, :]
-            # print('df0', df0)
-            session.flush()
-            for i in range(0, 5):
-                # btc0 = BTC(df0.time, df0.close, df0.vol, df0.dir, df0.liq)
-                btc0 = BTC(df0.iloc[i, :])
-                # if session.query(BTC.time).filter_by(time=btc0.time).scalar() is None:
-                if not session.query(BTC).filter(BTC.time == btc0.time).all():
-                    print('btc0', btc0)
-                    session.add(btc0)
+            # 10 объем выше которого берется всплеск
+            dfv = df[df['vol'] >= 10]
+            if not dfv.empty:
+                dfv.set_index('time', drop=True, inplace=True)
+                r = dfv.resample('1min')
+                df1m = r.agg({'close': "mean", 'vol': "sum", 'dir': 'max', 'liq': 'min'})
+                df1m = df1m.reset_index().dropna()
+                # print(df1m)
+                session.flush()
+                for i in range(len(df1m)):
+                    btc0 = BTC(df1m.iloc[i, :])
+                    if not session.query(BTC).filter(BTC.time == btc0.time).all():
+                        print('btc0', btc0)
+                        session.add(btc0)
 session.commit()
 # print(session.query(BTC).all())
