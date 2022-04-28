@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 
-from db_aggr import Db, BTC
+from db_btc import Db, BTC
 
 path = '/home/astroill/Data/aggr-server/test'
 db = Db('sqlite', '/home/astroill/Data/CF/bin_f_usdt.db')

@@ -1,10 +1,26 @@
 import os
 import pandas as pd
-from db_aggr import Db, BTC
+from db_btc import Db, BTC
 from datetime import datetime
 
+"""
+Из файлов собраных агрегатором https://github.com/Tucsky/aggr-server
+(Агрегатор должен работать непрерывно столько времени, сколько данных вам надо собрать)
+Вытаскиваются count_maxs максимумов за каждый час
+И складываются в базу SQL (например sqlite или mySQL)
+Начало сбора максимумов start_date до текущего момента now_date
+В последствии эту базу можно использовать для визуализации на графиках
+Для работы с SQL через SQLAlchemy используется модуль db.db_btc
+Запускать программу можно много раз, она добавляет только отсутствующие значения
+"""
+
+count_maxs = 5
+# Указать полный путь к папке где aggr-server собирает файлы
+# Обычно это aggr-server/data
 path = '/home/astroill/Data/aggr-server/data-copy'
-start_date = '2022-04-24'
+# Начальная дата сбора данных
+# Для ускорения указывайте дату последнюю или предпоследнюю предыдущего сбора
+start_date = '2022-04-27'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
 db = Db('sqlite', '/home/astroill/Data/CF/btc_all.db')
@@ -34,10 +50,10 @@ for dirs, folder, files in os.walk(path):
             tmax = df.time[imax]
             cmax = df.close[imax]
             # print(folder1, folder2, tmax, cmax, vmax)
-            df0 = df.sort_values(by=['vol'], ascending=False).iloc[0:5, :]
+            df0 = df.sort_values(by=['vol'], ascending=False).iloc[0:count_maxs, :]
             # print('df0', df0)
             session.flush()
-            for i in range(0, 5):
+            for i in range(0, count_maxs):
                 # btc0 = BTC(df0.time, df0.close, df0.vol, df0.dir, df0.liq)
                 btc0 = BTC(df0.iloc[i, :])
                 # if session.query(BTC.time).filter_by(time=btc0.time).scalar() is None:

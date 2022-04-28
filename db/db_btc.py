@@ -3,12 +3,20 @@ from sqlalchemy import Column, Integer, String, TIMESTAMP, Float
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
-import pandas as pd
+# import pandas as pd
 
+"""
+Модуль для создания, заполнения и использования базы данных котировок
+Например из файлов собраных агрегатором https://github.com/Tucsky/aggr-server
+Можно использовать sqlite, mySQL и другие (после небольшой модификации)
+"""
 Base = declarative_base()
 
 
 class Exch(Base):
+    """
+    Класс для работы с базой бирж и пар (пока не используется)
+    """
     __tablename__ = 'exch'
 
     id = Column(Integer, primary_key=True)
@@ -24,6 +32,9 @@ class Exch(Base):
 
 
 class BTC(Base):
+    """
+    Класс для работы с базой котировок
+    """
     __tablename__ = 'btc'
 
     time = Column(TIMESTAMP, nullable=False, primary_key=True)
@@ -32,14 +43,6 @@ class BTC(Base):
     dir = Column(Integer)
     liq = Column(Integer)
 
-    # def __init__(self, time, close, vol, d, liq):
-    #     # print(time)
-    #     self.time = time
-    #     self.close = close
-    #     self.vol = vol
-    #     self.dir = d
-    #     self.liq = liq
-
     def __init__(self, df):
         self.time = df.time
         self.close = df.close
@@ -47,19 +50,14 @@ class BTC(Base):
         self.dir = int(df.dir)
         self.liq = int(df.liq)
 
-    # def get(self):
-    #     time = self.time
-    #     close = self.close
-    #     vol = self.vol
-    #     df = pd.DataFrame({'time': self.time, 'close': self.close, 'vol': self.vol})
-    #     # print(df)
-    #     return df
-
     def __repr__(self):
         return f"BTC(time={self.time!r}, close={self.close!r}, vol={self.vol!r}, dir={self.dir!r}, liq={self.liq!r})"
 
 
 class Db():
+    """
+    Класс для работы с базами
+    """
     def __init__(self, sql_base='sqlite', name_base='btc.db'):
         if sql_base == 'sqlite':
             connect_base = f'sqlite+pysqlite:///{name_base}'

@@ -1,10 +1,10 @@
 import os
 import pandas as pd
-from db_aggr import Db, BTC
+from db_btc import Db, BTC
 from datetime import datetime
 
 path = '/home/astroill/Data/aggr-server/data-copy'
-start_date = '2022-02-09'
+start_date = '2022-04-24'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
 db = Db('sqlite', '/home/astroill/Data/CF/btc_all_max.db')

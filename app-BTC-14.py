@@ -11,7 +11,7 @@ from plotly.subplots import make_subplots
 
 from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma, sma
-from db.db_aggr import Db, BTC
+from db.db_btc import Db, BTC
 from sqlalchemy import select
 
 # Diskcache

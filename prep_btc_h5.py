@@ -1,10 +1,19 @@
 import pandas as pd
-from db.db_aggr import Db, BTC
+from db.db_btc import Db, BTC
 from MLDiLL.cryptoA import CryptoA
 from sqlalchemy import select
 
+"""
+Программа формирования файла BTC.h5 с котировками 1м за последние 3 месяца
+Из файлов собраных агрегатором https://github.com/Tucsky/aggr-server
+Используется модуль db_btc
+Для быстрого использования с jupyter-notebook 
+"""
+
 if __name__ == '__main__':
     cry_1m = CryptoA(period='1m', verbose=False)
+    # 43200 - количество минут в месяце
+    # 3 - количество месяцев для сбора
     cry_1m.load(limit=43200*3)
     # cry_1m.load(limit=1440)
     df = cry_1m.df.reset_index()[['Date', 'Open']]

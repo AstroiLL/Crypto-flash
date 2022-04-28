@@ -2,7 +2,7 @@ import os
 
 # import pandas as pd
 # import numpy as np
-from db.db_aggr import Db_sqlite, Exch
+from db.db_btc import Db_sqlite, Exch
 
 path = '/home/astroill/Data/aggr-server/data/'
 db = Db_sqlite('aggr02.db')
