@@ -2,10 +2,10 @@ import os
 
 # import pandas as pd
 # import numpy as np
-from db.db_btc import Db_sqlite, Exch
+from db.db_btc import Db, Exch
 
 path = '/home/astroill/Data/aggr-server/data/'
-db = Db_sqlite('aggr02.db')
+db = Db('aggr02.db')
 ses = db.open()
 c = 0
 for dirs, folder, files in os.walk(path):

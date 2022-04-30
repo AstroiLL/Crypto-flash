@@ -1,3 +1,4 @@
+import dash_bootstrap_components
 import plotly
 import dash
 import dash_bootstrap_components as dbc
@@ -29,10 +30,11 @@ PERIOD = '1m'
 WVW = 24
 VER_P = plotly.__version__
 VER_D = dash.__version__
-VERSION = f'BTC Splash #14, Plotly V{VER_P}, Dash V{VER_D}'
+VER_B = dash_bootstrap_components.__version__
+VERSION = f'BTC Splash #14, Plotly V{VER_P}, Dash V{VER_D}, Bootstrap V{VER_B}'
 
 # Открытие базы всплесков объемов
-db = Db('sqlite', '/home/astroill/Data/CF/btc_all.db')
+db = Db('sqlite', '/home/astroill/Data/CF/btc_max_more_10.db')
 
 # LAYOUT
 
@@ -137,6 +139,17 @@ price_max_vol = html.Div(
     ]
 )
 
+aggr_max_vol = html.Div(
+    [
+        dbc.Switch(
+            id="aggr-max-vol",
+            label="Aggr Max Volume",
+            value=True,
+            persistence=True, persistence_type='local',
+        ),
+    ]
+)
+
 sma_period_price = dbc.Input(
     id='sma-period-price', placeholder='period price', type="number", step=1, min=1, max=30, persistence=True,
     persistence_type='local'
@@ -201,6 +214,7 @@ app.layout = html.Div(
                 dbc.Col(sma_period_price, width=0),
                 dbc.Col(price_sma, width=0),
                 dbc.Col(price_max_vol, width=0),
+                dbc.Col(aggr_max_vol, width=0),
             ],
             # style={'margin-bottom': 40}
         ),
@@ -248,10 +262,13 @@ def update_df(limit, n, nn):
     Input('sma-period-vol', 'value'),
     Input('price-sma', 'value'),
     Input('price-max-vol', 'value'),
+    Input('aggr-max-vol', 'value'),
 )
 def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, price_line, sma_period_price, sma_period_vol,
                  price_sma,
-                 price_max_vol):
+                 price_max_vol,
+                 aggr_max_vol
+                 ):
     df = pd.read_json(data)
     if df.empty:
         raise PreventUpdate
@@ -339,7 +356,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, pric
             ), row=1, col=1
         )
     # Max Vol from aggr
-    if price_max_vol:
+    if aggr_max_vol:
         fig.add_trace(
             go.Scatter(
                 x=btc_df.time, y=btc_df.close,
@@ -347,7 +364,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, pric
                 mode='markers',
                 text=btc_df.vol,
                 marker=dict(
-                    size=8,
+                    size=16,
                     color=btc_df.col,
                 ),
             ), row=1, col=1

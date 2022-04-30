@@ -12,6 +12,7 @@ from datetime import datetime
 В последствии эту базу можно использовать для визуализации на графиках
 Для работы с SQL через SQLAlchemy используется модуль db.db_btc
 Запускать программу можно много раз, она добавляет только отсутствующие значения
+Устарела. Использовать aggr_max_vol_xx
 """
 
 count_maxs = 5
@@ -20,7 +21,7 @@ count_maxs = 5
 path = '/home/astroill/Data/aggr-server/data-copy'
 # Начальная дата сбора данных
 # Для ускорения указывайте дату последнюю или предпоследнюю предыдущего сбора
-start_date = '2022-04-27'
+start_date = '2022-04-29'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
 db = Db('sqlite', '/home/astroill/Data/CF/btc_all.db')

@@ -110,6 +110,14 @@ def wvwma(src, vol, length=48):
     # print(src,vol,length)
     return ta.wma(src*vol, length=length)/ta.wma(vol, length=length)
 
+def pvt(src, vol, length=48):
+    """
+    PVT - Price Volume Trend
+    """
+    # print(src,vol,length)
+    pass
+    # return ta.wma(src*vol, length=length)/ta.wma(vol, length=length)
+
 
 def hd(x, precision=2, sign=False):
     """

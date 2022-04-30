@@ -2,12 +2,27 @@ import os
 import pandas as pd
 from db_btc import Db, BTC
 from datetime import datetime
+"""
+Из файлов собраных агрегатором https://github.com/Tucsky/aggr-server
+(Агрегатор должен работать непрерывно столько времени, сколько данных вам надо собрать)
+Вытаскиваются все максимумы объемов >= moreBTC за каждый час
+И складываются в базу SQL (например sqlite или mySQL)
+Начало сбора максимумов start_date до текущего момента now_date
+В последствии эту базу можно использовать для визуализации на графиках
+Для работы с SQL через SQLAlchemy используется модуль db.db_btc
+Запускать программу можно много раз, она добавляет только отсутствующие значения
+"""
 
+moreBTC = 10
+# Указать полный путь к папке где aggr-server собирает файлы
+# Обычно это aggr-server/data
 path = '/home/astroill/Data/aggr-server/data-copy'
-start_date = '2022-04-24'
+# Начальная дата сбора данных
+# Для ускорения указывайте дату последнюю или предпоследнюю предыдущего сбора
+start_date = '2022-04-29'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
-db = Db('sqlite', '/home/astroill/Data/CF/btc_all_max.db')
+db = Db('sqlite', '/home/astroill/Data/CF/btc_max_more_10.db')
 session = db.open()
 columns = ['exch', 'pairs', 'date', 'time_max', 'close', 'vol']
 df_maxs = pd.DataFrame([], columns=columns)
@@ -28,8 +43,8 @@ for dirs, folder, files in os.walk(path):
             df.fillna(0, inplace=True)
             df = df[['time', 'close', 'vol', 'dir', 'liq']]
             df['time'] = pd.to_datetime(df['time'], unit='ms', infer_datetime_format=True)
-            # 10 объем выше которого берется всплеск
-            dfv = df[df['vol'] >= 10]
+            # Всплеск берется если объем >= moreBTC
+            dfv = df[df['vol'] >= moreBTC]
             if not dfv.empty:
                 dfv.set_index('time', drop=True, inplace=True)
                 r = dfv.resample('1min')

@@ -2,6 +2,11 @@ import os
 import pandas as pd
 from datetime import datetime
 
+"""
+Находятся все максимумы >= maxBTC
+И дописываются в excel
+"""
+maxBTC = 100
 path = '/home/astroill/Data/aggr-server/data-copy'
 start_date = '2022-04-17'
 now_date = datetime.now().strftime("%Y-%m-%d")
@@ -27,7 +32,7 @@ for dirs, folder, files in os.walk(path):
             # df.set_index('time', drop=True, inplace=True)
             vmax = df['vol'].max()
             # print(df)
-            if vmax >= 100:
+            if vmax >= maxBTC:
                 imax = df['vol'].argmax()
                 tmax = df.time[imax]
                 cmax = df.close[imax]

@@ -1,3 +1,4 @@
+# conda
 joblib
 matplotlib
 pandas
@@ -5,16 +6,7 @@ mysqlclient
 sqlalchemy
 dash
 plotly
-mldill
 setuptools
-pytables
-
-pandas_ta
+pandas-ta
+# pip3
 ccxt
-dash_bootstrap_components>=1.0.0
-enquiries
-
-dill
-numpy
-requests
-diskcache
