@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from db_btc import Db, BTC
+from dbiLL.db_btc import Db, BTC
 from datetime import datetime
 """
 Из файлов собраных агрегатором https://github.com/Tucsky/aggr-server
@@ -9,7 +9,7 @@ from datetime import datetime
 И складываются в базу SQL (например sqlite или mySQL)
 Начало сбора максимумов start_date до текущего момента now_date
 В последствии эту базу можно использовать для визуализации на графиках
-Для работы с SQL через SQLAlchemy используется модуль db.db_btc
+Для работы с SQL через SQLAlchemy используется модуль dbiLL.db_btc
 Запускать программу можно много раз, она добавляет только отсутствующие значения
 """
 
@@ -18,11 +18,11 @@ moreBTC = 10
 # Обычно это aggr-server/data
 path = '/home/astroill/Data/aggr-server/data-copy'
 # Начальная дата сбора данных
-# Для ускорения указывайте дату последнюю или предпоследнюю предыдущего сбора
-start_date = '2022-04-29'
+# Для ускорения указывайте последнюю или предпоследнюю дату предыдущего сбора
+start_date = '2022-05-01'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
-db = Db('sqlite', '/home/astroill/Data/CF/btc_max_more_10.db')
+db = Db('sqlite', '/home/astroill/Data/CF/btc_10_all.db')
 session = db.open()
 columns = ['exch', 'pairs', 'date', 'time_max', 'close', 'vol']
 df_maxs = pd.DataFrame([], columns=columns)
@@ -48,8 +48,9 @@ for dirs, folder, files in os.walk(path):
             if not dfv.empty:
                 dfv.set_index('time', drop=True, inplace=True)
                 r = dfv.resample('1min')
-                df1m = r.agg({'close': "mean", 'vol': "sum", 'dir': 'max', 'liq': 'min'})
+                df1m = r.agg({'close': "last", 'vol': "sum", 'dir': 'last', 'liq': 'last'})
                 df1m = df1m.reset_index().dropna()
+                # df1m = df1m.dropna()
                 # print(df1m)
                 session.flush()
                 for i in range(len(df1m)):
@@ -59,3 +60,7 @@ for dirs, folder, files in os.walk(path):
                         session.add(btc0)
 session.commit()
 # print(session.query(BTC).all())
+"""
+ohlc_dict = {'Open':'first','High':'max','Low':'min','Close': 'last','Volume': 'sum','Adj Close': 'last'}
+data_dy.resample('M', how=ohlc_dict, closed='right', label='right')
+"""

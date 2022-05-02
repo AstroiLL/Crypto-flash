@@ -12,7 +12,7 @@ from plotly.subplots import make_subplots
 
 from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma, sma
-from db.db_btc import Db, BTC
+from dbiLL.db_btc import Db, BTC
 from sqlalchemy import select
 
 # Diskcache
@@ -272,31 +272,30 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, pric
     df = pd.read_json(data)
     if df.empty:
         raise PreventUpdate
-    # Получаем из db всплески объемов
+    # Получаем из dbiLL всплески объемов
     session = db.open()
     stmt = select(BTC)
-    # print(stmt)
-    # print(pd.read_sql(stmt, con=session.bind))
-    # btc_df = pd.read_sql(
-    # print(session.query(stmt))
-        # , session.bind)
     btc0 = []
     for btc in session.scalars(stmt):
         # print(btc.time, btc.close, btc.vol)
         btc0.append({'time': btc.time, 'close': btc.close, 'vol': btc.vol, 'd': btc.dir})
-    # print(btc0)
+    session.close()
     btc_df = pd.DataFrame(btc0)
     # btc_df.set_index('time', inplace=True)
     btc_df = btc_df[btc_df.time >= df.index[0]]
     btc_df = btc_df.sort_values(by=['vol'], ascending=False).iloc[0:5, :]
     btc_df = btc_df.sort_values(by=['time'], ascending=True)
     btc_df['col'] = btc_df.d.where(btc_df.d == 0, 'green').where(btc_df.d == 1, 'orange')
+    maxVa = btc_df['vol'].max()
+    # print(maxV)
+    vol_level0a = (range_vol_level[0] * maxVa) / 100
+    vol_level1a = (range_vol_level[1] * maxVa) / 100
+    btc_df['max_vol'] = 0
+    btc_df['max_vol'] = btc_df['max_vol'].where(btc_df['vol'] < vol_level1a, 21).where(btc_df['vol'] < vol_level0a, 13)
     # print(btc_df)
-    session.close()
 
     maxV = df['Volume'].max()
     print(maxV)
-    # range_open = {'min': df['Open'].min(), 'max': df['Open'].max()}
     vol_level0 = (range_vol_level[0] * maxV) / 100
     vol_level1 = (range_vol_level[1] * maxV) / 100
     # Фильтровать по критерию Vol >= уровень
@@ -364,7 +363,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, pric
                 mode='markers',
                 text=btc_df.vol,
                 marker=dict(
-                    size=16,
+                    size=dfv['max_vol'],
                     color=btc_df.col,
                 ),
             ), row=1, col=1

@@ -10,3 +10,6 @@ setuptools
 pandas-ta
 # pip3
 ccxt
+# My modules
+#MLDiLL
+#dbiLL

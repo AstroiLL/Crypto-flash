@@ -1,15 +1,16 @@
 import os
 import pandas as pd
-from datetime import datetime
+# from datetime import datetime
 
 """
 Находятся все максимумы >= maxBTC
 И дописываются в excel
 """
-maxBTC = 100
+maxBTC = 10
 path = '/home/astroill/Data/aggr-server/data-copy'
-start_date = '2022-04-17'
-now_date = datetime.now().strftime("%Y-%m-%d")
+start_date = '2022-04-28'
+now_date = '2022-04-28'
+# now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
 columns = ['exch', 'pairs', 'date', 'time_max', 'close', 'vol']
 df_maxs = pd.DataFrame([], columns=columns)
