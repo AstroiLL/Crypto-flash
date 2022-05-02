@@ -283,7 +283,7 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, pric
     btc_df = pd.DataFrame(btc0)
     # btc_df.set_index('time', inplace=True)
     btc_df = btc_df[btc_df.time >= df.index[0]]
-    btc_df = btc_df.sort_values(by=['vol'], ascending=False).iloc[0:5, :]
+    btc_df = btc_df.sort_values(by=['vol'], ascending=False).iloc[0:10, :]
     btc_df = btc_df.sort_values(by=['time'], ascending=True)
     btc_df['col'] = btc_df.d.where(btc_df.d == 0, 'green').where(btc_df.d == 1, 'orange')
     maxVa = btc_df['vol'].max()
