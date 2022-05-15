@@ -8,8 +8,11 @@ dash
 plotly
 setuptools
 pandas-ta
+dash_bootstrap_components
+diskcache
+dash[diskcache]
 # pip3
 ccxt
 # My modules
 #MLDiLL
-#dbiLL
+# dbiLL

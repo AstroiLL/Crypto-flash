@@ -34,7 +34,7 @@ VER_B = dash_bootstrap_components.__version__
 VERSION = f'BTC Splash #14, Plotly V{VER_P}, Dash V{VER_D}, Bootstrap V{VER_B}'
 
 # Открытие базы всплесков объемов
-db = Db('sqlite', '/home/astroill/Data/CF/btc_max_more_10.db')
+db = Db('sqlite', 'btc_max_more_10.db')
 
 # LAYOUT
 

@@ -19,11 +19,11 @@ moreBTC = 10
 path = '/home/astroill/Data/aggr-server/data-copy'
 # Начальная дата сбора данных
 # Для ускорения указывайте последнюю или предпоследнюю дату предыдущего сбора
-start_date = '2022-05-02'
+start_date = '2022-05-15'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
 # База данных для занесения всплесков
-db = Db('sqlite', '/home/astroill/Data/CF/btc_max_more_10.db')
+db = Db('sqlite', '../btc_max_more_10.db')
 session = db.open()
 columns = ['exch', 'pairs', 'date', 'time_max', 'close', 'vol']
 df_maxs = pd.DataFrame([], columns=columns)
