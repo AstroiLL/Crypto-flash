@@ -1,0 +1,10 @@
+/assets/
+/cache*/
+/db-tests/
+/tests/
+
+/app-BTC-*.py
+!/app-BTC-14.py
+
+/cf*.py
+!/cf17.3.py

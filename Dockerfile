@@ -7,4 +7,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD [ "python", "./app-BTC-14.py" ]
+EXPOSE 8052
+
+CMD python ./app-BTC-14.py
