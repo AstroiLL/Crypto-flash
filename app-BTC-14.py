@@ -530,4 +530,4 @@ def update_chart(data, n, range_vol_level, nn, wvwma_select, position, pos, pric
 
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', port=8052, debug=True)
+    app.run_server(host='0.0.0.0', port=8052, debug=False, use_reloader=True)
