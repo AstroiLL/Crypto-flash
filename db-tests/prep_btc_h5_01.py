@@ -29,3 +29,5 @@ if __name__ == '__main__':
     df.fillna(0, inplace=True)
     print(df[df['Volume'] != 0])
     df.to_hdf('/home/astroill/Data/CF/BTC.h5', 'm1_3M_v_a')
+    # print df
+
