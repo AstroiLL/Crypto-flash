@@ -8,7 +8,7 @@ from datetime import datetime
 Вытаскиваются все максимумы объемов >= moreBTC за каждый час
 И складываются в базу SQL (например sqlite или mySQL)
 Начало сбора максимумов start_date до текущего момента now_date
-В последствии эту базу можно использовать для визуализации на графиках
+В последствии эту базу можно использовать для визуализации на графиках и для использования в ML
 Для работы с SQL через SQLAlchemy используется модуль dbiLL.db_btc
 Запускать программу можно много раз, она добавляет только отсутствующие значения
 """
@@ -19,11 +19,11 @@ moreBTC = 10
 path = '/home/astroill/Data/aggr-server/data-copy'
 # Начальная дата сбора данных
 # Для ускорения указывайте последнюю или предпоследнюю дату предыдущего сбора
-start_date = '2022-05-30'
+start_date = '2022-08-01'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
 # База данных для занесения всплесков
-db = Db('sqlite', '../btc_max_more_10.db')
+db = Db('sqlite', '/home/astroill/Data/CF/btc_max_more_10.db')
 session = db.open()
 columns = ['exch', 'pairs', 'date', 'time_max', 'close', 'vol']
 df_maxs = pd.DataFrame([], columns=columns)

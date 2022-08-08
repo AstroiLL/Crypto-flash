@@ -1,4 +1,4 @@
-import dash_bootstrap_components
+# import dash_bootstrap_components
 import plotly
 import dash
 import dash_bootstrap_components as dbc
@@ -9,6 +9,7 @@ from dash.long_callback import DiskcacheLongCallbackManager
 from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
 from plotly.subplots import make_subplots
+# import plotly.io as pio
 
 from MLDiLL.cryptoA import CryptoA
 from MLDiLL.utils import hd, wvwma, sma
@@ -35,15 +36,14 @@ long_callback_manager = DiskcacheLongCallbackManager(cache)
 # READ DATA
 
 PERIOD = '1m'
-# LIMIT = 800
 WVW = 24
 VER_P = plotly.__version__
 VER_D = dash.__version__
-VER_B = dash_bootstrap_components.__version__
+VER_B = dbc.__version__
 VERSION = f'BTC Flexible Flash #02, Plotly V{VER_P}, Dash V{VER_D}, Bootstrap V{VER_B}'
 
 # Открытие базы всплесков объемов
-db = Db('sqlite', 'btc_max_more_10.db')
+db = Db('sqlite', '/home/astroill/Data/CF/btc_max_more_10.db')
 
 # LAYOUT
 
@@ -60,6 +60,8 @@ CHARTS_TEMPLATE = go.layout.Template(
             x=0,
             y=1
         ),
+        # plot_bgcolor='rgb(17,17,17)',
+        # paper_bgcolor='rgb(17,17,17)',
         # height=650,
         height=800,
         # width=1400,
@@ -71,7 +73,8 @@ CHARTS_TEMPLATE = go.layout.Template(
         # hovermode="x unified",
         # hoverlabel_align='right',
         # margin={"r": 0, "t": 1, "l": 0, "b": 0},
-        transition_duration=500
+        transition_duration=500,
+
 
     )
 )
@@ -94,7 +97,7 @@ pos = html.Div(
     ]
 )
 marks = {i: j for i, j in
-               [(60, '1h'), (120, '2h'), (240, '4h'), (480, '8h'), (720, '12h')]}
+         [(60, '1h'), (120, '2h'), (180, '3h'), (240, '4h'), (360, '6h'), (480, '8h'), (600, '10h'), (720, '12h')]}
 sma_level_selector = dcc.Slider(
     id='sma-level-slider',
     # min=60,
@@ -181,12 +184,14 @@ sma_period_vol = html.Div(
 
 interval_reload = dcc.Interval(
     id='interval-reload',
-    interval=60*1000,  # 60 sec in milliseconds
+    interval=60 * 1000,  # 60 sec in milliseconds
     n_intervals=0
 )
 
 app = dash.Dash(
-    __name__, external_stylesheets=[dbc.themes.FLATLY]
+    # __name__, external_stylesheets=[dbc.themes.FLATLY]
+    # __name__, external_stylesheets=[dbc.themes.SOLAR]
+    __name__, external_stylesheets=[dbc.themes.DARKLY]
 )
 
 app.layout = html.Div(
@@ -195,7 +200,7 @@ app.layout = html.Div(
         interval_reload,
         dbc.Row(
             [
-                dbc.Col(html.H3(VERSION)),
+                dbc.Col(html.H4(VERSION)),
                 dbc.Col(html.Div(id='out-btc')),
 
             ],
@@ -347,7 +352,7 @@ def update_chart(data, n, sma_level, range_vol_level, nn, position, pos, price_l
                 mode='lines',
                 line=dict(
                     # size=1,
-                    color='grey',
+                    color='white',
                 ),
             ), row=1, col=1
         )
@@ -386,7 +391,7 @@ def update_chart(data, n, sma_level, range_vol_level, nn, position, pos, price_l
                 # hoverinfo='none',
                 line=dict(
                     width=1,
-                    color='black',
+                    color='white',
                 ),
                 showlegend=True
             ), row=1, col=1
@@ -427,7 +432,7 @@ def update_chart(data, n, sma_level, range_vol_level, nn, position, pos, price_l
             name='EndPrice',
             textposition="middle right",
             mode="text+markers",
-            marker=dict(color='black', size=12, symbol='star'),
+            marker=dict(color='yellow', size=12, symbol='star'),
             showlegend=True,
             hovertemplate=f"{end_price}"
         ), row=1, col=1
@@ -466,7 +471,7 @@ def update_chart(data, n, sma_level, range_vol_level, nn, position, pos, price_l
                 # hoverinfo='none',
                 line=dict(
                     width=1,
-                    color='black',
+                    color='white',
                 ),
                 showlegend=True
             ), row=2, col=1
@@ -485,7 +490,29 @@ def update_chart(data, n, sma_level, range_vol_level, nn, position, pos, price_l
         row=2, col=1
     )
 
-    fig.update_layout(template=CHARTS_TEMPLATE)
+    # fig.update_layout(template=CHARTS_TEMPLATE)
+    fig.update_layout(template='plotly_dark',
+                          legend=dict(
+                              orientation='h',
+                              title_text='',
+                              x=0,
+                              y=1
+                          ),
+                          # plot_bgcolor='rgb(17,17,17)',
+                          # paper_bgcolor='rgb(17,17,17)',
+                          # height=650,
+                          height=800,
+                          # width=1400,
+                          # xaxis_rangeslider_visible=True,
+                          xaxis_showspikes=True,
+                          # yaxis_showspikes=True,
+                          # legend_orientation="h",
+                          # legend=dict(x=0, y=1, orientation='h'),
+                          # hovermode="x unified",
+                          # hoverlabel_align='right',
+                          # margin={"r": 0, "t": 1, "l": 0, "b": 0},
+                          transition_duration=500,
+                      )
     fig.update_yaxes(
         title='Price',
         row=1, col=1

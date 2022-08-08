@@ -34,7 +34,7 @@ def ep(*args):
 
 def SMA(x: pd.Series, period: int = 20) -> pd.Series:
     """
-    Вычеслить скользящую среднюю для серии
+    Вычислить скользящую среднюю для серии
     :param x: Series
     :param period: Период sma
     :return: Series
@@ -49,7 +49,7 @@ def begin_today():
 
 def vwap(df, period='1D', price='Open'):
     """
-    Вычеслить средневзвешенную среднюю по объему за фиксированный период 1MN 1W 1D
+    Вычислить средневзвешенную среднюю по объему за фиксированный период 1MN 1W 1D
     и записать в DataFrame в поле с именем vwap_{period}
     """
 
