@@ -19,7 +19,7 @@ moreBTC = 10
 path = '/home/astroill/Data/aggr-server/data-copy'
 # Начальная дата сбора данных
 # Для ускорения указывайте последнюю или предпоследнюю дату предыдущего сбора
-start_date = '2022-08-01'
+start_date = '2022-08-19'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
 # База данных для занесения всплесков

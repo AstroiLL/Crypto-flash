@@ -1,7 +1,10 @@
 """
 iLLs functions
 """
+import matplotlib.dates as mdates
 import pandas as pd
+from matplotlib.lines import Line2D
+from matplotlib.patches import Rectangle
 from datetime import datetime as dt
 import pandas_ta as ta
 
@@ -171,6 +174,185 @@ def wa(group):
     group['Price'] = group['Price'] * group['Size'] / group['Size'].sum()
     # group['fairePrice'] = group['fairePrice'] * group['Size'] / group['Size'].sum()
     return group
+
+
+def ohlc2(axes, prices: pd.DataFrame, colorup='blue', colordown='red'):
+    width = 0.0001
+    width2 = 0.0004
+    pricesup = prices[prices['Close'] >= prices['Open']]
+    pricesdown = prices[prices['Close'] < prices['Open']]
+
+    axes.bar(pricesup.index, pricesup['Close'] - pricesup['Open'], width, bottom=pricesup['Open'], color=colorup)
+    # axes.bar(pricesup.index, pricesup['High'] - pricesup['Close'], width2, bottom=pricesup['Close'], color=colorup)
+    # axes.bar(pricesup.index, pricesup['Low'] - pricesup['Open'], width2, bottom=pricesup['Open'], color=colorup)
+
+    axes.bar(pricesdown.index, pricesdown['Close'] - pricesdown['Open'], width, bottom=pricesdown['Open'],
+             color=colordown)
+    # axes.bar(pricesdown.index, pricesdown['High'] - pricesdown['Open'], width2, bottom=pricesdown['Open'], color=colordown)
+    # axes.bar(pricesdown.index, pricesdown['Low'] - pricesdown['Close'], width2, bottom=pricesdown['Close'], color=colordown)
+
+
+def ohlc_j(ax, quotes, width=0.2, colorup='blue', colordown='red',
+           alpha=1.0):
+    """
+    Plot the time, open, high, low, close as a vertical line ranging
+    from low to high.  Use a rectangular bar to represent the
+    open-close span.  If close >= open, use colorup to color the bar,
+    otherwise use colordown
+
+    Parameters
+    ----------
+    ax : `Axes`
+        an Axes instance to plot to
+    quotes : sequence of quote sequences
+        data to plot.  time must be in float date format - see date2num
+        (time, open, high, low, close, ...)
+    width : float
+        fraction of a day for the rectangle width
+    colorup : color
+        the color of the rectangle where close >= open
+    colordown : color
+         the color of the rectangle where close <  open
+    alpha : float
+        the rectangle alpha level
+
+    Returns
+    -------
+    ret : tuple
+        returns (lines, patches) where lines is a list of lines
+        added and patches is a list of the rectangle patches added
+
+    """
+
+    OFFSET = width / 2.0
+    lines = []
+    patches = []
+    for q in quotes:
+        t, open, high, low, close = q[:5]
+        td = mdates.date2num(t.to_pydatetime())
+
+        if close >= open:
+            color = colorup
+            lower = open
+            height = close - open
+        else:
+            color = colordown
+            lower = close
+            height = open - close
+
+        vline = Line2D(
+            xdata=(t, t), ydata=(low, high),
+            color=color,
+            linewidth=0.5,
+            antialiased=True,
+        )
+
+        rect = Rectangle(
+            # xy=(t, lower),
+            xy=(td - OFFSET, lower),
+            width=width,
+            height=height,
+            facecolor=color,
+            edgecolor=color,
+        )
+        rect.set_alpha(alpha)
+
+        lines.append(vline)
+        patches.append(rect)
+        ax.add_line(vline)
+        ax.add_patch(rect)
+    ax.autoscale_view()
+
+    return lines, patches
+
+
+def ohlc_ha(ax, quotes, width=0.2, colorup='blue', colordown='red',
+            alpha=1.0):
+    """
+    Plot the time, open, high, low, close as a vertical line ranging
+    from low to high.  Use a rectangular bar to represent the
+    open-close span.  If close >= open, use colorup to color the bar,
+    otherwise use colordown
+
+    Parameters
+    ----------
+    ax : `Axes`
+        an Axes instance to plot to
+    quotes : sequence of quote sequences
+        data to plot.  time must be in float date format - see date2num
+        (time, open, high, low, close, ...)
+    width : float
+        fraction of a day for the rectangle width
+    colorup : color
+        the color of the rectangle where close >= open
+    colordown : color
+         the color of the rectangle where close <  open
+    alpha : float
+        the rectangle alpha level
+
+    Returns
+    -------
+    ret : tuple
+        returns (lines, patches) where lines is a list of lines
+        added and patches is a list of the rectangle patches added
+
+    """
+
+    OFFSET = width / 2.0
+    lines = []
+    patches = []
+    open_p = quotes[0][1]
+    close_p = quotes[0][4]
+    # ep(open_p)
+    for q in quotes:
+        t, open, high, low, close = q[:5]
+        td = mdates.date2num(t.to_pydatetime())
+
+        closeh = (open + close + high + low) / 4
+        openh = (open_p + close_p) / 2
+        open_p = openh
+        close_p = closeh
+        highh = max(high, openh, closeh)
+        lowh = min(low, openh, closeh)
+        open = openh
+        close = closeh
+        high = highh
+        low = lowh
+
+        if close >= open:
+            color = colorup
+            lower = open
+            height = close - open
+        else:
+            color = colordown
+            lower = close
+            height = open - close
+
+        vline = Line2D(
+            xdata=(t, t), ydata=(low, high),
+            color=color,
+            linewidth=0.5,
+            antialiased=True,
+        )
+
+        rect = Rectangle(
+            # xy=(t, lower),
+            xy=(td - OFFSET, lower),
+            width=width,
+            height=height,
+            facecolor=color,
+            edgecolor=color,
+        )
+        rect.set_alpha(alpha)
+
+        lines.append(vline)
+        patches.append(rect)
+        ax.add_line(vline)
+        ax.add_patch(rect)
+    ax.autoscale_view()
+
+    return lines, patches
+
 
 def HA(dataframe):
     """
