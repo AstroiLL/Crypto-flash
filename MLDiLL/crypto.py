@@ -379,19 +379,19 @@ COMMIT;
         if self.verbose: print(f'Created base {self.exchange}.{self.crypto}')
         conn = create_engine(f'{mysql_url}/').connect()
         conn.execute(base1 + base2, con=conn)
-        conn = create_engine(f'{mysql_url}/EXCHANGE').connect()
-        ins = f"INSERT INTO `Exchange`(`Exchange`, `Crypto`) VALUES ('{self.exchange}','{self.crypto}')"
-        conn.execute(ins, con=conn)
+        # conn = create_engine(f'{mysql_url}/EXCHANGE').connect()
+        # ins = f"INSERT INTO `Exchange`(`Exchange`, `Crypto`) VALUES ('{self.exchange}','{self.crypto}')"
+        # conn.execute(ins, con=conn)
         conn.close()
         # self.conn = create_engine(f'{mysql_url}/{self.exchange}.{self.crypto}').connect()
 
-    def get_list_exch(self):
-        """Получить список существующих на сервере баз данных баз котировок"""
-        conn = create_engine(f'{mysql_url}/EXCHANGE').connect()
-        df = pd.read_sql(f"SELECT * FROM Exchange", con=conn)
-        conn.close()
-        if self.verbose: print(df)
-        return df
+    # def get_list_exch(self):
+    #     """Получить список существующих на сервере баз данных баз котировок"""
+    #     conn = create_engine(f'{mysql_url}/EXCHANGE').connect()
+    #     df = pd.read_sql(f"SELECT * FROM Exchange", con=conn)
+    #     conn.close()
+    #     if self.verbose: print(df)
+    #     return df
 
 
 class CryptoH:
