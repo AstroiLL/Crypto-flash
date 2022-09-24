@@ -1,5 +1,5 @@
 # conda
-joblib
+#joblib
 matplotlib
 pandas
 mysqlclient

@@ -9,7 +9,7 @@ from datetime import datetime
 maxBTC = 10
 path = '/home/astroill/Data/aggr-server/data-copy'
 # start_date = '2022-02-10'
-start_date = '2022-07-13'
+start_date = '2022-09-01'
 # now_date = '2022-04-28'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)

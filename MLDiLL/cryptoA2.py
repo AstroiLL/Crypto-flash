@@ -39,14 +39,11 @@ class Exchange:
         # print(self.exchange_conn.id, self.exchange_conn.markets, self.exchange_conn.markets.keys())
         try:
             if self.verbose: print(
-                f"#64 Test_get_from_exch {self.exchange}.{self.crypto}.{self.period} limit 1"
+                f"#42 Test_get_from_exch {self.exchange}.{self.crypto}.{self.period} limit 1"
             )
-            if self.exchange == 'BITMEX' and self.crypto == 'BTC/USD':
-                self.exchange_conn.fetch_ohlcv(self.crypto+':BTC', self.period, limit=1)
-            else:
-                self.exchange_conn.fetch_ohlcv(self.crypto, self.period, limit=1)
+            self.exchange_conn.fetch_ohlcv(self.crypto, self.period, limit=1)
         except:
-            print(f'#1 Error connect exchange {self.exchange}')
+            print(f'#46 Error connect exchange {self.exchange}')
             self.availability = False
 
     # Получение данных с биржи
@@ -63,22 +60,19 @@ class Exchange:
         else:
             # Вычисляем время начала загрузки данных из входного времени
             since_exch = self.exchange_conn.parse8601(since.strftime('%Y-%m-%d %H:%M:%S'))
-        if self.verbose: print('#85 Since', self.exchange_conn.iso8601(since_exch))
+        if self.verbose: print('#63 Since', self.exchange_conn.iso8601(since_exch))
         df_app = None
         while limit > 0:
             time.sleep(self.exchange_conn.rateLimit // 1000)
-            if self.verbose: print('#89 Load limit ', limit, self.period)
+            if self.verbose: print('#67 Load limit ', limit, self.period)
             lmt = limit if limit <= 750 else 750
             try:
                 if self.verbose: print(
-                    f"#93 Get_from_exch {self.exchange}.{self.crypto}.{self.period} since {self.exchange_conn.iso8601(since_exch)} limit {lmt}"
+                    f"#71 Get_from_exch BTC.{self.period} since {self.exchange_conn.iso8601(since_exch)} limit {lmt}"
                 )
-                if self.exchange == 'BITMEX' and self.crypto == 'BTC/USD':
-                    fetch = self.exchange_conn.fetch_ohlcv(self.crypto+':BTC', self.period, since=since_exch, limit=lmt)
-                else:
-                    fetch = self.exchange_conn.fetch_ohlcv(self.crypto, self.period, since=since_exch, limit=lmt)
+                fetch = self.exchange_conn.fetch_ohlcv(self.crypto, self.period, since=since_exch, limit=lmt)
             except:
-                print(f'#2 Error fetch from {self.exchange}')
+                print(f'#75 Error fetch from {self.exchange}')
                 self.availability = False
             else:
                 df_fetch = pd.DataFrame(fetch, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
@@ -102,7 +96,7 @@ class CryptoA:
     Периоды 1d 1h 1m
     """
 
-    def __init__(self, exchange='BITMEX', crypto='BTC/USD', period='1m', update=False, verbose=True):
+    def __init__(self, exchange='ftx', crypto='BTC/USD:USD', period='1m', update=False, verbose=True):
         self.df = pd.DataFrame()
         self.exchange = exchange
         self.crypto = crypto
@@ -134,9 +128,6 @@ class CryptoA:
         if exchange is not None and self.exchange != exchange:
             self.new = True
             self.exchange = exchange
-            if self.exchange != 'BITMEX' and self.exchange != 'BINANCE':
-                print(f'Incorrect exchange "{self.exchange}", setting "BITMEX"')
-                self.exchange = 'BITMEX'
         if crypto is not None and self.crypto != crypto:
             self.new = True
             self.crypto = crypto
@@ -151,25 +142,25 @@ class CryptoA:
                 self._load_data_()
 
     def _connect_(self):
-        if self.verbose: print(f'==============\nInit {self.exchange}.{self.crypto} {self.period}')
-        self.conn_str = f'{sql_url}/{self.exchange}.{self.crypto}'
-        if self.verbose: print("#170", self.conn_str)
+        if self.verbose: print(f'==============\nInit BTC {self.period}')
+        self.conn_str = f'{sql_url}/BTC'
+        if self.verbose: print("#147", self.conn_str)
         c = 0
         while c < 3:
             try:
                 self.conn = create_engine(self.conn_str, pool_pre_ping=True, echo=self.verbose).connect()
                 self.table = Table(self.period, self.metadata_obj, autoload_with=self.conn)
                 self.session = Session(self.conn)
-                if self.verbose: print(f"#177 Connected to {self.exchange}.{self.crypto} {self.period}")
+                if self.verbose: print(f"#154 Connected to BTC {self.period}")
                 return
             except:
                 self.session = None
-                print(f'No base {self.exchange}.{self.crypto}')
+                print(f'No base BTC')
                 if not self.update:
                     print('#2 Updates disabled. Exiting.')
                     exit(2)
                 # self._create_base_()
-                print(f'#5 Error {c=}: Read base {self.exchange}.{self.crypto}.{self.period}')
+                print(f'#5 Error {c=}: Read base BTC.{self.period}')
             c += 1
         exit(5)
         # self._get_count_records_()
@@ -189,7 +180,7 @@ class CryptoA:
         while c < 3:
             try:
                 self.count = int(self.session.query(self.table).count())
-                if self.verbose: print(f"#206 Table {self.period} has total {self.count} records")
+                if self.verbose: print(f"#183 Table {self.period} has total {self.count} records")
                 return
             except:
                 if self.verbose: print('except: session.query.count')
@@ -197,7 +188,7 @@ class CryptoA:
                 self.session = None
                 self._connect_()
             c += 1
-        print(f'#5 Error: Read base {self.exchange}.{self.crypto}.{self.period}')
+        print(f'#5 Error: Read base BTC.{self.period}')
         exit(5)
 
     def _load_data_(self):
@@ -231,9 +222,9 @@ class CryptoA:
         df.index += timedelta(hours=tz)
         self.last_date = df.index[-1]
         if self.verbose:
-            print(f"#247 Last date from {self.period} from mySQL", self.last_date)
+            print(f"#225 Last date from {self.period} from mySQL", self.last_date)
             # print(f"Last date2 from {self.period} from mySQL", last_date)
-        if self.verbose: print(f'#249 Loaded {self.limit} bars {self.period}')
+        if self.verbose: print(f'#227 Loaded {self.limit} bars {self.period}')
         self.df = df.copy()
         self.maxV = df['Volume'].max()
         return True
