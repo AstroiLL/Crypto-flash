@@ -12,6 +12,4 @@ sma.py
 /cache-directory/*
 /cache/*
 /Data/
-/cache_ff/*
-
-!/cache_ff_03/
+/cache_ff*/*
