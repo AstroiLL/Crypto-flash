@@ -37,7 +37,7 @@ class Crypto:
 
     def __init__(self, exchange=None, crypto=None, period=None, update=True,
                  verbose=False):
-        if self.verbose: print(f'__init__ {period=}')
+        if verbose: print(f'__init__ {period=}')
         try:
             create_engine(f'{SQL_URL}').connect()
         except:
@@ -249,7 +249,10 @@ class Crypto:
         # TODO что мы вообще репарим? self.df или базу
         if self.verbose: print(f"repair_table {df.shape=}")
         # Если не указан DataFrame, то репарим DataFrame из класса
-        if df is None: df_rep = self.df
+        if df is None:
+            df_rep = self.df
+        else:
+            df_rep = df
         if df_rep is None: print(f"Repair only after load()"); return
         if self.verbose: print(f'Repair_table {self.period}')
         if self.period == '1m':
@@ -257,14 +260,13 @@ class Crypto:
         else:
             per = self.period
         # Находим пропущеные индексы
-        df = df_rep.resample(per).first()
-        holes = df[df['Open'].isna()].index.sort_values(ascending=True)
+        df_rep = df_rep.resample(per).first()
+        holes = df_rep[df_rep['Open'].isna()].index.sort_values(ascending=True)
         if self.verbose: print('holes:', holes)
         c = 1
         l = len(holes)
         for i in holes:
-            # if self.verbose:
-            print(f'Repair {self.period} ({c}/{l}) {i}'); c += 1
+            if self.verbose: print(f'Repair {self.period} ({c}/{l}) {i}'); c += 1
             self.update_from(from_date=i, count=1)
         if self.verbose: print(f'End repair_table {self.period}')
 
@@ -277,8 +279,7 @@ class Crypto:
         if self.verbose: print(f"Write_to_sql BTC {self.period} count {len(df_app)}")
         for i in range(len(df_app)):
             try:
-                # if self.verbose:
-                print('_to_sql', self.period, i, df_app.index[i])
+                if self.verbose: print('_to_sql', self.period, i, df_app.index[i])
                 df_app.iloc[i:i + 1].to_sql(self.period, con=conn, if_exists='append', index=True)
             except Exception as e:
                 print(f'\n{e} Error write to Base {self.period}')
@@ -315,7 +316,7 @@ class Crypto:
                 df['Date'] = pd.to_datetime(df['Date'], unit='ms', infer_datetime_format=True)
                 # Пишем кусок загруженных данных в базу
                 self._to_sql(df)
-                print(df)
+                # print(df)
             since_exch += dict_period[self.period] * lmt
             limit -= lmt
 

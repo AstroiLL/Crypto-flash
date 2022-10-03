@@ -284,7 +284,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     # print(len(maxv2))
     df.loc[:, 'rank'] = df['Volume'][maxv].rank()
     df.loc[:, 'rank2'] = df['Volume'][maxv2].rank()
-    df['rank2'].fillna(0, inplace=True)
+    df.loc[:, 'rank2'].fillna(0, inplace=True)
     # print(df)
     grid = (df['Open_max'].max() - df['Open_max'].min()) / 100
     df.loc[:, 'Prof_Bar'] = df['Open_max'] // grid * grid
