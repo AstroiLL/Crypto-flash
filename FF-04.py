@@ -66,8 +66,8 @@ CHARTS_TEMPLATE = go.layout.Template(
     )
 )
 
-all_period = dbc.Input(  # Выбор периода загрузки данных 2 дня
-    id='all-period', placeholder='all period', type="number", value=60 * 24 * 2, step=60, min=60, persistence=True,
+all_period = dbc.Input(  # Выбор периода загрузки данных 1 день
+    id='all-period', placeholder='all period', type="number", value=60 * 24, step=60, min=60, persistence=True,
     persistence_type='local', debounce=True, inputmode='numeric',
 )
 
@@ -86,7 +86,7 @@ pos = dbc.Switch(
 # TODO разобраться с disabled=pos
 position = dbc.Input(  # Ввод торговой позиции
     id='position', placeholder='position price', type="number", min=0, persistence=True,
-    persistence_type='local', debounce=True, disabled=pos
+    persistence_type='local', debounce=True, disabled=False
 )
 
 price_line = html.Div(
@@ -196,8 +196,10 @@ app.layout = html.Div(
         ),
         dbc.Row(
             [
-                'Period:',
+                'All limit:',
                 dbc.Col(all_period),
+                'Visual limit:',
+                dbc.Col(vis_period),
                 dbc.Col(pos),
                 'Pos:',
                 dbc.Col(position),
@@ -237,14 +239,19 @@ app.layout = html.Div(
     Output('refresh', 'children'),
     Output('df', 'data'),
     Input('all-period', 'value'),
+    Input('vis-period', 'value'),
+    Input('sma-level-slider', 'value'),
     Input('refresh', 'n_clicks'),
     Input('interval-reload', 'n_intervals'),
     manager=long_callback_manager,
 )
-def update_df(limit, n, nn):
+def update_df(all_limit, vis_limit, sma_level, n, nn):
     cry = CryptoA(period=PERIOD, verbose=False)
-    cry.load(limit=limit)
+    cry.load(limit=all_limit)
     df = cry.df[['Open', 'Close', 'Volume']]
+    df[f'wvwma_f'] = wvwma(df['Open'], df['Volume'], length=sma_level)
+    df[f'sma_f'] = sma(df['Open'], length=sma_level)
+    df = df[-vis_limit:]
     return 'Refresh', df.to_json()
 
 
@@ -256,7 +263,6 @@ def update_df(limit, n, nn):
     Input('sma-level-slider', 'value'),
     Input('vol-level-slider', 'value'),
     Input('interval-reload', 'n_intervals'),
-    # Input('wvwma-selector', 'value'),
     Input('position', 'value'),
     Input('pos', 'value'),
     Input('price-line', 'value'),
@@ -316,9 +322,6 @@ def update_chart(data, n, sma_level, range_vol_level, nn, position, pos, price_l
     df['sma'] = sma(df['Open'], length=sma_period_price)
     # Volume SMA
     df['sma_v'] = sma(df['Volume'], length=sma_period_vol)
-
-    df[f'wvwma_f'] = wvwma(df['Open'], df['Volume'], length=sma_level)
-    df[f'sma_f'] = sma(df['Open'], length=sma_level)
 
     # Make Figures
     fig = make_subplots(
