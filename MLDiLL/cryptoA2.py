@@ -1,5 +1,5 @@
 import time
-# import os
+import traceback
 # from dotenv import load_dotenv
 from datetime import timedelta
 
@@ -24,6 +24,10 @@ dict_period = {'1m': M1, '1h': H1, '1d': D1}
 tz = 0
 
 
+def lineno():
+    print(traceback.extract_stack()[-2].lineno)  # Только номер строки, откуда была вызвана функция
+
+
 class Exchange:
     # Работа с биржей
 
@@ -39,11 +43,11 @@ class Exchange:
         # print(self.exchange_conn.id, self.exchange_conn.markets, self.exchange_conn.markets.keys())
         try:
             if self.verbose: print(
-                f"#42 Test_get_from_exch {self.exchange}.{self.crypto}.{self.period} limit 1"
+                f"#{lineno()} Test_get_from_exch {self.exchange}.{self.crypto}.{self.period} limit 1"
             )
             self.exchange_conn.fetch_ohlcv(self.crypto, self.period, limit=1)
         except:
-            print(f'#46 Error connect exchange {self.exchange}')
+            print(f'#{lineno()} Error connect exchange {self.exchange}')
             self.availability = False
 
     # Получение данных с биржи
@@ -60,19 +64,19 @@ class Exchange:
         else:
             # Вычисляем время начала загрузки данных из входного времени
             since_exch = self.exchange_conn.parse8601(since.strftime('%Y-%m-%d %H:%M:%S'))
-        if self.verbose: print('#63 Since', self.exchange_conn.iso8601(since_exch))
+        if self.verbose: print('#', lineno(), ' Since', self.exchange_conn.iso8601(since_exch))
         df_app = None
         while limit > 0:
             time.sleep(self.exchange_conn.rateLimit // 1000)
-            if self.verbose: print('#67 Load limit ', limit, self.period)
+            if self.verbose: print('#', lineno(), ' Load limit ', limit, self.period)
             lmt = limit if limit <= 750 else 750
             try:
                 if self.verbose: print(
-                    f"#71 Get_from_exch BTC.{self.period} since {self.exchange_conn.iso8601(since_exch)} limit {lmt}"
+                    f"#{lineno()} Get_from_exch BTC.{self.period} since {self.exchange_conn.iso8601(since_exch)} limit {lmt}"
                 )
                 fetch = self.exchange_conn.fetch_ohlcv(self.crypto, self.period, since=since_exch, limit=lmt)
             except:
-                print(f'#75 Error fetch from {self.exchange}')
+                print(f'#{lineno()} Error fetch from {self.exchange}')
                 self.availability = False
             else:
                 df_fetch = pd.DataFrame(fetch, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
@@ -115,7 +119,6 @@ class CryptoA:
         self.metadata_obj = MetaData()
         self.maxV = 0
 
-
     # TODO default parameters попробовать убрать None
     def load(self, exchange=None, crypto=None, period=None, update=None, limit=1):
         """Открываем базу и загружаем новые данные если не изменились
@@ -144,14 +147,14 @@ class CryptoA:
     def _connect_(self):
         if self.verbose: print(f'==============\nInit BTC {self.period}')
         self.conn_str = f'{sql_url}/BTC'
-        if self.verbose: print("#147", self.conn_str)
+        if self.verbose: print(f"#{lineno()} {self.conn_str}")
         c = 0
         while c < 3:
             try:
                 self.conn = create_engine(self.conn_str, pool_pre_ping=True, echo=self.verbose).connect()
                 self.table = Table(self.period, self.metadata_obj, autoload_with=self.conn)
                 self.session = Session(self.conn)
-                if self.verbose: print(f"#154 Connected to BTC {self.period}")
+                if self.verbose: print(f"#{lineno()} Connected to BTC {self.period}")
                 return
             except:
                 self.session = None
@@ -180,7 +183,7 @@ class CryptoA:
         while c < 3:
             try:
                 self.count = int(self.session.query(self.table).count())
-                if self.verbose: print(f"#183 Table {self.period} has total {self.count} records")
+                if self.verbose: print(f"#{lineno()} Table {self.period} has total {self.count} records")
                 return
             except:
                 if self.verbose: print('except: session.query.count')
@@ -222,9 +225,9 @@ class CryptoA:
         df.index += timedelta(hours=tz)
         self.last_date = df.index[-1]
         if self.verbose:
-            print(f"#225 Last date from {self.period} from mySQL", self.last_date)
+            print(f"#{lineno()} Last date from {self.period} from mySQL", self.last_date)
             # print(f"Last date2 from {self.period} from mySQL", last_date)
-        if self.verbose: print(f'#227 Loaded {self.limit} bars {self.period}')
+        if self.verbose: print(f'#{lineno()} Loaded {self.limit} bars {self.period}')
         self.df = df.copy()
         self.maxV = df['Volume'].max()
         return True
@@ -236,7 +239,7 @@ if __name__ == '__main__':
     # cry_1h.df.to_hdf('./BTC-USD-h1.h5', 'h1')
     # print(cry_1h.df)
     cry_1m = CryptoA(period='1m', verbose=False)
-    cry_1m.load(limit=43200*4)
+    cry_1m.load(limit=43200 * 4)
     # df = cry_1m.df.reset_index()[['Date', 'Open', 'Volume']]
     # df.columns = ['ds', 'y', 'v']
     # df.to_hdf('~/Data/CF/BTCUSD.h5', 'm1_3M_v')

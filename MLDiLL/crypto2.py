@@ -365,15 +365,18 @@ COMMIT;
 
 
 if __name__ == '__main__':
-    exch = 'ftx'
-    pair = 'BTC/USD:USD'
+    # import re
+    exch = 'binance'
+    # pair = 'BTC/USD:USD'
     # exchange = ccxt.binance()
     # mark = exchange.load_markets()
-    # print(exchange.symbols)
-    cry = Crypto(exchange=exch, verbose=True, update=True)
+    # symbols = exchange.symbols
+    # symbols_btc = [sy for sy in symbols if re.match('BTC', sy)]
+    # print(symbols_btc)
+    cry = Crypto(exchange=exch, verbose=True, update=False)
     cry.info()
-    cry.open(crypto=pair, period='1m')
-    df = cry.load(limit=60)
-    cry.repair_table()
-    # print('SQL')
+    # cry.open(crypto=pair, period='1m')
+    # df = cry.load(limit=60)
+    # cry.repair_table()
+    # # print('SQL')
     # print(df)

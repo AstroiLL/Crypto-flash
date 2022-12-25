@@ -1,17 +1,17 @@
 # conda
-#joblib
 matplotlib
 pandas
 mysqlclient
 sqlalchemy
-dash
 plotly
 setuptools
 pandas-ta
-dash_bootstrap_components
 diskcache
-dash[diskcache]
 # pip3
+dash
+dash-table
+dash[diskcache]
+dash-bootstrap-components
 ccxt
 # My modules
 #MLDiLL

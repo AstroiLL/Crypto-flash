@@ -9,8 +9,8 @@ from plotly.subplots import make_subplots
 from MLDiLL.crypto2 import Crypto
 from MLDiLL.utils import hd, HA, wvwma
 
-cry_1h = Crypto(exchange="ftx", verbose=False)
-cry_1m = Crypto(exchange="ftx", verbose=False)
+cry_1h = Crypto(exchange="binance", verbose=False)
+cry_1m = Crypto(exchange="binance", verbose=False)
 
 vol_lev_hor = 0.3
 
@@ -184,7 +184,8 @@ app.layout = dbc.Container(
 
 # TODO repair select crypto
 def connect_base(pathname, all_p, repair=True):
-    crypto = 'BTC/USD:USD'
+    # crypto = 'BTC/USD:USD'
+    crypto = 'BTC/USDT'
     if pathname == "/ETH":
         crypto = 'ETH/USD'
     elif pathname == "/XRP":
