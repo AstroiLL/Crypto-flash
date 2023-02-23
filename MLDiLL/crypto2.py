@@ -1,5 +1,5 @@
 import time
-import asyncio
+# import asyncio
 from datetime import datetime, timedelta
 
 import ccxt
@@ -10,7 +10,7 @@ from sqlalchemy import create_engine
 # from MLDiLL.utils import VWAP, VWAP_d, VWAP_p
 
 # from .env import mysql_url
-MYSQL_URL = "mysql://bitok:bitok@10.10.10.200:3307"
+MYSQL_URL = "mysql+mysqldb://bitok:bitok@10.10.10.200:3307"
 # mysql_url = 'mysql://user:pass@127.0.0.1:3307'
 # mysql_url = os.environ['MYSQL_URL']
 SQL_URL = MYSQL_URL
@@ -70,8 +70,10 @@ class Crypto:
                 print(s)
 
     def _connect(self):
-        if self.verbose: print(f'_connect {self.conn_str}')
-        return create_engine(self.conn_str, pool_pre_ping=True).connect()
+        if self.verbose: print(f'_connect "{self.conn_str}"')
+        con = create_engine(self.conn_str, pool_pre_ping=True).connect()
+        if self.verbose: print(f'_connected "{con}"')
+        return con
 
     def _check_connect(self):
         if self.verbose: print('_check_connect')
@@ -130,11 +132,12 @@ class Crypto:
 
     def get_count_records(self):
         """Количество котировок в базе"""
-        if self.verbose: print('get_count_records')
+        if self.verbose: print(f'get_count_records {self.period}')
         try:
             conn = self._connect()
-            co = conn.execute(f"SELECT COUNT(*) FROM {self.period}")
+            co = conn.execute(f'SELECT COUNT(*) FROM {self.period}')
             conn.close()
+            if self.verbose: print(co)
             count = co.fetchone()[0]
         except:
             print('error get_count')

@@ -19,7 +19,7 @@ moreBTC = 10
 path = '/home/astroill/Python/Crypto-flash/aggr-server/data-copy'
 # Начальная дата сбора данных
 # Для ускорения указывайте последнюю или предпоследнюю дату предыдущего сбора
-start_date = '2023-02-02'
+start_date = '2023-02-23'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
 # База данных для занесения всплесков
@@ -39,11 +39,14 @@ for dirs, folder, files in os.walk(path):
             fullname = os.path.join(dirs, file)
             df = pd.read_csv(
                 fullname, sep=' ', names=['time', 'close', 'vol', 'dir', 'liq'],
-                parse_dates=['time'], infer_datetime_format=False, dtype={'dir': 'Int32', 'liq': 'Int32'}
+                # parse_dates=['time'],
+                dtype={'time': 'Int64', 'dir': 'Int32', 'liq': 'Int32'}
                 )
             df.fillna(0, inplace=True)
             df = df[['time', 'close', 'vol', 'dir', 'liq']]
-            df['time'] = pd.to_datetime(df['time'], unit='ms', infer_datetime_format=True)
+            df['time'] = pd.to_datetime(df['time'], unit='ms')
+            # print(df['time'])
+            # exit()
             # Всплеск берется если объем >= moreBTC
             dfv = df[df['vol'] >= moreBTC]
             if not dfv.empty:
