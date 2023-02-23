@@ -368,15 +368,19 @@ if __name__ == '__main__':
     # import re
     exch = 'binance'
     # pair = 'BTC/USD:USD'
+    crypto = 'BTC/USDT'
     # exchange = ccxt.binance()
     # mark = exchange.load_markets()
     # symbols = exchange.symbols
     # symbols_btc = [sy for sy in symbols if re.match('BTC', sy)]
     # print(symbols_btc)
     cry = Crypto(exchange=exch, verbose=True, update=False)
-    cry.info()
+    # cry.info()
     # cry.open(crypto=pair, period='1m')
     # df = cry.load(limit=60)
+    cry.open(crypto=crypto, period='1h', update=False)
+    df = cry.load(limit=60)
+
     # cry.repair_table()
     # # print('SQL')
-    # print(df)
+    print(df)

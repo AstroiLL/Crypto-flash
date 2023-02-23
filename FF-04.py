@@ -30,7 +30,7 @@ WVWMA (синяя линия) показывает взвешенное по о�
 Когда цена выше синей и красной, то приоритет в бай
 Когда цена ниже синей и красной, то приоритет в селл
 """
-cache = diskcache.Cache("./cache_ff_04")
+cache = diskcache.Cache("/tmp/ff/cache_ff_04")
 long_callback_manager = DiskcacheLongCallbackManager(cache)
 
 # READ DATA
@@ -43,7 +43,7 @@ VER_B = dbc.__version__
 VERSION = f'BTC Flexible Flash #04, Plotly V{VER_P}, Dash V{VER_D}, Bootstrap V{VER_B}'
 
 # Открытие базы всплесков объемов
-db = Db('sqlite', '/home/astroill/Data/CF/btc_max_more_10.db')
+db = Db('sqlite', '/home/astroill/Python/Crypto-flash/Data/btc_max_more_10.db')
 
 # LAYOUT
 

@@ -9,7 +9,7 @@ from plotly.subplots import make_subplots
 from MLDiLL.crypto2 import Crypto
 from MLDiLL.utils import hd, HA, wvwma
 
-cry_1h = Crypto(exchange="binance", verbose=False)
+cry_1h = Crypto(exchange="binance", verbose=True)
 cry_1m = Crypto(exchange="binance", verbose=False)
 
 vol_lev_hor = 0.3

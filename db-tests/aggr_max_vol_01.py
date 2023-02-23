@@ -16,14 +16,14 @@ from datetime import datetime
 moreBTC = 10
 # Указать полный путь к папке где aggr-server собирает файлы
 # Обычно это aggr-server/data
-path = '/home/astroill/Data/aggr-server/data-copy'
+path = '/home/astroill/Python/Crypto-flash/aggr-server/data-copy'
 # Начальная дата сбора данных
 # Для ускорения указывайте последнюю или предпоследнюю дату предыдущего сбора
 start_date = '2023-02-02'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
 # База данных для занесения всплесков
-db = Db('sqlite', '/home/astroill/Data/CF/btc_max_more_10.db')
+db = Db('sqlite', '/home/astroill/Python/Crypto-flash/Data/btc_max_more_10.db')
 session = db.open()
 columns = ['exch', 'pairs', 'date', 'time_max', 'close', 'vol']
 df_maxs = pd.DataFrame([], columns=columns)

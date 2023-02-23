@@ -10,7 +10,7 @@ diskcache
 # pip3
 dash
 dash-table
-dash[diskcache]
+#dash[diskcache]
 dash-bootstrap-components
 ccxt
 # My modules
