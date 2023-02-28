@@ -10,7 +10,7 @@ from MLDiLL.crypto2 import Crypto
 from MLDiLL.utils import hd, HA, wvwma
 
 cry_1h = Crypto(exchange="binance", verbose=True)
-cry_1m = Crypto(exchange="binance", verbose=False)
+cry_1m = Crypto(exchange="binance", verbose=True)
 
 vol_lev_hor = 0.3
 
@@ -286,9 +286,9 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     df.loc[:, 'rank'] = df['Volume'][maxv].rank()
     df.loc[:, 'rank2'] = df['Volume'][maxv2].rank()
     df.loc[:, 'rank2'].fillna(0, inplace=True)
-    # print(df)
     grid = (df['Open_max'].max() - df['Open_max'].min()) / 100
     df.loc[:, 'Prof_Bar'] = df['Open_max'] // grid * grid
+    print(df)
     dfg = df[df['Volume'] >= df['Volume'].max() * vol_lev_hor].groupby(['Prof_Bar']).sum()
 
     # Рисовать графики

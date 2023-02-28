@@ -13,3 +13,5 @@ sma.py
 /cache/*
 /Data/
 /cache_ff*/*
+/aggr-server/
+/Data/

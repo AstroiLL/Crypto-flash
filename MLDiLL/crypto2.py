@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import ccxt
 import pandas as pd
 import re
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 # from MLDiLL.utils import VWAP, VWAP_d, VWAP_p
 
@@ -37,7 +37,7 @@ class Crypto:
 
     def __init__(self, exchange=None, crypto=None, period=None, update=True,
                  verbose=False):
-        if verbose: print(f'__init__ {period=}')
+        if verbose: print(f'def __init__ {period=}')
         try:
             create_engine(f'{SQL_URL}').connect()
         except:
@@ -60,6 +60,7 @@ class Crypto:
         # self.connect(exchange=exchange, crypto=crypto, period=period, update=update)
 
     def info(self):
+        if self.verbose: print(f'def info')
         self.exch.load_markets()
         if self.verbose: print('Exchange:', self.exchange)
         symbols = self.exch.symbols
@@ -70,13 +71,13 @@ class Crypto:
                 print(s)
 
     def _connect(self):
-        if self.verbose: print(f'_connect "{self.conn_str}"')
+        if self.verbose: print(f'def _connect "{self.conn_str}"')
         con = create_engine(self.conn_str, pool_pre_ping=True).connect()
-        if self.verbose: print(f'_connected "{con}"')
+        if self.verbose: print(f'_connected to "{con}"')
         return con
 
     def _check_connect(self):
-        if self.verbose: print('_check_connect')
+        if self.verbose: print('def _check_connect')
         try:
             conn = self._connect()
         except:
@@ -99,7 +100,7 @@ class Crypto:
         if self.verbose: print(f"Table {self.period} has total {count_records} records")
 
     def _check_exchange(self):
-        if self.verbose: print('_check_exchange')
+        if self.verbose: print('def _check_exchange')
         try:
             if self.verbose: print(
                 f"Test_get_from_exch BTC {self.period} limit 1"
@@ -114,7 +115,7 @@ class Crypto:
 
     def open(self, exchange=None, crypto=None, period=None, update=None):
         """Открываем базу"""
-        if self.verbose: print('open')
+        if self.verbose: print('def open')
         self.limit = None
         if exchange is not None: self.exchange = exchange
         if self.exchange is not None: self.exch = getattr(ccxt, self.exchange)({'enableRateLimit': True})
@@ -132,12 +133,11 @@ class Crypto:
 
     def get_count_records(self):
         """Количество котировок в базе"""
-        if self.verbose: print(f'get_count_records {self.period}')
+        if self.verbose: print(f'def get_count_records {self.period}')
         try:
             conn = self._connect()
-            co = conn.execute(f'SELECT COUNT(*) FROM {self.period}')
+            co = conn.execute(text(f'SELECT COUNT(*) FROM {self.period};'))
             conn.close()
-            if self.verbose: print(co)
             count = co.fetchone()[0]
         except:
             print('error get_count')
@@ -146,7 +146,7 @@ class Crypto:
 
     def get_fist_date(self, local=False):
         """Первая дата котировок в базе"""
-        if self.verbose: print('get_fist_date')
+        if self.verbose: print('def get_fist_date')
         conn = self._connect()
         df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date LIMIT 1", con=conn)
         conn.close()
@@ -157,7 +157,7 @@ class Crypto:
 
     def get_last_date(self, local=False):
         """Последняя дата котировок в базе"""
-        if self.verbose: print("get_last_date")
+        if self.verbose: print("def get_last_date")
         count_records = self.get_count_records()
         if self.verbose: print(f"Table {self.period} has total {count_records} records")
         # TODO если пустая база возвращать 0, а не загружать
@@ -175,7 +175,7 @@ class Crypto:
 
     def load(self, limit=None):
         """Загрузить из базы в DataFrame последние limit котировок"""
-        if self.verbose: print(f"load {limit}")
+        if self.verbose: print(f"def load {limit}")
         if self.verbose:
             count_records = self.get_count_records()
             print(f"Table {self.period} has total {count_records} records")
@@ -204,7 +204,7 @@ class Crypto:
 
     def updating(self):
         """Обновить базу котировок от последней даты до текущей"""
-        if self.verbose: print("updating")
+        if self.verbose: print("def updating")
         if not self.update:
             print(f"Update in mode update=False. Ignoring Update.")
             return
@@ -231,14 +231,14 @@ class Crypto:
         if difs >= 1:
             conn = self._connect()
             if self.verbose: print(f"Delete in {self.period} last record on {self.last_date}")
-            conn.execute(f"DELETE FROM {self.period} ORDER BY Date DESC LIMIT 1")
+            conn.execute(text(f"DELETE FROM {self.period} ORDER BY Date DESC LIMIT 1;"))
             conn.close()
             if self.verbose: print(f"Update BTC {self.period} count {difs + 1}")
             self._get_from_exchange(limit=difs + 1)
 
     def update_from(self, from_date=None, count=None):
         """Обновить базу котировок от указанной даты по количеству"""
-        if self.verbose: print(f"update_from {from_date} {count}")
+        if self.verbose: print(f"def update_from {from_date} {count}")
         if not self.update:
             print(f"Update in mode update=False. Ignoring Update.")
             return
@@ -250,13 +250,13 @@ class Crypto:
     def repair_table(self, df=None):
         """Проверка DataFrame на отсутствие пропусков и дозагрузка пропущеных значений"""
         # TODO что мы вообще репарим? self.df или базу
-        if self.verbose: print(f"repair_table {df.shape=}")
         # Если не указан DataFrame, то репарим DataFrame из класса
         if df is None:
             df_rep = self.df
         else:
             df_rep = df
         if df_rep is None: print(f"Repair only after load()"); return
+        if self.verbose: print(f"def repair_table {df_rep.shape=}")
         if self.verbose: print(f'Repair_table {self.period}')
         if self.period == '1m':
             per = '1min'
@@ -276,7 +276,7 @@ class Crypto:
     # TODO repair _to_sql
     def _to_sql(self, df_app: pd.DataFrame):
         """Записать df_app в базу котировок"""
-        if self.verbose: print(f'_to_sql {df_app.shape=}')
+        if self.verbose: print(f'def _to_sql {df_app.shape=}')
         df_app.set_index('Date', drop=True, inplace=True)
         conn = self._connect()
         if self.verbose: print(f"Write_to_sql BTC {self.period} count {len(df_app)}")
@@ -292,7 +292,7 @@ class Crypto:
     def _get_from_exchange(self, since=None, limit=1500):
         """Получить котировки с биржи от даты since количеством limit
         И записать в базу котировок"""
-        if self.verbose: print(f"_get_from_exchange {since=} {limit=}")
+        if self.verbose: print(f"def _get_from_exchange {since=} {limit=}")
         # TODO syncing with updating
         if since is None:
             # Вычисляем время начала загрузки данных как разницу текущего времени и количества баров
@@ -316,7 +316,7 @@ class Crypto:
                 exit(1)
             else:
                 df = pd.DataFrame(fetch, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
-                df['Date'] = pd.to_datetime(df['Date'], unit='ms', infer_datetime_format=True)
+                df['Date'] = pd.to_datetime(df['Date'], unit='ms')
                 # Пишем кусок загруженных данных в базу
                 self._to_sql(df)
                 # print(df)
@@ -363,27 +363,20 @@ COMMIT;
         """
         if self.verbose: print(f'Created base {self.exchange}.{self.crypto}')
         conn = create_engine(f'{SQL_URL}/').connect()
-        conn.execute(base1 + base2, con=conn)
+        conn.execute(text(base1 + base2))
         conn.close()
 
 
 if __name__ == '__main__':
-    # import re
     exch = 'binance'
-    # pair = 'BTC/USD:USD'
     crypto = 'BTC/USDT'
-    # exchange = ccxt.binance()
-    # mark = exchange.load_markets()
-    # symbols = exchange.symbols
-    # symbols_btc = [sy for sy in symbols if re.match('BTC', sy)]
-    # print(symbols_btc)
-    cry = Crypto(exchange=exch, verbose=True, update=False)
+    cry = Crypto(exchange=exch, verbose=False, update=True)
     # cry.info()
-    # cry.open(crypto=pair, period='1m')
-    # df = cry.load(limit=60)
-    cry.open(crypto=crypto, period='1h', update=False)
+    cry.open(crypto=crypto, period='1h')
     df = cry.load(limit=60)
-
-    # cry.repair_table()
-    # # print('SQL')
+    cry.repair_table()
+    print(df)
+    cry.open(crypto=crypto, period='1m')
+    df = cry.load(limit=60)
+    cry.repair_table()
     print(df)

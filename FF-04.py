@@ -249,7 +249,7 @@ def update_df(all_limit, vis_limit, sma_level, n, nn):
     cry = CryptoA(period=PERIOD, verbose=False)
     cry.load(limit=all_limit)
     df = cry.df[['Open', 'Close', 'Volume']]
-    df[f'wvwma_f'] = wvwma(df['Open'], df['Volume'], length=sma_level)
+    df.loc[:, f'wvwma_f'] = wvwma(df['Open'], df['Volume'], length=sma_level)
     df[f'sma_f'] = sma(df['Open'], length=sma_level)
     df = df[-vis_limit:]
     return 'Refresh', df.to_json()
