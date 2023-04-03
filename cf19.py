@@ -9,6 +9,7 @@ from plotly.subplots import make_subplots
 from MLDiLL.crypto2 import Crypto
 from MLDiLL.utils import hd, HA, wvwma
 
+ProgBrand = "CFlash 19"
 cry_1h = Crypto(exchange="binance", verbose=False)
 cry_1m = Crypto(exchange="binance", verbose=False)
 
@@ -18,8 +19,8 @@ locations = dcc.Location(id="url")
 dropdown = dbc.DropdownMenu(
     children=[
         dbc.DropdownMenuItem("BTC", href="/"),
-        dbc.DropdownMenuItem("ETH", href="/ETH"),
-        dbc.DropdownMenuItem("XRP", href="/XRP"),
+        # dbc.DropdownMenuItem("ETH", href="/ETH"),
+        # dbc.DropdownMenuItem("XRP", href="/XRP"),
         # dbc.DropdownMenuItem("LTC", href="/LTC"),
     ],
     nav=True,
@@ -120,7 +121,7 @@ navbar = dbc.Navbar(
                 [
                     dbc.Row(
                         [
-                            dbc.Col(dbc.NavbarBrand("CFlash 18"), width={'size': 2, 'order': 'first'}),
+                            dbc.Col(dbc.NavbarBrand(ProgBrand), width={'size': 2, 'order': 'first'}),
                             dbc.Col(
                                 [
                                     dbc.Row(all_period_input),
@@ -183,20 +184,20 @@ app.layout = dbc.Container(
 
 
 # TODO repair select crypto
-def connect_base(pathname, all_p, repair=True):
+def connect_base(pathname, all_p, repair=False):
     # crypto = 'BTC/USD:USD'
     crypto = 'BTC/USDT'
-    if pathname == "/ETH":
-        crypto = 'ETH/USD'
-    elif pathname == "/XRP":
-        crypto = 'XRP/USD'
+    # if pathname == "/ETH":
+    #     crypto = 'ETH/USD'
+    # elif pathname == "/XRP":
+    #     crypto = 'XRP/USD'
     # elif pathname == "/LTC":
     #     crypto = 'LTC/USD'
     # Порядок действий: open load repair
-    cry_1h.open(crypto=crypto, period='1h', update=True)
+    cry_1h.open(crypto=crypto, period='1h', update=False)
     cry_1h.load(limit=all_p)
     if repair: cry_1h.repair_table()
-    cry_1m.open(crypto=crypto, period='1m', update=True)
+    cry_1m.open(crypto=crypto, period='1m', update=False)
     cry_1m.load(limit=all_p * 60)
     if repair: cry_1m.repair_table()
     return crypto
@@ -245,20 +246,20 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     pre_end_vol = cry_1h.df['Volume'][-2]
     # Брать из массива минут, группировать по часам, находить в каждом часе индекс максимума и
     # Open максимума этого часа прописывать в Open_max массива часов
-    vol_group = cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()
-    print(f'{vol_group=}')
-    df['Open_max'] = cry_1m.df['Open'][vol_group].resample('1h').mean()
-    df['Date_max'] = vol_group.resample('1h').max()
+    # vol_group = cry_1m.df['Volume'].groupby(pd.Grouper(freq='1h')).idxmax()
+    # print(f'{vol_group=}')
+    # df['Open_max'] = cry_1m.df['Open'][vol_group].resample('1h').mean()
+    # df['Date_max'] = vol_group.resample('1h').max()
     # TODO Выбор периодов линий на странице
     wvwma_0 = int(wvwma_0)
     wvwma_1 = 24
     wvwma_2 = 48
     wvwma_3 = 168
     # Графики взвешенных объемно-взвешенных
-    df[f'wvwma_{wvwma_0}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_0)
-    df[f'wvwma_{wvwma_1}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_1)
-    df[f'wvwma_{wvwma_2}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_2)
-    df[f'wvwma_{wvwma_3}'] = wvwma(df['Open_max'], df['Volume'], length=wvwma_3)
+    df[f'wvwma_{wvwma_0}'] = wvwma(df['Open'], df['Volume'], length=wvwma_0*60)
+    df[f'wvwma_{wvwma_1}'] = wvwma(df['Open'], df['Volume'], length=wvwma_1*60)
+    df[f'wvwma_{wvwma_2}'] = wvwma(df['Open'], df['Volume'], length=wvwma_2*60)
+    df[f'wvwma_{wvwma_3}'] = wvwma(df['Open'], df['Volume'], length=wvwma_3*60)
 
     # Создать массив разниц максимумов на каждом баре и текущей цены
     df['lsl'] = df['Open_max'] - end_price
@@ -269,12 +270,12 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     # Синий если сумма предыдущих объемов p баров была выше, красный если ниже
     def v_compare(ser):
         d = df.loc[ser.index]
-        d['l'] = d['Open_max'] - d['Open_max'][-1]
+        d['l'] = d['Open'] - d['Open'][-1]
         # df['ls_color'] = df['lsl'].where(df['lsl'] >= 0, 'blue').where(df['lsl'] < 0, 'red')
         # print(df.loc[ser.index])
         return d['Volume'][d['l'] >= 0].sum() - d['Volume'][d['l'] < 0].sum()
 
-    df['lslv'] = df['Open_max'].rolling(window=p).apply(v_compare, raw=False)
+    df['lslv'] = df['Open'].rolling(window=p).apply(v_compare, raw=False)
     df['ls_color_v'] = df['lslv'].where(df['lslv'] >= 0, 'blue').where(df['lslv'] < 0, 'red')
 
     df = df[-hours:]
@@ -286,8 +287,8 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     df.loc[:, 'rank'] = df['Volume'][maxv].rank()
     df.loc[:, 'rank2'] = df['Volume'][maxv2].rank()
     df.loc[:, 'rank2'].fillna(0, inplace=True)
-    grid = (df['Open_max'].max() - df['Open_max'].min()) / 100
-    df.loc[:, 'Prof_Bar'] = df['Open_max'] // grid * grid
+    grid = (df['Open'].max() - df['Open'].min()) / 100
+    df.loc[:, 'Prof_Bar'] = df['Open'] // grid * grid
     # print(df[['Volume', 'Prof_Bar']])
     df_Vol_max_vol_lev_hor = df['Volume'].max() * vol_lev_hor
     # print(df_Vol_max_vol_lev_hor)
@@ -313,7 +314,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     # maxVol
     fig.add_trace(
         go.Scatter(
-            x=df.index, y=df['Open_max'], mode='markers', name='max Volume',
+            x=df.index, y=df['Open'], mode='markers', name='max Volume',
             # hoverinfo='text',
             # hovertext=df['Date_max'][maxv],
             # text=df['Date_max'][maxv],
@@ -475,8 +476,8 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     fig.add_trace(
         go.Scatter(
             x=[df.index[-1] for _ in range(len(maxv))],
-            y=df['Open_max'][maxv],
-            text=df['Open_max'][maxv],
+            y=df['Open'][maxv],
+            text=df['Open'][maxv],
             textposition="top right",
             mode="text",
             name='Max Vol Price',
@@ -489,9 +490,9 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     fig.add_trace(
         go.Scatter(
             x=[maxv[i] for i in range(len(maxv))],
-            y=df['Open_max'][maxv],
+            y=df['Open'][maxv],
             hoverinfo="text",
-            hovertext=df['Date_max'][maxv],
+            # hovertext=df['Date_max'][maxv],
             # hovertemplate="Date:% {df['Date_max'][maxv]}",
             # hovertemplate=None,
             marker=dict(
@@ -512,7 +513,7 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
         [fig.add_shape(
             dict(
                 type="line", xref='x', yref='y', x0=maxv[i], x1=df.index[-1],
-                y0=df['Open_max'][maxv][i], y1=df['Open_max'][maxv][i],
+                y0=df['Open'][maxv][i], y1=df['Open'][maxv][i],
                 line=dict(color=df['ls_color'][maxv][i], width=df['rank'][maxv][i]),
             ),
             # hoverinfo='none',
@@ -523,12 +524,12 @@ def update_graph(wvwma_0, hours, vol_level, act, but, n, pathname, all_p, p, mvo
     [fig.add_annotation(
         dict(
             x=maxv[i],
-            y=df['Open_max'][maxv][i],
+            y=df['Open'][maxv][i],
             xref="x",
             yref="y",
-            text=f"{hd(df['Volume'][maxv][i], 0)}<br>{df['Date_max'][maxv][i].strftime('%d,%H:%M')}",
+            # text=f"{hd(df['Volume'][maxv][i], 0)}<br>{df['Date_max'][maxv][i].strftime('%d,%H:%M')}",
             # hoverinfo='text',
-            # hovertext=f"{df['Open_max'][maxv][i]}",
+            # hovertext=f"{df['Open'][maxv][i]}",
             name='Max Vol Annot',
             # showlegend=True,
             # legendgroup='Max Vol Annot',

@@ -64,7 +64,7 @@ class Crypto:
         self.exch.load_markets()
         if self.verbose: print('Exchange:', self.exchange)
         symbols = self.exch.symbols
-        pat = 'BTC.*USD'
+        pat = 'BTC.*USD*'
         # print('Symbols:', symbols)
         for s in symbols:
             if re.match(pat, s):
@@ -73,7 +73,7 @@ class Crypto:
     def _connect(self):
         if self.verbose: print(f'def _connect "{self.conn_str}"')
         con = create_engine(self.conn_str, pool_pre_ping=True).connect()
-        if self.verbose: print(f'_connected to "{con}"')
+        if self.verbose: print(f'_connected to "{con.info}"')
         return con
 
     def _check_connect(self):
@@ -130,6 +130,7 @@ class Crypto:
         self._check_connect()
         self._check_exchange()
         if self.update: self.updating()
+        self.load(limit=1)
 
     def get_count_records(self):
         """Количество котировок в базе"""
@@ -164,7 +165,7 @@ class Crypto:
         if count_records == 0:
             print("Empty base")
             if not self.update: exit(4)
-            self._get_from_exchange(limit=1000)
+            self._get_from_exchange()
         conn = self._connect()
         df = pd.read_sql(f"SELECT * FROM {self.period} ORDER BY Date DESC LIMIT 1", con=conn)
         conn.close()
@@ -227,6 +228,7 @@ class Crypto:
             difs = int(difs_td.total_seconds() // 60)
         else:
             return None
+        # TODO перенести и исправить это в функцию _to_sql
         # Удаляем последнюю запись, поскольку она скорее всего имеет неверные данные
         if difs >= 1:
             conn = self._connect()
@@ -280,12 +282,14 @@ class Crypto:
         df_app.set_index('Date', drop=True, inplace=True)
         conn = self._connect()
         if self.verbose: print(f"Write_to_sql BTC {self.period} count {len(df_app)}")
+        if self.verbose: print(f"{df_app}")
         for i in range(len(df_app)):
             try:
                 if self.verbose: print('_to_sql', self.period, i, df_app.index[i])
                 df_app.iloc[i:i + 1].to_sql(self.period, con=conn, if_exists='append', index=True)
             except Exception as e:
-                print(f'\n{e} Error write to Base {self.period}')
+                # TODO исправить ошибку записи. Удалять запись и добавлять с новыми данными или делать UPDATE
+                print(f'\n{e} Error write to Base {self.period}\n{df_app.iloc[i: i + 1]}')
         conn.close()
 
     # Работа с биржей
@@ -372,11 +376,18 @@ if __name__ == '__main__':
     crypto = 'BTC/USDT'
     cry = Crypto(exchange=exch, verbose=False, update=True)
     # cry.info()
-    cry.open(crypto=crypto, period='1h')
-    df = cry.load(limit=60)
-    cry.repair_table()
-    print(df)
+    # cry.open(crypto=crypto, period='1h')
+    # # df = cry.load(limit=1)
+    # cry.repair_table()
+    # print(f'First date 1h:', cry.get_fist_date())
+    # print(f'Last date 1h:', cry.get_last_date())
     cry.open(crypto=crypto, period='1m')
-    df = cry.load(limit=60)
+    # df = cry.load(limit=1)
     cry.repair_table()
-    print(df)
+    print(f'Last date 1m:', cry.get_last_date())
+    while True:
+        print('work! Dont break!')
+        cry.open(crypto=crypto, period='1m')
+        print(f'First date 1m:', cry.get_fist_date())
+        print('sleep')
+        time.sleep(300)

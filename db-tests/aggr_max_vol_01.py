@@ -19,7 +19,7 @@ moreBTC = 10
 path = '/home/astroill/Python/Crypto-flash/aggr-server/data-copy'
 # Начальная дата сбора данных
 # Для ускорения указывайте последнюю или предпоследнюю дату предыдущего сбора
-start_date = '2023-02-23'
+start_date = '2023-04-01'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
 # База данных для занесения всплесков
@@ -60,10 +60,12 @@ for dirs, folder, files in os.walk(path):
                 for i in range(len(df1m)):
                     btc0 = BTC(df1m.iloc[i, :])
                     if not session.query(BTC).filter(BTC.time == btc0.time).all():
-                        print('btc0', btc0)
+                        print('btc0:', btc0.time, 'Vol:', btc0.vol)
                         session.add(btc0)
 session.commit()
 # print(session.query(BTC).all())
+print('Last record:', session.query(BTC).order_by(BTC.time.desc()).first().time)
+
 """
 ohlc_dict = {'Open':'first','High':'max','Low':'min','Close': 'last','Volume': 'sum','Adj Close': 'last'}
 data_dy.resample('M', how=ohlc_dict, closed='right', label='right')
