@@ -110,7 +110,7 @@ sma_period_vol = html.Div(
 )
 
 marks = {i: j for i, j in
-         [(60, '1h'), (120, '2h'), (180, '3h'), (240, '4h'), (360, '6h'), (480, '8h'), (600, '10h'), (720, '12h')]}
+         [(60, '1h'), (120, '2h'), (240, '4h'), (480, '8h'), (720, '12h'), (1080, '18h'), (1440, '1D')]}
 sma_level_selector = dcc.Slider(  # Слайдер уровня SMA
     id='sma-level-slider',
     # min=60,
