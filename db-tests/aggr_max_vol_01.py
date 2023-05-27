@@ -16,10 +16,10 @@ from datetime import datetime
 moreBTC = 10
 # Указать полный путь к папке где aggr-server собирает файлы
 # Обычно это aggr-server/data
-path = '/home/astroill/Python/Crypto-flash/aggr-server/data-copy'
+path = '/home/astroill/Python/Crypto-flash/aggr-server/data'
 # Начальная дата сбора данных
 # Для ускорения указывайте последнюю или предпоследнюю дату предыдущего сбора
-start_date = '2023-04-01'
+start_date = '2023-05-16'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
 # База данных для занесения всплесков

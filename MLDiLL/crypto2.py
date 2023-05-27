@@ -372,6 +372,7 @@ COMMIT;
 
 
 if __name__ == '__main__':
+    print('work! Dont break!')
     exch = 'binance'
     crypto = 'BTC/USDT'
     cry = Crypto(exchange=exch, verbose=False, update=True)
@@ -390,4 +391,4 @@ if __name__ == '__main__':
         cry.open(crypto=crypto, period='1m')
         print(f'First date 1m:', cry.get_fist_date())
         print('sleep')
-        time.sleep(300)
+        time.sleep(600)
