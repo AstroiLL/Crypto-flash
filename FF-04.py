@@ -60,7 +60,7 @@ CHARTS_TEMPLATE = go.layout.Template(
             x=0,
             y=1
         ),
-        height=800,
+        height=750,
         xaxis_showspikes=True,
         transition_duration=500,
     )
