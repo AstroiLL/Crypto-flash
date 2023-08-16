@@ -19,7 +19,7 @@ moreBTC = 10
 path = '/home/astroill/Python/Crypto-flash/aggr-server/data'
 # Начальная дата сбора данных
 # Для ускорения указывайте последнюю или предпоследнюю дату предыдущего сбора
-start_date = '2023-05-16'
+start_date = '2023-08-15'
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Сегодня:", now_date)
 # База данных для занесения всплесков
@@ -29,7 +29,7 @@ columns = ['exch', 'pairs', 'date', 'time_max', 'close', 'vol']
 df_maxs = pd.DataFrame([], columns=columns)
 
 for dirs, folder, files in os.walk(path):
-    print(dirs)
+    # print(dirs)
     for file in files:
         fname, ext = os.path.splitext(file)
         date = fname[:10]
@@ -59,8 +59,10 @@ for dirs, folder, files in os.walk(path):
                 session.flush()
                 for i in range(len(df1m)):
                     btc0 = BTC(df1m.iloc[i, :])
+                    if btc0.vol >= 200:
+                        print(f'>>>>{folder1} {btc0.time} Vol: {btc0.vol} Close: {btc0.close}')
                     if not session.query(BTC).filter(BTC.time == btc0.time).all():
-                        print('btc0:', btc0.time, 'Vol:', btc0.vol)
+                        print(btc0.time, 'Vol:', btc0.vol, 'Close:', btc0.close)
                         session.add(btc0)
 session.commit()
 # print(session.query(BTC).all())
