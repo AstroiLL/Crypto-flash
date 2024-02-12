@@ -1,9 +1,9 @@
 import os
 import pandas as pd
 from dbiLL.db_btc import Db, BTC
-from datetime import datetime
+from datetime import datetime,timedelta
 """
-Из файлов собраных агрегатором https://github.com/Tucsky/aggr-server
+Из файлов собранных агрегатором https://github.com/Tucsky/aggr-server
 (Агрегатор должен работать непрерывно столько времени, сколько данных вам надо собрать)
 Вытаскиваются все максимумы объемов >= moreBTC за каждый час
 И складываются в базу SQL (например sqlite или mySQL)
@@ -19,9 +19,11 @@ moreBTC = 10
 path = '/home/astroill/Python/Crypto-flash/aggr-server/data'
 # Начальная дата сбора данных
 # Для ускорения указывайте последнюю или предпоследнюю дату предыдущего сбора
-start_date = '2023-08-15'
+start_date = ('2024-02-12')
+# maximums for charts
+maximums = 500
 now_date = datetime.now().strftime("%Y-%m-%d")
-print("Сегодня:", now_date)
+print("Now:", now_date, 'TZ=UTC')
 # База данных для занесения всплесков
 db = Db('sqlite', '/home/astroill/Python/Crypto-flash/Data/btc_max_more_10.db')
 session = db.open()
@@ -35,6 +37,7 @@ for dirs, folder, files in os.walk(path):
         date = fname[:10]
         if ext == '.gz' and date >= start_date:
             dir1, folder2 = os.path.split(dirs)
+            # folder1 - exch
             _, folder1 = os.path.split(dir1)
             fullname = os.path.join(dirs, file)
             df = pd.read_csv(
@@ -59,14 +62,14 @@ for dirs, folder, files in os.walk(path):
                 session.flush()
                 for i in range(len(df1m)):
                     btc0 = BTC(df1m.iloc[i, :])
-                    if btc0.vol >= 200:
-                        print(f'>>>>{folder1} {btc0.time} Vol: {btc0.vol} Close: {btc0.close}')
+                    if btc0.vol >= maximums:
+                        print(f'{folder1}/{folder2}\t{btc0.time}\t{btc0.close}\t{btc0.vol}')
                     if not session.query(BTC).filter(BTC.time == btc0.time).all():
-                        print(btc0.time, 'Vol:', btc0.vol, 'Close:', btc0.close)
+                        # print(btc0.time, 'Vol:', btc0.vol, 'Close:', btc0.close)
                         session.add(btc0)
 session.commit()
 # print(session.query(BTC).all())
-print('Last record:', session.query(BTC).order_by(BTC.time.desc()).first().time)
+print('Last record(TZ=MSK):', session.query(BTC).order_by(BTC.time.desc()).first().time+timedelta(hours=4))
 
 """
 ohlc_dict = {'Open':'first','High':'max','Low':'min','Close': 'last','Volume': 'sum','Adj Close': 'last'}
