@@ -2,6 +2,7 @@
 import plotly
 import dash
 import dash_bootstrap_components as dbc
+from io import StringIO
 import pandas as pd
 import plotly.graph_objects as go
 from dash import dcc, html
@@ -60,7 +61,7 @@ CHARTS_TEMPLATE = go.layout.Template(
             x=0,
             y=1
         ),
-        height=750,
+        height=650,
         xaxis_showspikes=True,
         transition_duration=500,
     )
@@ -246,11 +247,15 @@ app.layout = html.Div(
     manager=long_callback_manager,
 )
 def update_df(all_limit, vis_limit, sma_level, n, nn):
+
     cry = CryptoA(period=PERIOD, verbose=False)
     cry.load(limit=all_limit)
+    # df = pd.DataFrame()
     df = cry.df[['Open', 'Close', 'Volume']]
-    df.loc[:, f'wvwma_f'] = wvwma(df['Open'], df['Volume'], length=sma_level)
-    df[f'sma_f'] = sma(df['Open'], length=sma_level)
+    # df.loc[:, ['Open', 'Close', 'Volume']] = cry.df[['Open', 'Close', 'Volume']]
+    # print(df.isnull().sum())
+    df.loc[:, 'wvwma_f'] = wvwma(df['Open'], df['Volume'], length=sma_level)
+    df['sma_f'] = sma(df['Open'], length=sma_level)
     df = df[-vis_limit:]
     return 'Refresh', df.to_json()
 
@@ -277,7 +282,15 @@ def update_chart(data, n, sma_level, range_vol_level, nn, position, pos, price_l
                  price_max_vol,
                  aggr_max_vol
                  ):
-    df = pd.read_json(data)
+    """
+    from io import StringIO
+    import pandas as pd
+    data = '{"key": "value"}'
+    df = pd.read_json(StringIO(data))
+    """
+    # print(data)
+    df = pd.read_json(StringIO(data))
+    # df = pd.read_json(data)
     if df.empty:
         raise PreventUpdate
     # Получаем из dbiLL всплески объемов
@@ -410,8 +423,8 @@ def update_chart(data, n, sma_level, range_vol_level, nn, position, pos, price_l
             showlegend=True
         ), row=1, col=1
     )
-    end_price = df['Close'][-1]
-    end_vol = df['Volume'][-1]
+    end_price = df['Close'].iloc[-1]
+    end_vol = df['Volume'].iloc[-1]
     print(end_price, hd(end_vol))
     fig.add_trace(
         go.Scatter(
@@ -490,8 +503,8 @@ def update_chart(data, n, sma_level, range_vol_level, nn, position, pos, price_l
         ),
         # plot_bgcolor='rgb(17,17,17)',
         # paper_bgcolor='rgb(17,17,17)',
-        # height=650,
-        height=800,
+        height=670,
+        # height=800,
         # width=1400,
         # xaxis_rangeslider_visible=True,
         xaxis_showspikes=True,
