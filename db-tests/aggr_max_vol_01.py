@@ -19,7 +19,7 @@ moreBTC = 10
 path = '/home/astroill/Python/Crypto-flash/aggr-server/data'
 # Начальная дата сбора данных
 # Для ускорения указывайте последнюю или предпоследнюю дату предыдущего сбора
-start_date = ('2024-02-12')
+start_date = ('2024-04-01')
 # maximums for charts
 maximums = 500
 now_date = datetime.now().strftime("%Y-%m-%d")
@@ -69,7 +69,7 @@ for dirs, folder, files in os.walk(path):
                         session.add(btc0)
 session.commit()
 # print(session.query(BTC).all())
-print('Last record(TZ=MSK):', session.query(BTC).order_by(BTC.time.desc()).first().time+timedelta(hours=4))
+print('Last record(TZ=MSK):', session.query(BTC).order_by(BTC.time.desc()).first().time+timedelta(hours=3))
 
 """
 ohlc_dict = {'Open':'first','High':'max','Low':'min','Close': 'last','Volume': 'sum','Adj Close': 'last'}

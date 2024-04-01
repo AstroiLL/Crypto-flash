@@ -1,6 +1,6 @@
 import time
 # import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import ccxt
 import pandas as pd
@@ -216,6 +216,7 @@ class Crypto:
         if self.verbose: print("Last date from Base", self.last_date)
         # TODO syncing with _get_from_exchange
         today = datetime.utcnow()
+        #today = datetime.now(tz=timezone.utc)
         if self.verbose: print('Today:', today)
         difs_td = today - self.last_date
         if self.verbose: print('Today - last_date =', difs_td)
@@ -375,7 +376,7 @@ if __name__ == '__main__':
     print('work! Dont break!')
     exch = 'binance'
     crypto = 'BTC/USDT'
-    cry = Crypto(exchange=exch, verbose=False, update=True)
+    cry = Crypto(exchange=exch, verbose=True, update=True)
     # cry.info()
     # cry.open(crypto=crypto, period='1h')
     # # df = cry.load(limit=1)

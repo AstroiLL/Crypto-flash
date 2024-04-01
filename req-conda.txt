@@ -1,0 +1,14 @@
+# conda
+matplotlib
+pandas
+mysqlclient
+sqlalchemy
+plotly
+setuptools
+pandas-ta
+diskcache
+dash
+dash-table
+dash-bootstrap-components
+psutil
+multiprocess
