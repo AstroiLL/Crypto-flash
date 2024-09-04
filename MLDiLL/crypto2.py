@@ -376,7 +376,7 @@ if __name__ == '__main__':
     print('work! Dont break!')
     exch = 'binance'
     crypto = 'BTC/USDT'
-    cry = Crypto(exchange=exch, verbose=True, update=True)
+    cry = Crypto(exchange=exch, verbose=False, update=True)
     # cry.info()
     # cry.open(crypto=crypto, period='1h')
     # # df = cry.load(limit=1)
@@ -386,10 +386,10 @@ if __name__ == '__main__':
     cry.open(crypto=crypto, period='1m')
     # df = cry.load(limit=1)
     cry.repair_table()
-    print(f'Last date 1m:', cry.get_last_date())
     while True:
         print('work! Dont break!')
         cry.open(crypto=crypto, period='1m')
         print(f'First date 1m:', cry.get_fist_date())
-        print('sleep')
+        print(f'Last date 1m:', cry.get_last_date())
+        print('sleeping, can interupt')
         time.sleep(600)

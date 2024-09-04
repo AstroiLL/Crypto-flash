@@ -16,16 +16,17 @@ from datetime import datetime,timedelta
 moreBTC = 10
 # Указать полный путь к папке где aggr-server собирает файлы
 # Обычно это aggr-server/data
-path = '/home/astroill/Python/Crypto-flash/aggr-server/data'
+path = '/home/astroill/BTC/aggr-server/data'
 # Начальная дата сбора данных
 # Для ускорения указывайте последнюю или предпоследнюю дату предыдущего сбора
-start_date = ('2024-04-01')
+start_date = ('2024-09-04')
+print('Start:', start_date)
 # maximums for charts
-maximums = 500
+maximums =600
 now_date = datetime.now().strftime("%Y-%m-%d")
-print("Now:", now_date, 'TZ=UTC')
+print("Now:", now_date)
 # База данных для занесения всплесков
-db = Db('sqlite', '/home/astroill/Python/Crypto-flash/Data/btc_max_more_10.db')
+db = Db('sqlite', '/home/astroill/BTC/CF/btc.db')
 session = db.open()
 columns = ['exch', 'pairs', 'date', 'time_max', 'close', 'vol']
 df_maxs = pd.DataFrame([], columns=columns)
@@ -40,10 +41,10 @@ for dirs, folder, files in os.walk(path):
             # folder1 - exch
             _, folder1 = os.path.split(dir1)
             fullname = os.path.join(dirs, file)
+            # print(fullname)
             df = pd.read_csv(
-                fullname, sep=' ', names=['time', 'close', 'vol', 'dir', 'liq'],
-                # parse_dates=['time'],
-                dtype={'time': 'Int64', 'dir': 'Int32', 'liq': 'Int32'}
+                fullname, sep=' ', names=['time', 'close', 'vol', 'dir', 'liq'], on_bad_lines='warn',
+                dtype={'time': 'Int64', 'close': 'float64', 'vol': 'float64', 'dir': 'Int32', 'liq': 'Int32'}
                 )
             df.fillna(0, inplace=True)
             df = df[['time', 'close', 'vol', 'dir', 'liq']]

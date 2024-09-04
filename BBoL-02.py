@@ -44,7 +44,7 @@ VER_B = dbc.__version__
 VERSION = f'BTC Bunch of Lines #02, Plotly V{VER_P}, Dash V{VER_D}, Bootstrap V{VER_B}'
 
 # Открытие базы всплесков объемов
-db = Db('sqlite', '/home/astroill/Python/Crypto-flash/Data/btc_max_more_10.db')
+db = Db('sqlite', '/home/astroill/BTC/CF/btc.db')
 
 # LAYOUT
 
