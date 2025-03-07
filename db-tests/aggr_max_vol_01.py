@@ -19,10 +19,10 @@ moreBTC = 10
 path = '/home/astroill/BTC/aggr-server/data'
 # Начальная дата сбора данных
 # Для ускорения указывайте последнюю или предпоследнюю дату предыдущего сбора
-start_date = ('2024-09-04')
+start_date = ('2025-03-05')
 print('Start:', start_date)
 # maximums for charts
-maximums =600
+maximums =500
 now_date = datetime.now().strftime("%Y-%m-%d")
 print("Now:", now_date)
 # База данных для занесения всплесков

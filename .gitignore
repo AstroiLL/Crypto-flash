@@ -15,3 +15,4 @@ sma.py
 /cache_ff*/*
 /aggr-server/
 /Data/
+aggr_max_vol.log

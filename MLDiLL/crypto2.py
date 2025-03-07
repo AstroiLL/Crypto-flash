@@ -216,7 +216,9 @@ class Crypto:
         if self.verbose: print("Last date from Base", self.last_date)
         # TODO syncing with _get_from_exchange
         today = datetime.utcnow()
-        #today = datetime.now(tz=timezone.utc)
+        #print(today)
+        #print(datetime.now(tz=timezone.utc))
+        #print(self.last_date)
         if self.verbose: print('Today:', today)
         difs_td = today - self.last_date
         if self.verbose: print('Today - last_date =', difs_td)
